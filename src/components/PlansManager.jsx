@@ -98,6 +98,7 @@ export default function PlansManager({ plans, setPlans, accessToken, onNeedLogin
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [generatedPlanText, setGeneratedPlanText] = useState('');
   const [planTitle, setPlanTitle] = useState('');
+  const [planDocNo, setPlanDocNo] = useState('03');
 
   // State hỗ trợ soạn báo cáo
   const [reportPeriod, setReportPeriod] = useState('tháng'); // tháng | quý
@@ -105,6 +106,7 @@ export default function PlansManager({ plans, setPlans, accessToken, onNeedLogin
   const [reportYear, setReportYear] = useState(new Date().getFullYear().toString());
   const [reportResult, setReportResult] = useState('');
   const [reportNext, setReportNext] = useState('');
+  const [reportDocNo, setReportDocNo] = useState('03');
   const [signDay, setSignDay] = useState(() => {
     const today = new Date();
     return `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
@@ -152,11 +154,154 @@ export default function PlansManager({ plans, setPlans, accessToken, onNeedLogin
     }
   };
 
-  // Sao chép văn bản vào bộ nhớ tạm
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text);
-    setCopiedText(true);
-    setTimeout(() => setCopiedText(false), 2000);
+  // Hàm sinh tiêu đề 2 bên dạng plain-text căn lề bằng khoảng trắng
+  const generateTwoColumnHeader = (signDate, docNo) => {
+    const leftLines = [
+      "ĐOÀN THANH NIÊN",
+      "BỆNH VIỆN THAN – KHOÁNG SẢN",
+      "BCH ĐOÀN THANH NIÊN",
+      "TTYT THAN KHU VỰC MẠO KHÊ",
+      `Số: ${docNo}`
+    ];
+    const rightLines = [
+      "ĐOÀN TNCS HỒ CHÍ MINH",
+      "",
+      "",
+      signDate
+    ];
+    
+    const plainTextLines = [];
+    const maxLeftLen = Math.max(...leftLines.map(l => l.length));
+    const padWidth = Math.max(maxLeftLen + 12, 45); // bảo đảm khoảng cách tối thiểu
+    
+    for (let i = 0; i < 5; i++) {
+      const left = leftLines[i] || "";
+      const right = rightLines[i] || "";
+      if (left || right) {
+        if (right) {
+          plainTextLines.push(left.padEnd(padWidth, " ") + right);
+        } else {
+          plainTextLines.push(left);
+        }
+      }
+    }
+    return plainTextLines.join("\n");
+  };
+
+  // Hàm sinh bảng HTML không viền để dán vào Word thành bảng 2 cột chuẩn
+  const getHeaderHtml = (leftLines, rightLines) => {
+    return `<table style="width: 100%; border-collapse: collapse; border: none; font-family: 'Times New Roman', Times, serif; margin-bottom: 25px;">
+      <tr style="border: none;">
+        <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0; line-height: 1.25;">
+          <span style="font-size: 11pt;">${leftLines[0] || ""}</span><br>
+          <span style="font-size: 11pt; font-weight: bold;">${leftLines[1] || ""}</span><br>
+          <span style="font-size: 11pt; font-weight: bold;">${leftLines[2] || ""}</span><br>
+          <span style="font-size: 11pt; font-weight: bold; text-decoration: underline;">${leftLines[3] || ""}</span><br>
+          <span style="font-size: 11pt;">${leftLines[4] || ""}</span>
+        </td>
+        <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0; line-height: 1.25;">
+          <span style="font-size: 11pt; font-weight: bold;">${rightLines[0] || ""}</span><br>
+          <br>
+          <span style="font-size: 11pt; font-style: italic;">${rightLines[3] || ""}</span>
+        </td>
+      </tr>
+    </table>`;
+  };
+
+  // Sao chép thông minh: Plain-text để xem/sửa, HTML để dán vào Word ra định dạng chuẩn
+  const copyDocToClipboard = (text) => {
+    const lines = text.split('\n');
+    const leftLines = [];
+    const rightLines = [];
+    
+    // Phân tích 6 dòng đầu để tách cột trái và phải (dựa trên khoảng trắng kép)
+    let headerLineCount = 0;
+    for (let i = 0; i < Math.min(lines.length, 6); i++) {
+      const line = lines[i];
+      const parts = line.split(/\s{2,}/);
+      if (parts.length >= 2) {
+        leftLines.push(parts[0].trim());
+        rightLines.push(parts[1].trim());
+        headerLineCount++;
+      } else {
+        const trimmed = line.trim();
+        if (trimmed.includes("ĐOÀN TNCS") || trimmed.includes("Mạo Khê, ngày") || (trimmed.startsWith("Mạo Khê,") && i > 1)) {
+          leftLines.push("");
+          rightLines.push(trimmed);
+          headerLineCount++;
+        } else if (trimmed.startsWith("ĐOÀN THANH NIÊN") || trimmed.startsWith("BỆNH VIỆN") || trimmed.startsWith("BCH ĐOÀN") || trimmed.startsWith("TTYT THAN") || trimmed.startsWith("Số:")) {
+          leftLines.push(trimmed);
+          rightLines.push("");
+          headerLineCount++;
+        } else {
+          // Bắt đầu phần thân văn bản
+          break;
+        }
+      }
+    }
+
+    // Đảm bảo đủ các dòng trống để render HTML
+    while (leftLines.length < 5) leftLines.push("");
+    while (rightLines.length < 5) rightLines.push("");
+    // Nếu dòng cuối cùng của rightLines trống nhưng có ở dòng 3 thì đảo lại cho đúng chuẩn
+    if (!rightLines[3] && rightLines[2]) {
+      rightLines[3] = rightLines[2];
+      rightLines[2] = "";
+    }
+
+    const bodyLines = lines.slice(headerLineCount);
+    const bodyText = bodyLines.join('\n').trim();
+
+    const htmlHeader = getHeaderHtml(leftLines, rightLines);
+    
+    // Chuyển đổi Markdown thân bài sang HTML đơn giản để MS Word hiểu được
+    const htmlBody = bodyLines
+      .map(line => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('###')) {
+          return `<h3 style="font-family: 'Times New Roman'; font-size: 13pt; font-weight: bold; margin-top: 10px; margin-bottom: 4px;">${trimmed.replace(/###/g, '').trim()}</h3>`;
+        }
+        if (trimmed.startsWith('##')) {
+          return `<h2 style="font-family: 'Times New Roman'; font-size: 14pt; font-weight: bold; margin-top: 14px; margin-bottom: 6px;">${trimmed.replace(/##/g, '').trim()}</h2>`;
+        }
+        if (trimmed.startsWith('#')) {
+          return `<h1 style="font-family: 'Times New Roman'; font-size: 15pt; font-weight: bold; text-align: center; margin-top: 18px; margin-bottom: 8px;">${trimmed.replace(/#/g, '').trim()}</h1>`;
+        }
+        if (trimmed.startsWith('-')) {
+          return `<li style="font-family: 'Times New Roman'; font-size: 12pt; margin-left: 20px; margin-bottom: 3px;">${trimmed.replace(/^-/g, '').trim()}</li>`;
+        }
+        if (trimmed.startsWith('*')) {
+          return `<li style="font-family: 'Times New Roman'; font-size: 12pt; margin-left: 20px; margin-bottom: 3px;">${trimmed.replace(/^\*/g, '').trim()}</li>`;
+        }
+        if (trimmed) {
+          return `<p style="font-family: 'Times New Roman'; font-size: 12pt; text-indent: 1.27cm; text-align: justify; line-height: 1.25; margin-bottom: 5px;">${trimmed}</p>`;
+        }
+        return '<br>';
+      })
+      .join('');
+
+    const fullHtml = `<html><body style="font-family: 'Times New Roman'; font-size: 12pt; line-height: 1.25;">
+      ${htmlHeader}
+      ${htmlBody}
+    </body></html>`;
+
+    try {
+      const blobText = new Blob([text], { type: 'text/plain' });
+      const blobHtml = new Blob([fullHtml], { type: 'text/html' });
+      const data = [new ClipboardItem({ 'text/plain': blobText, 'text/html': blobHtml })];
+      navigator.clipboard.write(data).then(() => {
+        setCopiedText(true);
+        setTimeout(() => setCopiedText(false), 2000);
+      }).catch(() => {
+        navigator.clipboard.writeText(text);
+        setCopiedText(true);
+        setTimeout(() => setCopiedText(false), 2000);
+      });
+    } catch (e) {
+      navigator.clipboard.writeText(text);
+      setCopiedText(true);
+      setTimeout(() => setCopiedText(false), 2000);
+    }
   };
 
   // Xử lý tệp tải lên phục vụ viết kế hoạch AI
@@ -198,13 +343,7 @@ export default function PlansManager({ plans, setPlans, accessToken, onNeedLogin
 Dựa trên tài liệu đính kèm (là văn bản/kế hoạch của Đoàn cấp trên)${additionalReq.trim() ? `, và yêu cầu bổ sung đặc biệt sau: "${additionalReq}"` : ''},
 hãy viết một bản KẾ HOẠCH chi tiết và cụ thể để Chi đoàn chúng ta triển khai thực hiện.
 
-Văn bản kế hoạch cần phải được trình bày cực kỳ chuyên nghiệp, đúng chuẩn thể thức văn bản Đoàn TNCS Hồ Chí Minh:
-
-------------------------
-ĐOÀN TNCS HỒ CHÍ MINH
-BCH CHI ĐOÀN TTYT THAN KV MẠO KHÊ
-------------------------
-
+QUAN TRỌNG: Hãy chỉ tập trung viết nội dung phần thân kế hoạch, bắt đầu thẳng bằng:
 KẾ HOẠCH
 Về việc: [Nêu chủ đề kế hoạch cụ thể của chúng ta]
 
@@ -224,7 +363,6 @@ IV. TỔ CHỨC THỰC HIỆN
 - Phân công cụ thể cho các tổ đoàn viên, hậu cần, truyền thông...
 - Trách nhiệm báo cáo kết quả.
 
-Mạo Khê, ngày ${new Date().getDate()} tháng ${new Date().getMonth() + 1} năm ${new Date().getFullYear()}
 TM. BAN CHẤP HÀNH
 BÍ THƯ
 
@@ -234,7 +372,14 @@ Yêu cầu: Hãy viết rất chi tiết, phong thái trang nghiêm, chuyên ngh
 
     try {
       const result = await callGeminiAPI(prompt, geminiApiKey, uploadedFile);
-      setGeneratedPlanText(result);
+      
+      // Tạo header 2 cột ghép vào
+      const today = new Date();
+      const signDate = `Mạo Khê, ngày ${today.getDate().toString().padStart(2, '0')} tháng ${(today.getMonth() + 1).toString().padStart(2, '0')} năm ${today.getFullYear()}`;
+      const headerText = generateTwoColumnHeader(signDate, planDocNo);
+      
+      const fullDoc = `${headerText}\n\n${result}`;
+      setGeneratedPlanText(fullDoc);
       
       // Thử tự động trích xuất tiêu đề kế hoạch
       const titleMatch = result.match(/Về việc:\s*(.*)/i) || result.match(/KẾ HOẠCH\s*\n\s*(.*)/i);
@@ -249,6 +394,7 @@ Yêu cầu: Hãy viết rất chi tiết, phong thái trang nghiêm, chuyên ngh
       setIsGeneratingPlan(false);
     }
   };
+
 
   // Lưu bản kế hoạch AI tạo ra thành 1 thẻ kế hoạch trong danh sách
   const handleSaveGeneratedPlan = () => {
@@ -309,7 +455,18 @@ Yêu cầu: Hãy viết rất chi tiết, phong thái trang nghiêm, chuyên ngh
       ? reportNext.split('\n').map(l => l.startsWith('-') ? l : `- ${l}`).join('\n')
       : '- Tiếp tục duy trì công tác vệ sinh khuôn viên.\n- Tổ chức các buổi sinh hoạt định kỳ.';
 
-    const template = `BÁO CÁO
+    // Chuẩn hóa ngày ký sang dạng tiếng Việt chính thức
+    let formattedSignDate = signDay;
+    if (!signDay.includes("ngày") && signDay.includes("/")) {
+      const p = signDay.split('/');
+      if (p.length === 3) formattedSignDate = `Mạo Khê, ngày ${p[0]} tháng ${p[1]} năm ${p[2]}`;
+    }
+
+    const headerText = generateTwoColumnHeader(formattedSignDate, `${reportDocNo}-BC/ĐTNTT`);
+
+    const template = `${headerText}
+
+BÁO CÁO
 KẾT QUẢ HOẠT ĐỘNG CÔNG TÁC ĐOÀN VÀ PHONG TRÀO THANH NIÊN ${titlePeriod} VÀ PHƯƠNG HƯỚNG ${nextTitlePeriod.toUpperCase()} - NĂM ${reportYear}
 ------------------------
 Thực hiện Kế hoạch của BCH Đoàn thanh niên Bệnh viện Than - Khoáng sản về công tác đoàn năm ${reportYear}. Được sự quan tâm chỉ đạo trực tiếp của Chi bộ Trung tâm, từ tình hình hoạt động chung của toàn trung tâm. BCH Chi đoàn thanh niên Trung tâm y tế Than khu vực Mạo Khê báo cáo:
@@ -322,9 +479,6 @@ ${formattedNext}
 
 Trên đây là kết quả hoạt động công tác đoàn và phong trào TTN của Chi đoàn thanh niên Trung tâm Y tế Than khu vực Mạo Khê trong ${reportPeriod} ${reportPeriodVal}/${reportYear} và triển khai phương hướng nhiệm vụ trọng tâm trong ${reportPeriod === 'tháng' ? 'tháng' : 'quý'} ${nextPeriodVal}/${nextPeriodYear}.
 
-TTYT THAN KV MẠO KHÊ
-BCH CHI ĐOÀN | ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
-Mạo Khê, ngày ${signDay}
 TM. BAN CHẤP HÀNH
 BÍ THƯ
 
@@ -382,8 +536,7 @@ ${reportResult}
 - Phương hướng nhiệm vụ kỳ tới:
 ${reportNext}
 
-Định dạng văn bản đầu ra cần khớp hoàn toàn với mẫu chuẩn sau (hãy giữ nguyên cấu trúc đầu ra):
-
+QUAN TRỌNG: Hãy chỉ tập trung viết nội dung phần thân báo cáo, bắt đầu thẳng bằng:
 BÁO CÁO
 KẾT QUẢ HOẠT ĐỘNG CÔNG TÁC ĐOÀN VÀ PHONG TRÀO THANH NIÊN ${reportPeriod === 'tháng' ? 'THÁNG' : 'QUÝ'} ${reportPeriodVal} VÀ PHƯƠNG HƯỚNG ${reportPeriod === 'tháng' ? 'THÁNG' : 'QUÝ'} ${nextPeriodVal} - NĂM ${reportYear}
 ------------------------
@@ -397,13 +550,8 @@ II. Kế hoạch hoạt động ${reportPeriod === 'tháng' ? 'tháng' : 'quý'}
 
 Trên đây là kết quả hoạt động công tác đoàn và phong trào TTN của Chi đoàn thanh niên Trung tâm Y tế Than khu vực Mạo Khê trong ${reportPeriod} ${reportPeriodVal}/${reportYear} và triển khai phương hướng nhiệm vụ trọng tâm trong ${reportPeriod === 'tháng' ? 'tháng' : 'quý'} ${nextPeriodVal}/${nextPeriodYear}.
 
-TTYT THAN KV MẠO KHÊ
-BCH CHI ĐOÀN | ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
-Mạo Khê, ngày ${signDay}
 TM. BAN CHẤP HÀNH
 BÍ THƯ
-
-
 
 Đặng Phong Thái
 
@@ -411,7 +559,15 @@ Yêu cầu: Hãy tối ưu hóa từ ngữ cho thật chuyên nghiệp, súc tí
 
     try {
       const result = await callGeminiAPI(prompt, geminiApiKey);
-      setGeneratedReportText(result);
+      
+      let formattedSignDate = signDay;
+      if (!signDay.includes("ngày") && signDay.includes("/")) {
+        const p = signDay.split('/');
+        if (p.length === 3) formattedSignDate = `Mạo Khê, ngày ${p[0]} tháng ${p[1]} năm ${p[2]}`;
+      }
+      
+      const headerText = generateTwoColumnHeader(formattedSignDate, `${reportDocNo}-BC/ĐTNTT`);
+      setGeneratedReportText(`${headerText}\n\n${result}`);
     } catch (err) {
       alert("Lỗi khi tối ưu báo cáo bằng AI: " + err.message);
     } finally {
@@ -598,6 +754,22 @@ Yêu cầu: Hãy tối ưu hóa từ ngữ cho thật chuyên nghiệp, súc tí
                 </div>
               </div>
 
+              {/* Số kế hoạch */}
+              <div>
+                <label className="text-xs font-bold text-gray-600 block mb-1.5 uppercase tracking-wider">Số kế hoạch</label>
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                  <span className="text-xs text-gray-400 font-bold uppercase">Số:</span>
+                  <input
+                    type="text"
+                    value={planDocNo}
+                    onChange={e => setPlanDocNo(e.target.value)}
+                    placeholder="VD: 03"
+                    className="w-16 bg-white border border-gray-200 rounded-lg px-2 py-1 text-center text-sm outline-none focus:border-blue-400 font-bold text-gray-700"
+                  />
+                  <span className="text-sm font-semibold text-gray-500">/KH-ĐTNTT</span>
+                </div>
+              </div>
+
               {/* Yêu cầu thêm */}
               <div>
                 <label className="text-xs font-bold text-gray-600 block mb-1.5 uppercase tracking-wider">Yêu cầu bổ sung (Tùy chọn)</label>
@@ -651,7 +823,7 @@ Yêu cầu: Hãy tối ưu hóa từ ngữ cho thật chuyên nghiệp, súc tí
                 </h3>
                 {generatedPlanText && (
                   <button
-                    onClick={() => copyToClipboard(generatedPlanText)}
+                    onClick={() => copyDocToClipboard(generatedPlanText)}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
                   >
                     <Copy size={12} /> Sao chép văn bản
@@ -755,6 +927,21 @@ Yêu cầu: Hãy tối ưu hóa từ ngữ cho thật chuyên nghiệp, súc tí
               </div>
 
               <div>
+                <label className="text-xs font-bold text-gray-600 block mb-1.5 uppercase">Số báo cáo</label>
+                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                  <span className="text-xs text-gray-400 font-bold uppercase">Số:</span>
+                  <input
+                    type="text"
+                    value={reportDocNo}
+                    onChange={e => setReportDocNo(e.target.value)}
+                    placeholder="VD: 03"
+                    className="w-16 bg-white border border-gray-200 rounded-lg px-2 py-1 text-center text-sm outline-none focus:border-blue-400 font-bold text-gray-700"
+                  />
+                  <span className="text-sm font-semibold text-gray-500">/BC-ĐTNTT</span>
+                </div>
+              </div>
+
+              <div>
                 <label className="text-xs font-bold text-gray-600 block mb-1.5 uppercase">1. Kết quả đạt được (Ý chính)</label>
                 <textarea
                   value={reportResult}
@@ -806,7 +993,7 @@ Yêu cầu: Hãy tối ưu hóa từ ngữ cho thật chuyên nghiệp, súc tí
                 </h3>
                 {generatedReportText && (
                   <button
-                    onClick={() => copyToClipboard(generatedReportText)}
+                    onClick={() => copyDocToClipboard(generatedReportText)}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
                   >
                     <Copy size={12} /> Sao chép văn bản
