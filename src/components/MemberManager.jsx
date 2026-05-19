@@ -98,7 +98,7 @@ function MemberDetail({ m, onClose }) {
   );
 }
 
-export default function MemberManager({ members, setMembers }) {
+export default function MemberManager({ members, setMembers, isAdmin }) {
   const [search, setSearch] = useState("");
   const [fTD, setFTD] = useState("Tất cả");
   const [fGT, setFGT] = useState("Tất cả");
@@ -194,15 +194,19 @@ export default function MemberManager({ members, setMembers }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
         <h2 style={{ margin: 0, fontSize: 22, color: "#1a1a2e" }}>👥 Quản lý Đoàn viên <span style={{ fontSize: 13, color: "#aaa", fontWeight: 400 }}>({filtered.length}/{members.length})</span></h2>
         <div style={{ display: "flex", gap: 8 }}>
-          <input 
-            type="file" 
-            accept=".xlsx, .xls" 
-            ref={fileInputRef} 
-            onChange={handleFileUpload} 
-            style={{ display: 'none' }} 
-          />
-          <Btn v="s" onClick={() => fileInputRef.current?.click()}>📥 Nhập từ Excel</Btn>
-          <Btn onClick={() => { setEditItem(null); setShowForm(true); }}>+ Thêm đoàn viên</Btn>
+          {isAdmin && (
+            <>
+              <input 
+                type="file" 
+                accept=".xlsx, .xls" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                style={{ display: 'none' }} 
+              />
+              <Btn v="s" onClick={() => fileInputRef.current?.click()}>📥 Nhập từ Excel</Btn>
+              <Btn onClick={() => { setEditItem(null); setShowForm(true); }}>+ Thêm đoàn viên</Btn>
+            </>
+          )}
         </div>
       </div>
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
@@ -244,8 +248,12 @@ export default function MemberManager({ members, setMembers }) {
                   <td style={{ padding: "9px 13px" }}>
                     <div style={{ display: "flex", gap: 5 }}>
                       <button onClick={() => setDetail(m)} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#f0f0f0", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Xem</button>
-                      <button onClick={() => { setEditItem(m); setShowForm(true); }} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#fff3e0", color: "#e65100", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Sửa</button>
-                      <button onClick={() => { if (window.confirm("Xóa đoàn viên này?")) setMembers(p => p.filter(x => x.id !== m.id)); }} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#ffeef0", color: RED, cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Xóa</button>
+                      {isAdmin && (
+                        <>
+                          <button onClick={() => { setEditItem(m); setShowForm(true); }} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#fff3e0", color: "#e65100", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Sửa</button>
+                          <button onClick={() => { if (window.confirm("Xóa đoàn viên này?")) setMembers(p => p.filter(x => x.id !== m.id)); }} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#ffeef0", color: RED, cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Xóa</button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

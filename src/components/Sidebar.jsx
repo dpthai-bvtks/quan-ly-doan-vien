@@ -1,16 +1,19 @@
 import React from 'react';
 import { LayoutDashboard, Users, FolderOpen, Calendar, Gamepad2, Settings, LogOut } from 'lucide-react';
 
-const navItems = [
-  { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard },
-  { id: 'members', label: 'Quản lý Đoàn viên', icon: Users },
-  { id: 'documents', label: 'Quản lý Văn bản', icon: FolderOpen },
-  { id: 'plans', label: 'Kế hoạch & Công trình', icon: Calendar },
-  { id: 'games', label: 'Trò chơi sinh hoạt', icon: Gamepad2 },
-  { id: 'settings', label: 'Cài đặt', icon: Settings },
+const ALL_NAV_ITEMS = [
+  { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard, adminOnly: false },
+  { id: 'members', label: 'Quản lý Đoàn viên', icon: Users, adminOnly: false },
+  { id: 'documents', label: 'Quản lý Văn bản', icon: FolderOpen, adminOnly: false },
+  { id: 'plans', label: 'Kế hoạch & Công trình', icon: Calendar, adminOnly: false },
+  { id: 'games', label: 'Trò chơi sinh hoạt', icon: Gamepad2, adminOnly: true },
+  { id: 'settings', label: 'Cài đặt', icon: Settings, adminOnly: true },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab }) {
+export default function Sidebar({ activeTab, setActiveTab, currentUser, onAppLogout }) {
+  const isAdmin = currentUser?.role === 'admin';
+  const navItems = ALL_NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
+
   return (
     <div className="w-64 h-screen bg-white border-r border-gray-200 flex flex-col fixed left-0 top-0">
       <div className="p-6 border-b border-gray-100 flex items-center justify-center">
@@ -18,7 +21,7 @@ export default function Sidebar({ activeTab, setActiveTab }) {
           <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-3 shadow-lg shadow-blue-200">
             <span className="text-white font-bold text-xl">ĐTN</span>
           </div>
-          <h2 className="font-bold text-gray-800 text-lg leading-tight">Chi đoàn TTYT Than KV Mạo Khê</h2>
+          <h2 className="font-bold text-gray-800 text-lg leading-tight">Chi đoàn BVTKS - CS2</h2>
           <p className="text-xs text-gray-500 mt-1">Hệ thống Quản lý</p>
         </div>
       </div>
@@ -44,6 +47,28 @@ export default function Sidebar({ activeTab, setActiveTab }) {
             );
           })}
         </nav>
+      </div>
+
+      {/* Thông tin người dùng & Đăng xuất */}
+      <div className="p-4 border-t border-gray-100">
+        <div className="flex items-center gap-3 mb-3 px-2">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${isAdmin ? 'bg-blue-600' : 'bg-gray-400'}`}>
+            {currentUser?.displayName?.[0] || 'G'}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-gray-800 truncate">{currentUser?.displayName}</p>
+            <p className={`text-xs font-medium ${isAdmin ? 'text-blue-500' : 'text-gray-400'}`}>
+              {isAdmin ? '👑 Quản trị viên' : '👁 Chỉ xem'}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onAppLogout}
+          className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-all"
+        >
+          <LogOut className="h-4 w-4" />
+          Đăng xuất hệ thống
+        </button>
       </div>
     </div>
   );
