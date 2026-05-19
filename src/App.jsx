@@ -138,7 +138,6 @@ function AppContent() {
       setSyncStatus('Lỗi đồng bộ');
     }
   };
-  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '')
 
   const login = useGoogleLogin({
     onSuccess: (codeResponse) => setAccessToken(codeResponse.access_token),
