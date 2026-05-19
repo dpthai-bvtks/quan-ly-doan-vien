@@ -82,7 +82,7 @@ export default function PlayerMobile() {
   const handleJoin = (e) => {
     e.preventDefault();
     if (pin && name && socket) {
-      socket.emit('player_join', { pin, name });
+      socket.emit('player_join', { pin: pin.trim(), name: name.trim() });
     }
   };
 

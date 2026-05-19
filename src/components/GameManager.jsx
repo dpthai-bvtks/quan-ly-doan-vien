@@ -32,6 +32,10 @@ export default function GameManager({ questions, setQuestions, geminiApiKey, onN
       setPlayers(updatedPlayers);
     });
 
+    newSocket.on('disconnect', () => {
+      alert('⚠️ Mất kết nối tới máy chủ! Phòng của bạn đã bị hủy, vui lòng tải lại trang (F5) để tạo phòng mới.');
+    });
+
     return () => newSocket.close();
   }, []);
 

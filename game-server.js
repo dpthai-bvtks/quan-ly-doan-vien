@@ -106,7 +106,7 @@ io.on('connection', (socket) => {
 
   socket.on('player_join', ({ pin, name }) => {
     const room = rooms[pin];
-    if (room && room.gameState === 'lobby') {
+    if (room && (room.gameState === 'lobby' || room.gameState === 'playing' || room.gameState === 'question' || room.gameState === 'revealed')) {
       const player = {
         socketId: socket.id,
         name: name,
@@ -121,7 +121,7 @@ io.on('connection', (socket) => {
       io.to(room.hostId).emit('players_update', room.players);
       console.log(`${name} joined room ${pin}`);
     } else {
-      socket.emit('join_error', 'Phòng không tồn tại hoặc đã bắt đầu chơi!');
+      socket.emit('join_error', 'Phòng không tồn tại hoặc đã kết thúc!');
     }
   });
 
