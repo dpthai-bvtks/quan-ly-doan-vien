@@ -49,6 +49,16 @@ export default function GameManager({ questions, setQuestions, geminiApiKey, onN
     }
   }, [timeLeft, step]);
 
+  // Auto next question after 8 seconds of reveal
+  useEffect(() => {
+    if (step === 'revealed') {
+      const timer = setTimeout(() => {
+        handleNextQuestion();
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [step, qIndex]);
+
   const handleCreateRoom = () => {
     socket.emit('host_create_room');
   };

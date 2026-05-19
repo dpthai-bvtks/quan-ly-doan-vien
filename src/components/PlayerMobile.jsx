@@ -72,6 +72,17 @@ export default function PlayerMobile() {
     return () => newSocket.close();
   }, []);
 
+  // Tự động vào lại phòng nếu bị rớt mạng (tắt màn hình)
+  useEffect(() => {
+    if (socket && pin && name && step !== 'login') {
+      const onConnect = () => {
+        socket.emit('player_join', { pin: pin.trim(), name: name.trim() });
+      };
+      socket.on('connect', onConnect);
+      return () => socket.off('connect', onConnect);
+    }
+  }, [socket, pin, name, step]);
+
   useEffect(() => {
     if (step === 'question' && timeLeft > 0) {
       const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);

@@ -107,14 +107,21 @@ io.on('connection', (socket) => {
   socket.on('player_join', ({ pin, name }) => {
     const room = rooms[pin];
     if (room && (room.gameState === 'lobby' || room.gameState === 'playing' || room.gameState === 'question' || room.gameState === 'revealed')) {
-      const player = {
-        socketId: socket.id,
-        name: name,
-        score: 0,
-        alive: true,
-        currentAnswer: null
-      };
-      room.players.push(player);
+      let player = room.players.find(p => p.name === name);
+      if (player) {
+        // Reconnect
+        player.socketId = socket.id;
+      } else {
+        // New player
+        player = {
+          socketId: socket.id,
+          name: name,
+          score: 0,
+          alive: true,
+          currentAnswer: null
+        };
+        room.players.push(player);
+      }
       socket.join(pin);
       
       socket.emit('joined_room', player);
