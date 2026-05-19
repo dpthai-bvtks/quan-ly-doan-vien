@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google'
 import { File as FileIcon } from 'lucide-react'
@@ -15,11 +15,129 @@ import { RAW_MEMBERS, INIT_PLANS, INIT_QUESTIONS } from './data/constants'
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
 
 function AppContent() {
+  const FOLDER_ID = '1GvFkzdx-0KAEAUqQ_uyduBH0Er8e4Y1T';
+  const DB_FILE_NAME = 'db_quanlydoanvien.json';
+
   const [activeTab, setActiveTab] = useState('dashboard')
   const [accessToken, setAccessToken] = useState(null)
-  const [members, setMembers] = useState(RAW_MEMBERS)
-  const [plans, setPlans] = useState(INIT_PLANS)
-  const [questions, setQuestions] = useState(INIT_QUESTIONS)
+  
+  // LocalStorage Cache System
+  const [members, setMembers] = useState(() => {
+    const saved = localStorage.getItem('db_members');
+    return saved ? JSON.parse(saved) : RAW_MEMBERS;
+  })
+  const [plans, setPlans] = useState(() => {
+    const saved = localStorage.getItem('db_plans');
+    return saved ? JSON.parse(saved) : INIT_PLANS;
+  })
+  const [questions, setQuestions] = useState(() => {
+    const saved = localStorage.getItem('db_questions');
+    return saved ? JSON.parse(saved) : INIT_QUESTIONS;
+  })
+  
+  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '')
+  
+  const [syncStatus, setSyncStatus] = useState('Chưa kết nối') // Chưa kết nối, Đang đồng bộ, Đã đồng bộ, Lỗi
+  const [driveFileId, setDriveFileId] = useState(null)
+  
+  const initialLoadDone = useRef(false)
+
+  // Lưu vào LocalStorage mỗi khi có thay đổi
+  useEffect(() => {
+    localStorage.setItem('db_members', JSON.stringify(members));
+    localStorage.setItem('db_plans', JSON.stringify(plans));
+    localStorage.setItem('db_questions', JSON.stringify(questions));
+    
+    // Auto sync to cloud nếu đã load xong và có token
+    if (initialLoadDone.current && accessToken) {
+      uploadToDrive(members, plans, questions);
+    }
+  }, [members, plans, questions])
+
+  // Lấy file từ Drive khi vừa đăng nhập
+  useEffect(() => {
+    if (accessToken) {
+      downloadFromDrive();
+    } else {
+      setSyncStatus('Chưa kết nối');
+      setDriveFileId(null);
+    }
+  }, [accessToken])
+
+  const downloadFromDrive = async () => {
+    setSyncStatus('Đang đồng bộ...');
+    try {
+      // 1. Tìm xem file DB đã tồn tại chưa
+      const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DB_FILE_NAME}' and '${FOLDER_ID}' in parents and trashed=false`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      const searchData = await searchRes.json();
+      
+      if (searchData.error) throw new Error(searchData.error.message);
+
+      if (searchData.files && searchData.files.length > 0) {
+        const fileId = searchData.files[0].id;
+        setDriveFileId(fileId);
+        
+        // 2. Tải nội dung file
+        const getRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        const dbData = await getRes.json();
+        
+        if (dbData.members) setMembers(dbData.members);
+        if (dbData.plans) setPlans(dbData.plans);
+        if (dbData.questions) setQuestions(dbData.questions);
+        
+        setSyncStatus('Đã đồng bộ');
+      } else {
+        // Chưa có file -> Tạo file mới với dữ liệu hiện tại
+        setSyncStatus('Tạo CSDL Đám mây...');
+        await uploadToDrive(members, plans, questions, true);
+      }
+      initialLoadDone.current = true;
+    } catch (error) {
+      console.error("Lỗi đồng bộ:", error);
+      setSyncStatus('Lỗi đồng bộ');
+    }
+  };
+
+  const uploadToDrive = async (m, p, q, isCreate = false) => {
+    setSyncStatus('Đang lưu lên Đám mây...');
+    try {
+      const dbContent = JSON.stringify({ members: m, plans: p, questions: q });
+      const metadata = {
+        name: DB_FILE_NAME,
+        parents: [FOLDER_ID],
+        mimeType: 'application/json'
+      };
+
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+      form.append('file', new Blob([dbContent], { type: 'application/json' }));
+
+      const url = (isCreate || !driveFileId) 
+        ? 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
+        : `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`;
+      
+      const method = (isCreate || !driveFileId) ? 'POST' : 'PATCH';
+
+      const res = await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: form
+      });
+      const data = await res.json();
+      
+      if (data.error) throw new Error(data.error.message);
+      if (isCreate || !driveFileId) setDriveFileId(data.id);
+      
+      setSyncStatus('Đã đồng bộ');
+    } catch (error) {
+      console.error("Lỗi lưu lên Drive:", error);
+      setSyncStatus('Lỗi đồng bộ');
+    }
+  };
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '')
 
   const login = useGoogleLogin({
@@ -41,7 +159,7 @@ function AppContent() {
       case 'games':
         return <GameManager questions={questions} setQuestions={setQuestions} geminiApiKey={geminiApiKey} onNeedSettings={() => setActiveTab('settings')} />
       case 'settings':
-        return <Settings accessToken={accessToken} login={login} logout={logout} geminiApiKey={geminiApiKey} setGeminiApiKey={setGeminiApiKey} />
+        return <Settings accessToken={accessToken} login={login} logout={logout} geminiApiKey={geminiApiKey} setGeminiApiKey={setGeminiApiKey} syncStatus={syncStatus} />
       case 'documents':
         return (
           <div className="space-y-6">

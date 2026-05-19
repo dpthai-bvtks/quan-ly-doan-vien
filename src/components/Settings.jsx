@@ -1,7 +1,7 @@
 import React from 'react';
 import { Btn, SectionDivider } from './UI';
 
-export default function Settings({ accessToken, login, logout, geminiApiKey, setGeminiApiKey }) {
+export default function Settings({ accessToken, login, logout, geminiApiKey, setGeminiApiKey, syncStatus }) {
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
@@ -21,6 +21,9 @@ export default function Settings({ accessToken, login, logout, geminiApiKey, set
                 <div>
                   <div style={{ fontWeight: 700, color: "#1a1a2e", fontSize: 15 }}>Đã kết nối Google Drive</div>
                   <div style={{ fontSize: 12, color: "#34A853", fontWeight: 600, marginTop: 2 }}>✅ Tab Văn bản và Kế hoạch có thể tải lên file</div>
+                  <div style={{ fontSize: 12, color: syncStatus.includes('Lỗi') ? '#dc2626' : '#2563eb', fontWeight: 600, marginTop: 2 }}>
+                    ☁️ Trạng thái CSDL: {syncStatus}
+                  </div>
                 </div>
               </div>
               <button
