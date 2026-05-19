@@ -229,11 +229,19 @@ export default function GameManager({ questions, setQuestions, geminiApiKey, onN
           <Btn onClick={handleStartGame}>Bắt đầu chơi ({players.length})</Btn>
         </div>
         
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center">
-          <p className="text-gray-500 mb-2">Hướng dẫn người chơi dùng điện thoại truy cập vào:</p>
-          <div className="text-3xl font-bold text-blue-600 mb-4">{window.location.hostname}:5173/play</div>
-          <p className="text-gray-500 mb-2">Và nhập mã PIN:</p>
-          <div className="text-7xl font-black tracking-widest text-gray-900 bg-gray-100 py-6 rounded-2xl inline-block px-12 mb-8">
+        <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center">
+          <p className="text-gray-500 mb-4 text-lg">Hướng dẫn người chơi dùng điện thoại quét mã QR bên dưới:</p>
+          
+          <div className="mb-6 p-4 bg-white rounded-xl shadow-sm border-2 border-gray-100 inline-block">
+            <img 
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(window.location.origin + '/play?pin=' + pin)}`} 
+              alt="QR Code"
+              className="w-[200px] h-[200px] object-contain"
+            />
+          </div>
+          
+          <p className="text-gray-500 mb-2">Hoặc nhập thủ công mã PIN:</p>
+          <div className="text-5xl font-black tracking-widest text-gray-900 bg-gray-100 py-4 rounded-2xl inline-block px-10 mb-8 border-2 border-gray-200">
             {pin}
           </div>
           

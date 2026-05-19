@@ -7,7 +7,11 @@ const SERVER_URL = import.meta.env.VITE_GAME_SERVER_URL || (window.location.prot
 export default function PlayerMobile() {
   const [socket, setSocket] = useState(null);
   const [step, setStep] = useState('login'); // login, waiting, question, result, eliminated, ended
-  const [pin, setPin] = useState('');
+  
+  // Lấy mã PIN từ đường link (nếu người dùng quét mã QR)
+  const initialPin = new URLSearchParams(window.location.search).get('pin') || '';
+  const [pin, setPin] = useState(initialPin);
+  
   const [name, setName] = useState('');
   const [playerInfo, setPlayerInfo] = useState(null);
   
@@ -103,8 +107,9 @@ export default function PlayerMobile() {
               placeholder="Mã PIN Phòng" 
               value={pin} 
               onChange={e => setPin(e.target.value)} 
-              className="w-full text-center text-2xl font-bold tracking-widest p-4 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
+              className={`w-full text-center text-2xl font-bold tracking-widest p-4 border-2 rounded-xl focus:outline-none ${initialPin ? 'bg-gray-100 border-gray-100 text-gray-500 cursor-not-allowed' : 'border-gray-200 focus:border-blue-500'}`}
               required 
+              readOnly={!!initialPin}
             />
             <input 
               type="text" 
