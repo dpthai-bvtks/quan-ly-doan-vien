@@ -118,7 +118,7 @@ export default function GameManager({ questions, setQuestions, geminiApiKey, onN
       // 2. Thử lần lượt các model cho đến khi thành công
       for (const targetModel of supportedModels) {
         try {
-          const prompt = `Bạn là một chuyên gia tạo câu hỏi trắc nghiệm. Hãy tạo 10 câu hỏi trắc nghiệm bằng tiếng Việt về chủ đề: '${aiTopic}'.\n\nQUAN TRỌNG: Chỉ trả về MỘT MẢNG JSON, tuyệt đối không bọc trong markdown hay giải thích thêm. Định dạng mỗi phần tử:\n{"question": "Nội dung câu hỏi?", "options": ["A. Đáp án 1", "B. Đáp án 2", "C. Đáp án 3", "D. Đáp án 4"], "correct": "A", "explanation": "Giải thích ngắn gọn."}`;
+          const prompt = `Bạn là một chuyên gia tạo câu hỏi trắc nghiệm. Hãy tạo 10 câu hỏi trắc nghiệm bằng tiếng Việt về chủ đề: '${aiTopic}'.\n\nQUAN TRỌNG: Chỉ trả về MỘT MẢNG JSON, tuyệt đối không bọc trong markdown hay giải thích thêm. Định dạng mỗi phần tử:\n{"question": "Nội dung câu hỏi?", "options": ["A. Đáp án 1", "B. Đáp án 2", "C. Đáp án 3", "D. Đáp án 4"], "correct": "A", "explanation": "Giải thích lý do vì sao đáp án đó đúng. Yêu cầu thật ngắn gọn, súc tích (1-2 câu) nhưng phải thật chính xác, khoa học và đầy đủ ý nghĩa."}`;
           
           const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${geminiApiKey}`, {
             method: 'POST',
