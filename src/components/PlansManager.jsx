@@ -126,6 +126,10 @@ export default function PlansManager({ plans, setPlans, accessToken, onNeedLogin
   };
 
   const handleSave = async () => {
+    if (!isAdmin) {
+      alert("Tài khoản khách không có quyền thêm mới kế hoạch!");
+      return;
+    }
     if (!form.title) return;
     setUploading(true);
     try {
@@ -306,6 +310,10 @@ export default function PlansManager({ plans, setPlans, accessToken, onNeedLogin
 
   // Xử lý tệp tải lên phục vụ viết kế hoạch AI
   const handlePlanFileChange = (e) => {
+    if (!isAdmin) {
+      alert("Tài khoản khách không có quyền tải tài liệu lên!");
+      return;
+    }
     const file = e.target.files[0];
     if (!file) return;
 
@@ -327,6 +335,10 @@ export default function PlansManager({ plans, setPlans, accessToken, onNeedLogin
 
   // AI Viết Kế Hoạch từ văn bản cấp trên
   const handleGeneratePlan = async () => {
+    if (!isAdmin) {
+      alert("Tài khoản khách không có quyền soạn kế hoạch!");
+      return;
+    }
     if (!geminiApiKey) {
       alert("Vui lòng cấu hình Gemini API Key tại tab Cài đặt trước!");
       return;
@@ -398,6 +410,10 @@ Yêu cầu: Hãy viết rất chi tiết, phong thái trang nghiêm, chuyên ngh
 
   // Lưu bản kế hoạch AI tạo ra thành 1 thẻ kế hoạch trong danh sách
   const handleSaveGeneratedPlan = () => {
+    if (!isAdmin) {
+      alert("Tài khoản khách không có quyền lưu kế hoạch!");
+      return;
+    }
     if (!planTitle.trim()) {
       alert("Vui lòng nhập tên hoạt động/kế hoạch!");
       return;
@@ -732,26 +748,32 @@ Yêu cầu: Hãy tối ưu hóa từ ngữ cho thật chuyên nghiệp, súc tí
               {/* Tải tệp lên */}
               <div>
                 <label className="text-xs font-bold text-gray-600 block mb-1.5 uppercase tracking-wider">Tài liệu cấp trên (PDF hoặc Ảnh)</label>
-                <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50 text-center hover:bg-gray-100 transition-colors relative cursor-pointer">
-                  <input
-                    type="file"
-                    accept="application/pdf,image/*"
-                    onChange={handlePlanFileChange}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  />
-                  <Upload className="mx-auto text-gray-400 mb-2" size={24} />
-                  {uploadedFile ? (
-                    <div>
-                      <p className="text-sm font-semibold text-blue-600 truncate">{uploadedFile.name}</p>
-                      <p className="text-xs text-gray-400">{(uploadedFile.size / 1024).toFixed(1)} KB</p>
-                    </div>
-                  ) : (
-                    <div>
-                      <p className="text-sm text-gray-600">Click để chọn hoặc kéo thả tệp</p>
-                      <p className="text-xs text-gray-400">Hỗ trợ định dạng PDF, PNG, JPG</p>
-                    </div>
-                  )}
-                </div>
+                {!isAdmin ? (
+                  <div className="border border-dashed border-red-200 rounded-xl p-4 bg-red-50 text-center">
+                    <p className="text-xs font-bold text-red-600">🔒 Tài khoản khách không được phép tải lên tài liệu.</p>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50 text-center hover:bg-gray-100 transition-colors relative cursor-pointer">
+                    <input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      onChange={handlePlanFileChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                    <Upload className="mx-auto text-gray-400 mb-2" size={24} />
+                    {uploadedFile ? (
+                      <div>
+                        <p className="text-sm font-semibold text-blue-600 truncate">{uploadedFile.name}</p>
+                        <p className="text-xs text-gray-400">{(uploadedFile.size / 1024).toFixed(1)} KB</p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-sm text-gray-600">Click để chọn hoặc kéo thả tệp</p>
+                        <p className="text-xs text-gray-400">Hỗ trợ định dạng PDF, PNG, JPG</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Số kế hoạch */}
@@ -793,7 +815,7 @@ Yêu cầu: Hãy tối ưu hóa từ ngữ cho thật chuyên nghiệp, súc tí
             </div>
 
             {/* Lưu thành Thẻ kế hoạch */}
-            {generatedPlanText && (
+            {generatedPlanText && isAdmin && (
               <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
                 <h4 className="font-bold text-gray-800 text-sm uppercase tracking-wider">Tạo thẻ kế hoạch hoạt động</h4>
                 <div>
