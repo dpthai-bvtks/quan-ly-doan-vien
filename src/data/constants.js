@@ -11,6 +11,13 @@ export const DOI_TUONG_LIST = ["Sinh hoạt chính", "Sinh hoạt ghép"];
 export const XEP_LOAI_LIST = ["Xuất sắc", "Tốt", "Khá", "Trung bình", "Yếu", "Chưa đánh giá"];
 export const REN_LUYEN_LIST = ["Đã đăng ký", "Chưa đăng ký"];
 export const HOI_LIST = ["Hội LHTN Việt Nam", "Không"];
+export const TRANG_THAI_DV = {
+  ACTIVE: 'active',
+  CHUYEN_DI: 'chuyen_di',
+  CHUYEN_DEN: 'chuyen_den',
+  TRUONG_THANH: 'truong_thanh',
+  XOA_TEN: 'xoa_ten',
+};
 
 export const RAW_MEMBERS = [
   { id: 1, hoTen: "Đào Thị Sen", toDoan: "Phòng ban CS1", maDinhDanh: "8007801", soThe: "024192024863", gioiTinh: "Nữ", ngaySinh: "1990-01-01", tuoi: 34, danToc: "Kinh", tonGiao: "Không", queQuan: "Xã Cẩm Lý, Huyện Lục Nam, Bắc Giang", diaChiThuongTru: "Phường Mạo Khê, Thị xã Đông Triều, Quảng Ninh", soCMND: "024192004509", ngayCap: "", noiCap: "CỤC CẢNH SÁT QUẢN LÝ HÀNH CHÍNH VỀ TRẬT TỰ XÃ HỘI", trinhDoVH: "Hệ 12/12", trinhDoCM: "Cao đẳng", trinhDoLLCT: "Chưa có", tinHoc: "Chuẩn kỹ năng sử dụng CNTT cơ bản", ngoaiNgu: "Bậc 1", noiVaoDoan: "", tgVaoDoan: "2006-03-26", soNQ: "", tgVaoDang: "", ngheNghiep: "Cán bộ/Công chức/Viên chức", doiTuong: "Sinh hoạt chính", renLuyen: "Đã đăng ký", xepLoai: "Chưa đánh giá", khenThuong: "Không", kyLuat: "Không", chucVu: "Đoàn viên", hoi: "Hội LHTN Việt Nam", email: "", dienThoai: "0976594607" },

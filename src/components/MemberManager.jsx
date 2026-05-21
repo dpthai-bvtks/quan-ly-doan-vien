@@ -1,7 +1,10 @@
 import React, { useState, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import { Avatar, Badge, Modal, FG, FI, FS, FT, Btn, SectionDivider } from './UI';
-import { RED, TO_DOAN_LIST, DAN_TOC_LIST, TON_GIAO_LIST, TRINH_DO_VH_LIST, TRINH_DO_CM_LIST, TRINH_DO_LLCT_LIST, TIN_HOC_LIST, NGOAI_NGU_LIST, CHUC_VU_LIST, DOI_TUONG_LIST, REN_LUYEN_LIST, XEP_LOAI_LIST, HOI_LIST, EMPTY_FORM } from '../data/constants';
+import { RED, TO_DOAN_LIST, DAN_TOC_LIST, TON_GIAO_LIST, TRINH_DO_VH_LIST, TRINH_DO_CM_LIST, TRINH_DO_LLCT_LIST, TIN_HOC_LIST, NGOAI_NGU_LIST, CHUC_VU_LIST, DOI_TUONG_LIST, REN_LUYEN_LIST, XEP_LOAI_LIST, HOI_LIST, EMPTY_FORM, TRANG_THAI_DV } from '../data/constants';
+
+const STATUS_LABEL = { chuyen_di: 'Chuyển đi', chuyen_den: 'Chuyển đến', truong_thanh: 'Trưởng thành Đoàn', xoa_ten: 'Xóa tên', active: 'Đang sinh hoạt' };
+const STATUS_COLOR = { chuyen_di: '#f97316', truong_thanh: '#8b5cf6', xoa_ten: '#e63946', chuyen_den: '#16a34a', active: '#2a9d8f' };
 
 function MemberForm({ initial, onSave, onClose }) {
   const [f, setF] = useState(initial ? { ...initial } : { ...EMPTY_FORM });
@@ -102,22 +105,46 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
   const [search, setSearch] = useState("");
   const [fTD, setFTD] = useState("Tất cả");
   const [fGT, setFGT] = useState("Tất cả");
+  const [fStatus, setFStatus] = useState("all");
   const [showForm, setShowForm] = useState(false);
   const [editItem, setEditItem] = useState(null);
   const [detail, setDetail] = useState(null);
+  const [statusModal, setStatusModal] = useState(null); // member đang đổi trạng thái
+  const [noiDenInput, setNoiDenInput] = useState('');
+  const [ngayBienDong, setNgayBienDong] = useState(() => new Date().toISOString().split('T')[0]);
   const fileInputRef = useRef(null);
 
-  const filtered = members.filter(m => {
+  const isInactive = m => m.trangThai && m.trangThai !== TRANG_THAI_DV.ACTIVE && m.trangThai !== TRANG_THAI_DV.CHUYEN_DEN;
+
+  const baseFiltered = members.filter(m => {
     const q = search.toLowerCase();
-    return (!q || m.hoTen.toLowerCase().includes(q) || (m.dienThoai || "").includes(q) || (m.soCMND || "").includes(q))
-      && (fTD === "Tất cả" || m.toDoan === fTD)
-      && (fGT === "Tất cả" || m.gioiTinh === fGT);
+    const matchText = !q || m.hoTen.toLowerCase().includes(q) || (m.dienThoai||"").includes(q) || (m.soCMND||"").includes(q);
+    const matchTD = fTD === "Tất cả" || m.toDoan === fTD;
+    const matchGT = fGT === "Tất cả" || m.gioiTinh === fGT;
+    const matchStatus = fStatus === 'all' || (fStatus === 'active' ? !isInactive(m) : m.trangThai === fStatus);
+    return matchText && matchTD && matchGT && matchStatus;
   });
+  const filtered = [
+    ...baseFiltered.filter(m => !isInactive(m)),
+    ...baseFiltered.filter(m => isInactive(m)),
+  ];
 
   const handleSave = (f) => {
     if (editItem) setMembers(prev => prev.map(m => m.id === editItem.id ? { ...f, id: editItem.id } : m));
-    else setMembers(prev => [{ ...f, id: Date.now() }, ...prev]);
+    else setMembers(prev => [{ ...f, id: Date.now(), trangThai: TRANG_THAI_DV.ACTIVE }, ...prev]);
     setShowForm(false); setEditItem(null);
+  };
+
+  const handleChangeStatus = (newStatus) => {
+    if (!statusModal) return;
+    setMembers(prev => prev.map(m => m.id === statusModal.id ? {
+      ...m,
+      trangThai: newStatus,
+      noiDen: newStatus === TRANG_THAI_DV.CHUYEN_DI ? noiDenInput : m.noiDen,
+      ngayBienDong,
+    } : m));
+    setStatusModal(null);
+    setNoiDenInput('');
   };
 
   const handleFileUpload = (e) => {
@@ -189,20 +216,23 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
     e.target.value = null;
   };
 
+  const activeCount = members.filter(m => !isInactive(m)).length;
+  const inactiveCount = members.filter(m => isInactive(m)).length;
+
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
-        <h2 style={{ margin: 0, fontSize: 22, color: "#1a1a2e" }}>👥 Quản lý Đoàn viên <span style={{ fontSize: 13, color: "#aaa", fontWeight: 400 }}>({filtered.length}/{members.length})</span></h2>
+        <div>
+          <h2 style={{ margin: 0, fontSize: 22, color: "#1a1a2e" }}>👥 Quản lý Đoàn viên <span style={{ fontSize: 13, color: "#aaa", fontWeight: 400 }}>({filtered.length}/{members.length})</span></h2>
+          <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+            <span style={{ fontSize: 12, padding: '2px 10px', borderRadius: 20, background: '#e8f5e9', color: '#2e7d32', fontWeight: 700 }}>Đang SH: {activeCount}</span>
+            <span style={{ fontSize: 12, padding: '2px 10px', borderRadius: 20, background: '#f5f5f5', color: '#888', fontWeight: 700 }}>Biến động: {inactiveCount}</span>
+          </div>
+        </div>
         <div style={{ display: "flex", gap: 8 }}>
           {isAdmin && (
             <>
-              <input 
-                type="file" 
-                accept=".xlsx, .xls" 
-                ref={fileInputRef} 
-                onChange={handleFileUpload} 
-                style={{ display: 'none' }} 
-              />
+              <input type="file" accept=".xlsx,.xls" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} />
               <Btn v="s" onClick={() => fileInputRef.current?.click()}>📥 Nhập từ Excel</Btn>
               <Btn onClick={() => { setEditItem(null); setShowForm(true); }}>+ Thêm đoàn viên</Btn>
             </>
@@ -215,6 +245,14 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
           <option>Tất cả</option>{TO_DOAN_LIST.map(t => <option key={t}>{t}</option>)}
         </select>
         {["Tất cả", "Nam", "Nữ"].map(g => <button key={g} onClick={() => setFGT(g)} style={{ padding: "8px 14px", borderRadius: 10, border: "none", background: fGT === g ? RED : "#f0f0f0", color: fGT === g ? "#fff" : "#555", fontWeight: 600, cursor: "pointer", fontSize: 13 }}>{g}</button>)}
+        <select value={fStatus} onChange={e => setFStatus(e.target.value)} style={{ padding: "9px 12px", border: "1.5px solid #e0e0e0", borderRadius: 10, fontSize: 13 }}>
+          <option value="all">Tất cả trạng thái</option>
+          <option value="active">Đang sinh hoạt</option>
+          <option value="chuyen_den">Chuyển đến</option>
+          <option value="chuyen_di">Chuyển đi</option>
+          <option value="truong_thanh">Trưởng thành Đoàn</option>
+          <option value="xoa_ten">Xóa tên</option>
+        </select>
       </div>
       <div style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
         <div style={{ overflowX: "auto" }}>
@@ -227,37 +265,48 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((m, i) => (
-                <tr key={m.id} style={{ borderBottom: "1px solid #f5f5f5", transition: "background .1s" }}
-                  onMouseEnter={e => e.currentTarget.style.background = "#fff8f8"}
-                  onMouseLeave={e => e.currentTarget.style.background = ""}>
-                  <td style={{ padding: "9px 13px", color: "#bbb", fontSize: 12 }}>{i + 1}</td>
-                  <td style={{ padding: "9px 13px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-                      <Avatar name={m.hoTen} size={30} />
-                      <span style={{ fontWeight: 600, color: "#1a1a2e" }}>{m.hoTen}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: "9px 13px" }}><Badge text={m.gioiTinh} /></td>
-                  <td style={{ padding: "9px 13px", color: "#666" }}>{m.tuoi}</td>
-                  <td style={{ padding: "9px 13px", color: "#555", whiteSpace: "nowrap", fontSize: 12 }}>{m.toDoan}</td>
-                  <td style={{ padding: "9px 13px" }}><Badge text={m.chucVu} /></td>
-                  <td style={{ padding: "9px 13px" }}><Badge text={m.trinhDoCM} /></td>
-                  <td style={{ padding: "9px 13px" }}><Badge text={m.trinhDoLLCT} /></td>
-                  <td style={{ padding: "9px 13px", color: "#888", fontSize: 12 }}>{m.dienThoai}</td>
-                  <td style={{ padding: "9px 13px" }}>
-                    <div style={{ display: "flex", gap: 5 }}>
-                      <button onClick={() => setDetail(m)} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#f0f0f0", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Xem</button>
-                      {isAdmin && (
-                        <>
-                          <button onClick={() => { setEditItem(m); setShowForm(true); }} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#fff3e0", color: "#e65100", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Sửa</button>
-                          <button onClick={() => { if (window.confirm("Xóa đoàn viên này?")) setMembers(p => p.filter(x => x.id !== m.id)); }} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#ffeef0", color: RED, cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Xóa</button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {filtered.map((m, i) => {
+                const inactive = isInactive(m);
+                const st = m.trangThai;
+                return (
+                  <tr key={m.id} style={{ borderBottom: "1px solid #f5f5f5", opacity: inactive ? 0.45 : 1, transition: "background .1s" }}
+                    onMouseEnter={e => e.currentTarget.style.background = inactive ? "#f5f5f5" : "#fff8f8"}
+                    onMouseLeave={e => e.currentTarget.style.background = ""}
+                  >
+                    <td style={{ padding: "9px 13px", color: "#bbb", fontSize: 12 }}>{i + 1}</td>
+                    <td style={{ padding: "9px 13px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+                        <Avatar name={m.hoTen} size={30} />
+                        <div>
+                          <span onClick={() => setDetail(m)} style={{ fontWeight: 600, color: inactive ? "#999" : "#1a1a2e", cursor: 'pointer', textDecoration: 'underline dotted', textDecorationColor: '#ccc' }}>{m.hoTen}</span>
+                          {st && st !== TRANG_THAI_DV.ACTIVE && (
+                            <div style={{ fontSize: 10, color: STATUS_COLOR[st] || '#aaa', fontWeight: 700 }}>
+                              {STATUS_LABEL[st]}{st === TRANG_THAI_DV.CHUYEN_DI && m.noiDen ? ` → ${m.noiDen}` : ''}{m.ngayBienDong ? ` (${new Date(m.ngayBienDong).toLocaleDateString('vi-VN')})` : ''}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ padding: "9px 13px" }}><Badge text={m.gioiTinh} /></td>
+                    <td style={{ padding: "9px 13px", color: "#666" }}>{m.tuoi}</td>
+                    <td style={{ padding: "9px 13px", color: "#555", whiteSpace: "nowrap", fontSize: 12 }}>{m.toDoan}</td>
+                    <td style={{ padding: "9px 13px" }}><Badge text={m.chucVu} /></td>
+                    <td style={{ padding: "9px 13px" }}><Badge text={m.trinhDoCM} /></td>
+                    <td style={{ padding: "9px 13px" }}><Badge text={m.trinhDoLLCT} /></td>
+                    <td style={{ padding: "9px 13px", color: "#888", fontSize: 12 }}>{m.dienThoai}</td>
+                    <td style={{ padding: "9px 13px" }}>
+                      <div style={{ display: "flex", gap: 5 }}>
+                        {isAdmin && (
+                          <>
+                            <button onClick={() => { setEditItem(m); setShowForm(true); }} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#fff3e0", color: "#e65100", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Sửa</button>
+                            <button onClick={() => { setStatusModal(m); setNoiDenInput(m.noiDen||''); setNgayBienDong(new Date().toISOString().split('T')[0]); }} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: '#eef2ff', color: '#4f46e5', cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Biến động</button>
+                          </>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           {!filtered.length && <div style={{ textAlign: "center", padding: 40, color: "#ccc" }}>Không tìm thấy đoàn viên</div>}
@@ -265,6 +314,25 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
       </div>
       {showForm && <MemberForm initial={editItem} onSave={handleSave} onClose={() => { setShowForm(false); setEditItem(null); }} />}
       {detail && <MemberDetail m={detail} onClose={() => setDetail(null)} />}
+      {statusModal && (
+        <Modal title={`🔄 Biến động đoàn viên: ${statusModal.hoTen}`} onClose={() => setStatusModal(null)}>
+          <div style={{ marginBottom: 12 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#666', textTransform: 'uppercase', marginBottom: 6 }}>Ngày biến động</label>
+            <input type="date" value={ngayBienDong} onChange={e => setNgayBienDong(e.target.value)} style={{ width: '100%', padding: '8px 11px', border: '1.5px solid #e0e0e0', borderRadius: 7, fontSize: 13 }} />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#666', textTransform: 'uppercase', marginBottom: 6 }}>Nơi đến (nếu chuyển đi)</label>
+            <input value={noiDenInput} onChange={e => setNoiDenInput(e.target.value)} placeholder="Tên đơn vị mới..." style={{ width: '100%', padding: '8px 11px', border: '1.5px solid #e0e0e0', borderRadius: 7, fontSize: 13, boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <button onClick={() => handleChangeStatus(TRANG_THAI_DV.ACTIVE)} style={{ padding: '10px', borderRadius: 8, border: 'none', background: '#e8f5e9', color: '#2e7d32', fontWeight: 700, cursor: 'pointer' }}>✅ Đang sinh hoạt</button>
+            <button onClick={() => handleChangeStatus(TRANG_THAI_DV.CHUYEN_DEN)} style={{ padding: '10px', borderRadius: 8, border: 'none', background: '#e8f5e9', color: '#1b5e20', fontWeight: 700, cursor: 'pointer' }}>📥 Chuyển đến</button>
+            <button onClick={() => handleChangeStatus(TRANG_THAI_DV.CHUYEN_DI)} style={{ padding: '10px', borderRadius: 8, border: 'none', background: '#fff3e0', color: '#e65100', fontWeight: 700, cursor: 'pointer' }}>📤 Chuyển đi</button>
+            <button onClick={() => handleChangeStatus(TRANG_THAI_DV.TRUONG_THANH)} style={{ padding: '10px', borderRadius: 8, border: 'none', background: '#f3e8ff', color: '#7c3aed', fontWeight: 700, cursor: 'pointer' }}>🎓 Trưởng thành Đoàn</button>
+            <button onClick={() => { if(window.confirm('Xác nhận xóa tên khỏi danh sách?')) handleChangeStatus(TRANG_THAI_DV.XOA_TEN); }} style={{ padding: '10px', borderRadius: 8, border: 'none', background: '#ffeef0', color: '#c8102e', fontWeight: 700, cursor: 'pointer', gridColumn: '1/-1' }}>🗑️ Xóa tên đoàn viên</button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
