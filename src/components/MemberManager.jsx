@@ -255,7 +255,7 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
         </select>
       </div>
       <div style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
-        <div style={{ overflowX: "auto", maxHeight: "calc(100vh - 260px)", overflowY: "auto" }}>
+        <div style={{ overflowX: "auto", maxHeight: "calc(100vh - 180px)", overflowY: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ background: "#fafafa", borderBottom: "2px solid #f0f0f0" }}>

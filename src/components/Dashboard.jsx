@@ -1,43 +1,47 @@
 import React, { useMemo } from 'react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { RED, GOLD, GREEN, NAVY, TEAL, CHART_COLORS, TRINH_DO_CM_LIST, TRINH_DO_LLCT_LIST, ageGroup } from '../data/constants';
+import { RED, GOLD, GREEN, NAVY, TEAL, CHART_COLORS, TRINH_DO_CM_LIST, TRINH_DO_LLCT_LIST, ageGroup, TRANG_THAI_DV } from '../data/constants';
 
 export default function Dashboard({ members }) {
-  const total = members.length;
-  const nam = members.filter(m => m.gioiTinh === "Nam").length;
+  const activeMembers = useMemo(() => {
+    return members.filter(m => !m.trangThai || m.trangThai === TRANG_THAI_DV.ACTIVE || m.trangThai === TRANG_THAI_DV.CHUYEN_DEN);
+  }, [members]);
+
+  const total = activeMembers.length;
+  const nam = activeMembers.filter(m => m.gioiTinh === "Nam").length;
   const nu = total - nam;
 
   const genderData = [{ name: "Nam", value: nam }, { name: "Nữ", value: nu }];
 
-  const dangVien = members.filter(m => m.tgVaoDang && m.tgVaoDang.trim() !== "").length;
+  const dangVien = activeMembers.filter(m => m.tgVaoDang && m.tgVaoDang.trim() !== "").length;
   const chuaVaoDang = total - dangVien;
   const dangVienData = [{ name: "Đảng viên", value: dangVien }, { name: "Đoàn viên", value: chuaVaoDang }];
 
   const toDoanData = useMemo(() => {
     const map = {};
-    members.forEach(m => { map[m.toDoan] = (map[m.toDoan] || 0) + 1; });
+    activeMembers.forEach(m => { map[m.toDoan] = (map[m.toDoan] || 0) + 1; });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
-  }, [members]);
+  }, [activeMembers]);
 
   const ageData = useMemo(() => {
     const groups = { "≤25": 0, "26-28": 0, "29-30": 0, ">30": 0 };
-    members.forEach(m => { groups[ageGroup(m.tuoi)]++; });
+    activeMembers.forEach(m => { groups[ageGroup(m.tuoi)]++; });
     return Object.entries(groups).map(([name, value]) => ({ name, value }));
-  }, [members]);
+  }, [activeMembers]);
 
   const cmData = useMemo(() => {
     const map = {};
     TRINH_DO_CM_LIST.forEach(k => { map[k] = 0; });
-    members.forEach(m => { if (map[m.trinhDoCM] !== undefined) map[m.trinhDoCM]++; });
+    activeMembers.forEach(m => { if (map[m.trinhDoCM] !== undefined) map[m.trinhDoCM]++; });
     return Object.entries(map).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }));
-  }, [members]);
+  }, [activeMembers]);
 
   const llctData = useMemo(() => {
     const map = {};
     TRINH_DO_LLCT_LIST.forEach(k => { map[k] = 0; });
-    members.forEach(m => { if (map[m.trinhDoLLCT] !== undefined) map[m.trinhDoLLCT]++; });
+    activeMembers.forEach(m => { if (map[m.trinhDoLLCT] !== undefined) map[m.trinhDoLLCT]++; });
     return Object.entries(map).filter(([, v]) => v > 0).map(([name, value]) => ({ name, value }));
-  }, [members]);
+  }, [activeMembers]);
 
   const CC = ({ title, children }) => (
     <div style={{ background: "#fff", borderRadius: 14, padding: "18px 20px", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
@@ -133,30 +137,19 @@ export default function Dashboard({ members }) {
             </BarChart>
           </ResponsiveContainer>
         </CC>
-        <CC title="Theo trình độ lý luận chính trị">
+        <CC title="Theo trình độ chuyên môn">
           <ResponsiveContainer width="100%" height={210}>
-            <PieChart>
-              <Pie data={llctData} cx="50%" cy="50%" outerRadius={72} dataKey="value" label={({ name, value }) => `${name}: ${value}`}>
-                {llctData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i]} />)}
-              </Pie>
-              <Tooltip /><Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
-            </PieChart>
+            <BarChart data={cmData} margin={{ top: 5, right: 20, left: -15, bottom: 5 }}>
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+              <Tooltip formatter={v => [v, "Đoàn viên"]} />
+              <Bar dataKey="value" radius={[5, 5, 0, 0]}>
+                {cmData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </CC>
       </div>
-
-      <CC title="Theo trình độ chuyên môn">
-        <ResponsiveContainer width="100%" height={190}>
-          <BarChart data={cmData} margin={{ top: 5, right: 20, left: -15, bottom: 5 }}>
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-            <Tooltip formatter={v => [v, "Đoàn viên"]} />
-            <Bar dataKey="value" radius={[5, 5, 0, 0]}>
-              {cmData.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </CC>
 
       <div style={{ marginTop: 18, background: `linear-gradient(135deg,#c1121f,${RED})`, borderRadius: 14, padding: "18px 22px", color: "#fff" }}>
         <div style={{ fontWeight: 800, fontSize: 15 }}>🌟 Đoàn TNCS Hồ Chí Minh</div>
