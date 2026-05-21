@@ -51,6 +51,7 @@ function AppContent({ currentUser, handleAppLogout }) {
   const [syncStatus, setSyncStatus] = useState('Chưa kết nối')
   const [driveFileId, setDriveFileId] = useState(null)
   const initialLoadDone = useRef(false)
+  const [sessionExpired, setSessionExpired] = useState(false)
 
   // Lưu vào LocalStorage & sync cloud (chỉ admin mới được ghi lên Drive)
   useEffect(() => {
@@ -83,7 +84,7 @@ function AppContent({ currentUser, handleAppLogout }) {
       const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DB_FILE_NAME}' and '${FOLDER_ID}' in parents and trashed=false`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
-      if (searchRes.status === 401) { logout(); alert("Phiên đăng nhập Google đã hết hạn. Vui lòng đăng nhập lại!"); return; }
+      if (searchRes.status === 401) { setSessionExpired(true); setSyncStatus('Lỗi đồng bộ'); return; }
       const searchData = await searchRes.json();
       if (searchData.error) throw new Error(searchData.error.message);
 
@@ -126,7 +127,7 @@ function AppContent({ currentUser, handleAppLogout }) {
       const method = (isCreate || !driveFileId) ? 'POST' : 'PATCH';
 
       const res = await fetch(url, { method, headers: { Authorization: `Bearer ${accessToken}` }, body: form });
-      if (res.status === 401) { logout(); alert("Phiên đăng nhập Google đã hết hạn. Vui lòng đăng nhập lại!"); return; }
+      if (res.status === 401) { setSessionExpired(true); setSyncStatus('Lỗi đồng bộ'); return; }
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
       if (isCreate || !driveFileId) setDriveFileId(data.id);
@@ -139,6 +140,7 @@ function AppContent({ currentUser, handleAppLogout }) {
 
   const login = useGoogleLogin({
     onSuccess: (codeResponse) => {
+      setSessionExpired(false);
       setAccessToken(codeResponse.access_token);
       localStorage.setItem('google_access_token', codeResponse.access_token);
       const expiresIn = codeResponse.expires_in || 3600;
@@ -197,6 +199,14 @@ function AppContent({ currentUser, handleAppLogout }) {
 
   return (
     <div className="flex bg-gray-50 min-h-screen">
+      {sessionExpired && (
+        <div className="fixed top-0 left-64 right-0 z-[100] bg-red-500 text-white p-3 flex justify-center items-center gap-4 shadow-md">
+          <span className="font-semibold text-sm">⚠️ Phiên kết nối máy chủ Google Drive đã hết hạn (sau 1 tiếng). Không thể tự động lưu dữ liệu lúc này.</span>
+          <button onClick={() => login()} className="bg-white text-red-600 px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-gray-100 shadow-sm transition-colors cursor-pointer">
+            Gia hạn kết nối ngay
+          </button>
+        </div>
+      )}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} currentUser={currentUser} onAppLogout={handleAppLogout} />
       <div className="flex-1 ml-64 p-8">
         <div className="max-w-6xl mx-auto">
