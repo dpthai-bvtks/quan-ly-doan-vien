@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { RED, GOLD, GREEN, NAVY } from '../data/constants';
 
 export function Avatar({ name, size = 40 }) {
@@ -21,9 +22,9 @@ export function Badge({ text }) {
 }
 
 export function Modal({ title, onClose, children, wide }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }}>
-      <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: wide ? 800 : 540, margin: "20px auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
+  const modalContent = (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16, overflowY: "auto" }}>
+      <div style={{ background: "#fff", borderRadius: 16, padding: 26, width: "100%", maxWidth: wide ? 800 : 540, margin: "20px auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", position: "relative" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
           <h3 style={{ margin: 0, color: "#1a1a2e", fontSize: 17 }}>{title}</h3>
           <button onClick={onClose} style={{ border: "none", background: "#f0f0f0", borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontSize: 18 }}>×</button>
@@ -32,6 +33,7 @@ export function Modal({ title, onClose, children, wide }) {
       </div>
     </div>
   );
+  return createPortal(modalContent, document.body);
 }
 
 export function FG({ label, children }) {
