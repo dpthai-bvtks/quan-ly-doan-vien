@@ -158,6 +158,16 @@ export default function PlansManager({ plans, setPlans, accessToken, onNeedLogin
     }
   };
 
+  const handleDeletePlan = (id) => {
+    if (!isAdmin) {
+      alert("Tài khoản khách không có quyền xóa kế hoạch!");
+      return;
+    }
+    if (window.confirm("Bạn có chắc chắn muốn xóa kế hoạch này? (Lưu ý: Không thể khôi phục)")) {
+      setPlans(prev => prev.filter(p => p.id !== id));
+    }
+  };
+
   // Hàm sinh tiêu đề 2 bên dạng plain-text căn lề bằng khoảng trắng
   const generateTwoColumnHeader = (signDate, docNo) => {
     const leftLines = [
@@ -633,9 +643,18 @@ Yêu cầu: Hãy tối ưu hóa từ ngữ cho thật chuyên nghiệp, súc tí
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
             {plans.map(p => (
               <div key={p.id} style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.07)' }}>
-                <div style={{ background: cc[p.category] || RED, padding: '14px 18px', color: '#fff' }}>
+                <div style={{ background: cc[p.category] || RED, padding: '14px 18px', color: '#fff', position: 'relative' }}>
                   <div style={{ fontSize: 11, opacity: 0.8, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1 }}>{p.category}</div>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginTop: 4, lineHeight: 1.4 }}>{p.title}</div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginTop: 4, lineHeight: 1.4, paddingRight: 24 }}>{p.title}</div>
+                  {isAdmin && (
+                    <button 
+                      onClick={() => handleDeletePlan(p.id)}
+                      className="absolute top-3 right-3 p-1.5 bg-white/20 hover:bg-white/40 rounded-lg transition-colors cursor-pointer text-white"
+                      title="Xóa kế hoạch"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
                 </div>
                 <div style={{ padding: 16 }}>
                   <div style={{ fontSize: 12, color: '#aaa', marginBottom: 8 }}>📅 {p.startDate} → {p.endDate}</div>
