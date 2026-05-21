@@ -29,7 +29,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onAppLog
             <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center mb-3 shadow-lg shadow-blue-200 group-hover:scale-105 transition-transform">
               <span className="text-white font-bold text-xl">ĐTN</span>
             </div>
-            <h2 className="font-bold text-gray-800 text-lg leading-tight">Chi đoàn BVTKS - CS2</h2>
+            <h2 className="font-bold text-gray-800 text-base leading-tight mt-1">Chi đoàn Bệnh viện Than - Khoáng sản CS2</h2>
             <p className="text-xs text-gray-500 mt-1">Hệ thống Quản lý</p>
           </div>
         </div>

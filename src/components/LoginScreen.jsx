@@ -41,7 +41,7 @@ export default function LoginScreen({ onLogin }) {
             <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/30 shadow-lg">
               <span className="text-white font-black text-3xl">ĐTN</span>
             </div>
-            <h1 className="text-white font-bold text-2xl leading-tight">Chi đoàn BVTKS - CS2</h1>
+            <h1 className="text-white font-bold text-xl leading-tight mt-1">Chi đoàn Bệnh viện Than - Khoáng sản CS2</h1>
             <p className="text-blue-200 text-sm mt-1">Hệ thống Quản lý Đoàn viên</p>
           </div>
 
