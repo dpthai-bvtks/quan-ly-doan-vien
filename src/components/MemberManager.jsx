@@ -255,12 +255,12 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
         </select>
       </div>
       <div style={{ background: "#fff", borderRadius: 14, overflow: "hidden", boxShadow: "0 2px 12px rgba(0,0,0,0.07)" }}>
-        <div style={{ overflowX: "auto" }}>
+        <div style={{ overflowX: "auto", maxHeight: "calc(100vh - 260px)", overflowY: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ background: "#fafafa", borderBottom: "2px solid #f0f0f0" }}>
                 {["#", "Họ và tên", "GT", "Tuổi", "Tổ đoàn", "Chức vụ", "Tr.độ CM", "LLCT", "Điện thoại", ""].map(h => (
-                  <th key={h} style={{ padding: "11px 13px", textAlign: "left", fontWeight: 700, color: "#666", whiteSpace: "nowrap", fontSize: 12 }}>{h}</th>
+                  <th key={h} style={{ padding: "11px 13px", textAlign: "left", fontWeight: 700, color: "#666", whiteSpace: "nowrap", fontSize: 12, position: "sticky", top: 0, background: "#fafafa", zIndex: 2, boxShadow: "0 1px 0 #e0e0e0" }}>{h}</th>
                 ))}
               </tr>
             </thead>
