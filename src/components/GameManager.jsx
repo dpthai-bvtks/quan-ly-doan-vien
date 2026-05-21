@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { Btn, SectionDivider } from './UI';
-import { Settings as SettingsIcon, Plus, Trash2, Edit, Sparkles, Loader2 } from 'lucide-react';
+import { Settings as SettingsIcon, Plus, Trash2, Edit, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 
 const SERVER_URL = import.meta.env.VITE_GAME_SERVER_URL || (window.location.protocol + '//' + window.location.hostname + ':3000');
 
@@ -14,6 +14,14 @@ export default function GameManager({ questions, setQuestions, geminiApiKey, onN
   const [qIndex, setQIndex] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
   
+  // States và refs phục vụ reconnection
+  const [hostToken, setHostToken] = useState(null);
+  const [isDisconnected, setIsDisconnected] = useState(false);
+  const pinRef = useRef(null);
+  const hostTokenRef = useRef(null);
+  pinRef.current = pin;
+  hostTokenRef.current = hostToken;
+  
   // States for Question Management
   const [editingQuestion, setEditingQuestion] = useState(null);
   const [aiTopic, setAiTopic] = useState('');
@@ -23,9 +31,44 @@ export default function GameManager({ questions, setQuestions, geminiApiKey, onN
     const newSocket = io(SERVER_URL);
     setSocket(newSocket);
 
-    newSocket.on('room_created', (newPin) => {
-      setPin(newPin);
+    newSocket.on('connect', () => {
+      setIsDisconnected(false);
+      if (pinRef.current && hostTokenRef.current) {
+        console.log('Host socket reconnected. Emitting reclaim for pin:', pinRef.current);
+        newSocket.emit('host_reclaim_room', { pin: pinRef.current, hostToken: hostTokenRef.current });
+      }
+    });
+
+    newSocket.on('room_created', (data) => {
+      setPin(data.pin);
+      setHostToken(data.hostToken);
       setStep('lobby');
+    });
+
+    newSocket.on('room_reclaimed', ({ pin: reclaimedPin, gameState, currentQuestionIndex, players: currentPlayers }) => {
+      console.log('Room reclaimed successfully:', reclaimedPin);
+      setPin(reclaimedPin);
+      setPlayers(currentPlayers);
+      setQIndex(currentQuestionIndex);
+      setIsDisconnected(false);
+      
+      // Khôi phục step hiện tại của host
+      if (gameState === 'question') {
+        setStep('question');
+      } else if (gameState === 'revealed') {
+        setStep('revealed');
+      } else if (gameState === 'leaderboard') {
+        setStep('leaderboard');
+      } else {
+        setStep('lobby');
+      }
+    });
+
+    newSocket.on('reclaim_failed', (msg) => {
+      alert(`⚠️ Không thể khôi phục phòng chơi: ${msg}`);
+      setStep('menu');
+      setPin(null);
+      setHostToken(null);
     });
 
     newSocket.on('players_update', (updatedPlayers) => {
@@ -33,7 +76,7 @@ export default function GameManager({ questions, setQuestions, geminiApiKey, onN
     });
 
     newSocket.on('disconnect', () => {
-      alert('⚠️ Mất kết nối tới máy chủ! Phòng của bạn đã bị hủy, vui lòng tải lại trang (F5) để tạo phòng mới.');
+      setIsDisconnected(true);
     });
 
     return () => newSocket.close();
@@ -208,6 +251,20 @@ export default function GameManager({ questions, setQuestions, geminiApiKey, onN
 
   // --- RENDERS ---
 
+  if (isDisconnected) {
+    return (
+      <div className="fixed inset-0 bg-black/75 z-[9999] flex flex-col items-center justify-center p-6 text-white text-center backdrop-blur-sm">
+        <div className="bg-gray-900 border border-gray-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full space-y-4 animate-pulse">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto text-yellow-500" />
+          <h3 className="text-xl font-bold text-white">Mất kết nối máy chủ</h3>
+          <p className="text-sm text-gray-300 leading-relaxed">
+            Đang cố gắng kết nối lại với máy chủ. Vui lòng giữ nguyên trang, phòng chơi và tiến trình sẽ tự động phục hồi ngay khi kết nối thành công.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (step === 'menu') {
     return (
       <div>
@@ -263,8 +320,8 @@ export default function GameManager({ questions, setQuestions, geminiApiKey, onN
           <div className="flex flex-wrap justify-center gap-4 mt-6">
             {players.length === 0 && <div className="text-gray-400 italic">Chưa có ai...</div>}
             {players.map(p => (
-              <span key={p.socketId} className="px-4 py-2 bg-blue-50 text-blue-700 font-bold rounded-lg border border-blue-100">
-                {p.name}
+              <span key={p.socketId || p.name} className={`px-4 py-2 font-bold rounded-lg border transition-all ${p.disconnected ? 'bg-gray-100 text-gray-400 border-gray-200 line-through opacity-60' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>
+                {p.name} {p.disconnected && '🔌'}
               </span>
             ))}
           </div>
@@ -349,12 +406,14 @@ export default function GameManager({ questions, setQuestions, geminiApiKey, onN
         <h2 style={{ margin: 0, fontSize: 22, color: "#1a1a2e", marginBottom: 20 }}>🏆 Bảng xếp hạng chung cuộc</h2>
         <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 max-w-2xl mx-auto">
           {sorted.map((p, idx) => (
-            <div key={p.socketId} className={`flex justify-between items-center p-4 border-b ${idx === 0 ? 'bg-yellow-50 border-yellow-200 rounded-xl' : 'border-gray-100'}`}>
+            <div key={p.socketId || p.name} className={`flex justify-between items-center p-4 border-b ${idx === 0 ? 'bg-yellow-50 border-yellow-200 rounded-xl' : 'border-gray-100'}`}>
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${idx === 0 ? 'bg-yellow-400 text-white text-xl' : 'bg-gray-100 text-gray-500'}`}>
                   {idx + 1}
                 </div>
-                <span className={`text-lg font-bold ${idx === 0 ? 'text-yellow-700' : 'text-gray-800'}`}>{p.name}</span>
+                <span className={`text-lg font-bold ${idx === 0 ? 'text-yellow-700' : 'text-gray-800'} ${p.disconnected ? 'text-gray-400 line-through opacity-60' : ''}`}>
+                  {p.name} {p.disconnected && '🔌'}
+                </span>
                 {!p.alive && <span className="px-2 py-1 bg-red-100 text-red-600 text-xs rounded-full font-bold">Bị loại</span>}
               </div>
               <div className="text-xl font-black text-gray-800">{p.score} <span className="text-sm font-normal text-gray-500">điểm</span></div>

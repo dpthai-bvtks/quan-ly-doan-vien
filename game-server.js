@@ -29,16 +29,43 @@ io.on('connection', (socket) => {
 
   socket.on('host_create_room', () => {
     const pin = generatePIN();
+    const hostToken = Math.random().toString(36).substring(2, 15);
     rooms[pin] = {
       hostId: socket.id,
+      hostToken: hostToken,
       players: [],
       gameState: 'lobby', // lobby, question, revealed, leaderboard
       currentQuestionIndex: -1,
-      correctAnswer: null
+      correctAnswer: null,
+      hostDisconnected: false
     };
     socket.join(pin);
-    socket.emit('room_created', pin);
-    console.log(`Room ${pin} created by ${socket.id}`);
+    socket.emit('room_created', { pin, hostToken });
+    console.log(`Room ${pin} created by ${socket.id} with token ${hostToken}`);
+  });
+
+  socket.on('host_reclaim_room', ({ pin, hostToken }) => {
+    const room = rooms[pin];
+    if (room && room.hostToken === hostToken) {
+      if (room.hostDisconnectTimer) {
+        clearTimeout(room.hostDisconnectTimer);
+        room.hostDisconnectTimer = null;
+      }
+      room.hostDisconnected = false;
+      room.hostId = socket.id;
+      socket.join(pin);
+      socket.emit('room_reclaimed', {
+        pin,
+        gameState: room.gameState,
+        currentQuestionIndex: room.currentQuestionIndex,
+        players: room.players
+      });
+      // Send host current players list
+      socket.emit('players_update', room.players);
+      console.log(`Room ${pin} reclaimed by host ${socket.id}`);
+    } else {
+      socket.emit('reclaim_failed', 'Phòng không tồn tại hoặc token không hợp lệ.');
+    }
   });
 
   socket.on('host_start_game', (pin) => {
@@ -54,6 +81,7 @@ io.on('connection', (socket) => {
       rooms[pin].currentQuestionIndex = questionIndex;
       rooms[pin].correctAnswer = correctAnswer;
       rooms[pin].explanation = questionData.explanation; // LƯU GIẢI THÍCH
+      rooms[pin].questionData = questionData; // LƯU DỮ LIỆU CÂU HỎI CHI TIẾT
       
       // Reset currentAnswer cho tất cả player
       rooms[pin].players.forEach(p => p.currentAnswer = null);
@@ -111,6 +139,8 @@ io.on('connection', (socket) => {
       if (player) {
         // Reconnect
         player.socketId = socket.id;
+        player.disconnected = false; // Trực tuyến lại
+        console.log(`Player ${name} reconnected in room ${pin}`);
       } else {
         // New player
         player = {
@@ -118,15 +148,21 @@ io.on('connection', (socket) => {
           name: name,
           score: 0,
           alive: true,
-          currentAnswer: null
+          currentAnswer: null,
+          disconnected: false
         };
         room.players.push(player);
+        console.log(`${name} joined room ${pin}`);
       }
       socket.join(pin);
       
-      socket.emit('joined_room', player);
+      socket.emit('joined_room', {
+        player,
+        gameState: room.gameState,
+        questionData: room.questionData,
+        currentQuestionIndex: room.currentQuestionIndex
+      });
       io.to(room.hostId).emit('players_update', room.players);
-      console.log(`${name} joined room ${pin}`);
     } else {
       socket.emit('join_error', 'Phòng không tồn tại hoặc đã kết thúc!');
     }
@@ -145,18 +181,24 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    // Tìm và xóa người chơi khỏi phòng nếu disconnect
+    // Tìm người chơi/host để cập nhật trạng thái mất kết nối tạm thời
     for (const pin in rooms) {
       const room = rooms[pin];
       if (room.hostId === socket.id) {
-        // Host thoát -> Giải tán phòng
-        io.to(pin).emit('room_closed');
-        delete rooms[pin];
+        // Host mất kết nối -> Chờ 60 giây trước khi xóa phòng
+        console.log(`Host disconnected from room ${pin}. Starting 60s grace period.`);
+        room.hostDisconnected = true;
+        room.hostDisconnectTimer = setTimeout(() => {
+          console.log(`Room ${pin} deleted after host timeout.`);
+          io.to(pin).emit('room_closed');
+          delete rooms[pin];
+        }, 60000);
       } else {
-        const pIndex = room.players.findIndex(p => p.socketId === socket.id);
-        if (pIndex !== -1) {
-          room.players.splice(pIndex, 1);
+        const player = room.players.find(p => p.socketId === socket.id);
+        if (player) {
+          player.disconnected = true;
           io.to(room.hostId).emit('players_update', room.players);
+          console.log(`Player ${player.name} disconnected from room ${pin}`);
         }
       }
     }

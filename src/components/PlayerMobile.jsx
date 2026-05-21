@@ -21,14 +21,37 @@ export default function PlayerMobile() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [lastResult, setLastResult] = useState(null); // { isCorrect, isAlive, correctAnswer }
   const [leaderboard, setLeaderboard] = useState([]);
+  
+  // Connection states
+  const [isDisconnected, setIsDisconnected] = useState(false);
 
   useEffect(() => {
     const newSocket = io(SERVER_URL);
     setSocket(newSocket);
 
-    newSocket.on('joined_room', (player) => {
-      setPlayerInfo(player);
-      setStep('waiting');
+    newSocket.on('connect', () => {
+      setIsDisconnected(false);
+    });
+
+    newSocket.on('disconnect', () => {
+      setIsDisconnected(true);
+    });
+
+    newSocket.on('joined_room', (data) => {
+      const p = data.player || data;
+      setPlayerInfo(p);
+      
+      // Khôi phục trạng thái chơi hiện tại nếu đang trong trận
+      if (data.gameState === 'question' && data.questionData) {
+        setSelectedAnswer(p.currentAnswer);
+        setCurrentQuestion(data.questionData);
+        setTimeLeft(8); // Cho thêm 8 giây local
+        setStep('question');
+      } else if (data.gameState === 'revealed') {
+        setStep('waiting');
+      } else {
+        setStep('waiting');
+      }
     });
 
     newSocket.on('join_error', (msg) => {
@@ -105,6 +128,18 @@ export default function PlayerMobile() {
   };
 
   // --- RENDERS ---
+
+  if (isDisconnected) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-6 text-white text-center">
+        <div className="w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+        <h2 className="text-2xl font-bold mb-2 text-yellow-500">Mất kết nối máy chủ</h2>
+        <p className="text-gray-300 max-w-xs text-sm leading-relaxed">
+          Đang cố gắng kết nối lại với máy chủ. Vui lòng giữ nguyên trang, tiến trình của bạn sẽ tự động được khôi phục.
+        </p>
+      </div>
+    );
+  }
 
   if (step === 'login') {
     return (
