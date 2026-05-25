@@ -16,11 +16,9 @@ import AttendanceManager from './components/AttendanceManager'
 import { RAW_MEMBERS, INIT_PLANS, INIT_QUESTIONS } from './data/constants'
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
+const API_URL = 'https://script.google.com/macros/s/AKfycbwrBrDPYew4uooEFxCPgBumIcj68AiW6DiaGsW4ZmiTXy3O5QdgV-1_od8YLOo0C-Vu/exec';
 
 function AppContent({ currentUser, handleAppLogout }) {
-  const FOLDER_ID = '1GvFkzdx-0KAEAUqQ_uyduBH0Er8e4Y1T';
-  const DB_FILE_NAME = 'db_quanlydoanvien.json';
-
   const isAdmin = currentUser?.role === 'admin';
 
   const [activeTab, setActiveTab] = useState('dashboard')
@@ -55,7 +53,6 @@ function AppContent({ currentUser, handleAppLogout }) {
   
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '')
   const [syncStatus, setSyncStatus] = useState('Chưa kết nối')
-  const [driveFileId, setDriveFileId] = useState(null)
   const initialLoadDone = useRef(false)
   const [sessionExpired, setSessionExpired] = useState(false)
 
@@ -65,19 +62,14 @@ function AppContent({ currentUser, handleAppLogout }) {
     localStorage.setItem('db_plans', JSON.stringify(plans));
     localStorage.setItem('db_questions', JSON.stringify(questions));
     localStorage.setItem('db_funds', JSON.stringify(funds));
-    if (initialLoadDone.current && accessToken && isAdmin) {
-      uploadToDrive(members, plans, questions, funds);
+    if (initialLoadDone.current && isAdmin) {
+      uploadToCloud(members, plans, questions, funds);
     }
   }, [members, plans, questions, funds])
 
   useEffect(() => {
-    if (accessToken) {
-      downloadFromDrive();
-    } else {
-      setSyncStatus('Chưa kết nối');
-      setDriveFileId(null);
-    }
-  }, [accessToken])
+    downloadFromCloud();
+  }, [])
 
   const logout = () => {
     setAccessToken(null);
@@ -85,32 +77,16 @@ function AppContent({ currentUser, handleAppLogout }) {
     localStorage.removeItem('google_token_expires_at');
   }
 
-  const downloadFromDrive = async () => {
+  const downloadFromCloud = async () => {
     setSyncStatus('Đang đồng bộ...');
     try {
-      const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DB_FILE_NAME}' and '${FOLDER_ID}' in parents and trashed=false`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      if (searchRes.status === 401) { setSessionExpired(true); setSyncStatus('Lỗi đồng bộ'); return; }
-      const searchData = await searchRes.json();
-      if (searchData.error) throw new Error(searchData.error.message);
-
-      if (searchData.files && searchData.files.length > 0) {
-        const fileId = searchData.files[0].id;
-        setDriveFileId(fileId);
-        const getRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        });
-        const dbData = await getRes.json();
-        if (dbData.members) setMembers(dbData.members);
-        if (dbData.plans) setPlans(dbData.plans);
-        if (dbData.questions) setQuestions(dbData.questions);
-        if (dbData.funds) setFunds(dbData.funds);
-        setSyncStatus('Đã đồng bộ');
-      } else {
-        setSyncStatus('Tạo CSDL Đám mây...');
-        await uploadToDrive(members, plans, questions, funds, true);
-      }
+      const res = await fetch(API_URL);
+      const dbData = await res.json();
+      if (dbData.members) setMembers(dbData.members);
+      if (dbData.plans) setPlans(dbData.plans);
+      if (dbData.questions) setQuestions(dbData.questions);
+      if (dbData.funds) setFunds(dbData.funds);
+      setSyncStatus('Đã đồng bộ');
       initialLoadDone.current = true;
     } catch (error) {
       console.error("Lỗi đồng bộ:", error);
@@ -118,30 +94,23 @@ function AppContent({ currentUser, handleAppLogout }) {
     }
   };
 
-  const uploadToDrive = async (m, p, q, f, isCreate = false) => {
+  const uploadToCloud = async (m, p, q, f) => {
     setSyncStatus('Đang lưu lên Đám mây...');
     try {
-      const dbContent = JSON.stringify({ members: m, plans: p, questions: q, funds: f });
-      const metadata = { name: DB_FILE_NAME, mimeType: 'application/json' };
-      if (isCreate || !driveFileId) metadata.parents = [FOLDER_ID];
-
-      const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-      form.append('file', new Blob([dbContent], { type: 'application/json' }));
-
-      const url = (isCreate || !driveFileId)
-        ? 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
-        : `https://www.googleapis.com/upload/drive/v3/files/${driveFileId}?uploadType=multipart`;
-      const method = (isCreate || !driveFileId) ? 'POST' : 'PATCH';
-
-      const res = await fetch(url, { method, headers: { Authorization: `Bearer ${accessToken}` }, body: form });
-      if (res.status === 401) { setSessionExpired(true); setSyncStatus('Lỗi đồng bộ'); return; }
+      const dbContent = { members: m, plans: p, questions: q, funds: f };
+      const res = await fetch(API_URL, { 
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(dbContent)
+      });
       const data = await res.json();
-      if (data.error) throw new Error(data.error.message);
-      if (isCreate || !driveFileId) setDriveFileId(data.id);
-      setSyncStatus('Đã đồng bộ');
+      if (data.status === 'success') {
+        setSyncStatus('Đã đồng bộ');
+      } else {
+        throw new Error(data.message);
+      }
     } catch (error) {
-      console.error("Lỗi lưu lên Drive:", error);
+      console.error("Lỗi lưu lên Cloud:", error);
       setSyncStatus('Lỗi đồng bộ');
     }
   };
@@ -214,7 +183,7 @@ function AppContent({ currentUser, handleAppLogout }) {
       {sessionExpired && (
         <div className="fixed top-0 left-64 right-0 z-[100] text-white p-3 flex justify-center items-center gap-4 shadow-lg"
           style={{ background: 'linear-gradient(90deg, #c8102e, #a50d24)' }}>
-          <span className="font-semibold text-sm">⚠️ Phiên kết nối Google Drive đã hết hạn. Không thể tự động lưu dữ liệu lúc này.</span>
+          <span className="font-semibold text-sm">⚠️ Phiên kết nối Google Drive đã hết hạn. Yêu cầu đăng nhập lại để tải file.</span>
           <button onClick={() => login()} className="bg-white text-red-700 px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-gray-100 shadow-sm transition-colors cursor-pointer">
             Gia hạn kết nối ngay
           </button>

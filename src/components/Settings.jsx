@@ -13,17 +13,14 @@ export default function Settings({ accessToken, login, logout, geminiApiKey, set
 
         {/* Google Account Card */}
         <div style={{ background: "#fff", borderRadius: 16, padding: "24px 28px", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", marginBottom: 18 }}>
-          <SectionDivider label="Tài khoản Google (Google Drive)" />
+          <SectionDivider label="Tài khoản Google (Dùng để tải file đính kèm)" />
           {accessToken ? (
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 14 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#4285F4,#34A853)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20 }}>G</div>
                 <div>
                   <div style={{ fontWeight: 700, color: "#1a1a2e", fontSize: 15 }}>Đã kết nối Google Drive</div>
-                  <div style={{ fontSize: 12, color: "#34A853", fontWeight: 600, marginTop: 2 }}>✅ Tab Văn bản và Kế hoạch có thể tải lên file</div>
-                  <div style={{ fontSize: 12, color: syncStatus.includes('Lỗi') ? '#dc2626' : '#2563eb', fontWeight: 600, marginTop: 2 }}>
-                    ☁️ Trạng thái CSDL: {syncStatus}
-                  </div>
+                  <div style={{ fontSize: 12, color: "#34A853", fontWeight: 600, marginTop: 2 }}>✅ Đã có thể tải văn bản và file kế hoạch lên Drive</div>
                 </div>
               </div>
               <button
@@ -37,7 +34,7 @@ export default function Settings({ accessToken, login, logout, geminiApiKey, set
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 14 }}>
               <div>
                 <div style={{ fontWeight: 600, color: "#1a1a2e", fontSize: 15 }}>Chưa đăng nhập tài khoản Google</div>
-                <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>Cần đăng nhập để sử dụng tab Văn bản và tải file kế hoạch lên Drive</div>
+                <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>Cần kết nối Google Drive để tải các file đính kèm lên hệ thống</div>
               </div>
               <button
                 onClick={() => login()}
@@ -48,6 +45,28 @@ export default function Settings({ accessToken, login, logout, geminiApiKey, set
               </button>
             </div>
           )}
+        </div>
+
+        {/* CSDL API Status Card */}
+        <div style={{ background: "#fff", borderRadius: 16, padding: "24px 28px", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", marginBottom: 18 }}>
+          <SectionDivider label="Kết nối Cơ sở dữ liệu đám mây" />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#00b4d8,#0077b6)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20 }}>☁️</div>
+              <div>
+                <div style={{ fontWeight: 700, color: "#1a1a2e", fontSize: 15 }}>Hệ thống Google Apps Script API</div>
+                <div style={{ fontSize: 12, color: syncStatus.includes('Lỗi') ? '#dc2626' : '#0077b6', fontWeight: 600, marginTop: 2 }}>
+                  Trạng thái: {syncStatus}
+                </div>
+              </div>
+            </div>
+            <button
+                onClick={() => window.location.reload()}
+                style={{ padding: "8px 18px", borderRadius: 9, border: "none", background: "#e0f2fe", color: "#0284c7", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
+              >
+                Đồng bộ lại
+            </button>
+          </div>
         </div>
 
         {/* AI & Gemini API Key */}

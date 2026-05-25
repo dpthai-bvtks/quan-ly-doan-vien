@@ -112,9 +112,32 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
   const [statusModal, setStatusModal] = useState(null); // member đang đổi trạng thái
   const [noiDenInput, setNoiDenInput] = useState('');
   const [ngayBienDong, setNgayBienDong] = useState(() => new Date().toISOString().split('T')[0]);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const fileInputRef = useRef(null);
 
   const isInactive = m => m.trangThai && m.trangThai !== TRANG_THAI_DV.ACTIVE && m.trangThai !== TRANG_THAI_DV.CHUYEN_DEN;
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') direction = 'desc';
+    setSortConfig({ key, direction });
+  };
+
+  const sortFn = (a, b) => {
+    if (!sortConfig.key) return 0;
+    let aVal = a[sortConfig.key] || "";
+    let bVal = b[sortConfig.key] || "";
+    if (sortConfig.key === 'tuoi') {
+      aVal = Number(aVal) || 0;
+      bVal = Number(bVal) || 0;
+    } else {
+      if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+      if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+    }
+    if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+    if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+    return 0;
+  };
 
   const baseFiltered = members.filter(m => {
     const q = search.toLowerCase();
@@ -124,9 +147,10 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
     const matchStatus = fStatus === 'all' || (fStatus === 'active' ? !isInactive(m) : m.trangThai === fStatus);
     return matchText && matchTD && matchGT && matchStatus;
   });
+
   const filtered = [
-    ...baseFiltered.filter(m => !isInactive(m)),
-    ...baseFiltered.filter(m => isInactive(m)),
+    ...baseFiltered.filter(m => !isInactive(m)).sort(sortFn),
+    ...baseFiltered.filter(m => isInactive(m)).sort(sortFn),
   ];
 
   const handleSave = (f) => {
@@ -259,9 +283,25 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ background: "#fafafa", borderBottom: "2px solid #f0f0f0" }}>
-                {["#", "Họ và tên", "GT", "Tuổi", "Tổ đoàn", "Chức vụ", "Tr.độ CM", "LLCT", "Điện thoại", ""].map(h => (
-                  <th key={h} style={{ padding: "11px 13px", textAlign: "left", fontWeight: 700, color: "#666", whiteSpace: "nowrap", fontSize: 12, position: "sticky", top: 0, background: "#fafafa", zIndex: 2, boxShadow: "0 1px 0 #e0e0e0" }}>{h}</th>
-                ))}
+                {["#", "Họ và tên", "GT", "Tuổi", "Tổ đoàn", "Chức vụ", "Tr.độ CM", "LLCT", "Điện thoại", ""].map(h => {
+                  const colKeys = { "Họ và tên": "hoTen", "GT": "gioiTinh", "Tuổi": "tuoi", "Tổ đoàn": "toDoan", "Chức vụ": "chucVu", "Tr.độ CM": "trinhDoCM", "LLCT": "trinhDoLLCT", "Điện thoại": "dienThoai" };
+                  const isSortable = !!colKeys[h];
+                  const isActiveSort = sortConfig.key === colKeys[h];
+                  return (
+                    <th key={h} 
+                        onClick={() => isSortable && handleSort(colKeys[h])}
+                        style={{ padding: "11px 13px", textAlign: "left", fontWeight: 700, color: "#666", whiteSpace: "nowrap", fontSize: 12, position: "sticky", top: 0, background: "#fafafa", zIndex: 2, boxShadow: "0 1px 0 #e0e0e0", cursor: isSortable ? "pointer" : "default", userSelect: "none" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        {h}
+                        {isSortable && (
+                           <span style={{ color: isActiveSort ? RED : "#ccc", fontSize: 10 }}>
+                             {isActiveSort ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '↕'}
+                           </span>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
