@@ -1,31 +1,43 @@
 import React, { useState } from 'react';
 import { Modal, FI, FS, FT, Btn } from './UI';
-import { RED, GREEN, GOLD, NAVY, TEAL } from '../data/constants';
+import { RED, GREEN, GOLD, NAVY, TEAL, API_URL } from '../data/constants';
 import { Sparkles, Copy, FileText, Upload, RefreshCw, Eye, Download, Check, Edit3, Plus, Trash2 } from 'lucide-react';
 
 const FOLDER_KE_HOACH = import.meta.env.VITE_FOLDER_KE_HOACH || '';
 
-async function uploadFileToDrive(file, accessToken) {
-  const metadata = {
-    name: file.name,
-    parents: [FOLDER_KE_HOACH],
-  };
+async function uploadFileToDrive(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64 = reader.result.split(',')[1];
+        const payload = {
+          action: 'upload_file',
+          folderId: FOLDER_KE_HOACH,
+          name: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          base64: base64
+        };
 
-  const form = new FormData();
-  form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-  form.append('file', file);
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
 
-  const res = await fetch(
-    'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink,webContentLink',
-    {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
-      body: form,
-    }
-  );
-
-  if (!res.ok) throw new Error('Upload thất bại: ' + res.statusText);
-  return await res.json(); // { id, name, webViewLink, webContentLink }
+        const data = await res.json();
+        if (data.status === 'success') {
+          resolve({ id: data.fileId, name: file.name, webViewLink: data.url });
+        } else {
+          reject(new Error(data.message || 'Lỗi không xác định'));
+        }
+      } catch (e) {
+        reject(e);
+      }
+    };
+    reader.onerror = () => reject(new Error("Lỗi đọc file"));
+    reader.readAsDataURL(file);
+  });
 }
 
 // Hàm phụ gọi API Gemini hỗ trợ tuyển chọn model
@@ -82,7 +94,7 @@ async function callGeminiAPI(prompt, geminiApiKey, fileObj = null) {
   throw lastError || new Error("Tất cả các AI models đều bị lỗi!");
 }
 
-export default function PlansManager({ plans, setPlans, accessToken, onNeedLogin, isAdmin, geminiApiKey }) {
+export default function PlansManager({ plans, setPlans, isAdmin, geminiApiKey }) {
   const [subTab, setSubTab] = useState('list'); // list | ai_plan | ai_report
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -135,18 +147,13 @@ export default function PlansManager({ plans, setPlans, accessToken, onNeedLogin
     setUploading(true);
     try {
       let attachment = null;
+      let uploadedObj = null;
       if (pendingFile) {
-        if (!accessToken) {
-          alert('Bạn cần đăng nhập Google tại tab Cài đặt trước khi tải file lên Drive!');
-          setUploading(false);
-          return;
-        }
-        const driveFile = await uploadFileToDrive(pendingFile, accessToken);
+        uploadedObj = await uploadFileToDrive(pendingFile);
         attachment = {
-          name: driveFile.name,
-          fileId: driveFile.id,
-          viewUrl: driveFile.webViewLink,
-          downloadUrl: driveFile.webContentLink,
+          name: uploadedObj.name,
+          fileId: uploadedObj.id,
+          viewUrl: uploadedObj.webViewLink,
         };
       }
       setPlans(prev => [{ ...form, id: Date.now(), attachment }, ...prev]);

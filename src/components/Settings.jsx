@@ -1,7 +1,7 @@
 import React from 'react';
 import { Btn, SectionDivider } from './UI';
 
-export default function Settings({ accessToken, login, logout, geminiApiKey, setGeminiApiKey, syncStatus }) {
+export default function Settings({ geminiApiKey, setGeminiApiKey, syncStatus }) {
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
@@ -11,40 +11,26 @@ export default function Settings({ accessToken, login, logout, geminiApiKey, set
 
       <div style={{ maxWidth: 720 }}>
 
-        {/* Google Account Card */}
+        {/* CSDL API Status Card */}
         <div style={{ background: "#fff", borderRadius: 16, padding: "24px 28px", boxShadow: "0 2px 12px rgba(0,0,0,0.07)", marginBottom: 18 }}>
-          <SectionDivider label="Tài khoản Google (Dùng để tải file đính kèm)" />
-          {accessToken ? (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 14 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#4285F4,#34A853)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20 }}>G</div>
-                <div>
-                  <div style={{ fontWeight: 700, color: "#1a1a2e", fontSize: 15 }}>Đã kết nối Google Drive</div>
-                  <div style={{ fontSize: 12, color: "#34A853", fontWeight: 600, marginTop: 2 }}>✅ Đã có thể tải văn bản và file kế hoạch lên Drive</div>
+          <SectionDivider label="Kết nối Cơ sở dữ liệu đám mây" />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg,#00b4d8,#0077b6)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20 }}>☁️</div>
+              <div>
+                <div style={{ fontWeight: 700, color: "#1a1a2e", fontSize: 15 }}>Hệ thống Google Apps Script API</div>
+                <div style={{ fontSize: 12, color: syncStatus.includes('Lỗi') ? '#dc2626' : '#0077b6', fontWeight: 600, marginTop: 2 }}>
+                  Trạng thái: {syncStatus}
                 </div>
               </div>
-              <button
-                onClick={logout}
-                style={{ padding: "8px 18px", borderRadius: 9, border: "none", background: "#ffeef0", color: "#c1121f", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
-              >
-                Đăng xuất
-              </button>
             </div>
-          ) : (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 14 }}>
-              <div>
-                <div style={{ fontWeight: 600, color: "#1a1a2e", fontSize: 15 }}>Chưa đăng nhập tài khoản Google</div>
-                <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>Cần kết nối Google Drive để tải các file đính kèm lên hệ thống</div>
-              </div>
-              <button
-                onClick={() => login()}
-                style={{ padding: "10px 22px", borderRadius: 9, border: "none", background: "linear-gradient(135deg,#4285F4,#2563eb)", color: "#fff", fontWeight: 700, cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 2px 10px rgba(66,133,244,0.35)" }}
+            <button
+                onClick={() => window.location.reload()}
+                style={{ padding: "8px 18px", borderRadius: 9, border: "none", background: "#e0f2fe", color: "#0284c7", fontWeight: 700, cursor: "pointer", fontSize: 13 }}
               >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-                Đăng nhập với Google
-              </button>
-            </div>
-          )}
+                Đồng bộ lại
+            </button>
+          </div>
         </div>
 
         {/* CSDL API Status Card */}

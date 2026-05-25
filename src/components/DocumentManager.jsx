@@ -2,10 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Upload, File as FileIcon, Download, Eye, Loader2, Trash2, Search, Plus, Filter } from 'lucide-react';
 
+import { API_URL } from '../data/constants';
+
 const FOLDER_DEN = import.meta.env.VITE_FOLDER_VAN_BAN_DEN;
 const FOLDER_DI = import.meta.env.VITE_FOLDER_VAN_BAN_DI;
 
-export default function DocumentManager({ accessToken, isAdmin }) {
+export default function DocumentManager({ isAdmin }) {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -20,21 +22,28 @@ export default function DocumentManager({ accessToken, isAdmin }) {
 
   const fileInputRef = useRef(null);
 
-  // Lấy danh sách file từ Google Drive
+  // Lấy danh sách file từ API
   const fetchFiles = async () => {
     setLoading(true);
     try {
-      // Chỉ lấy file nằm trong 2 thư mục này
-      let query = '';
-      if (FOLDER_DEN && FOLDER_DI) {
-        query = `q=trashed=false and ('${FOLDER_DEN}' in parents or '${FOLDER_DI}' in parents)&`;
+      const results = [];
+      if (FOLDER_DEN) {
+        const res1 = await axios.get(`${API_URL}?action=get_files&folderId=${FOLDER_DEN}`);
+        if (res1.data.files) {
+          res1.data.files.forEach(f => f.parents = [FOLDER_DEN]);
+          results.push(...res1.data.files);
+        }
       }
-
-      const res = await axios.get(
-        `https://www.googleapis.com/drive/v3/files?${query}fields=files(id,name,webViewLink,webContentLink,iconLink,createdTime,mimeType,size,parents)&orderBy=createdTime desc`,
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      setFiles(res.data.files || []);
+      if (FOLDER_DI) {
+        const res2 = await axios.get(`${API_URL}?action=get_files&folderId=${FOLDER_DI}`);
+        if (res2.data.files) {
+          res2.data.files.forEach(f => f.parents = [FOLDER_DI]);
+          results.push(...res2.data.files);
+        }
+      }
+      // Sort newest first
+      results.sort((a, b) => b.createdTime - a.createdTime);
+      setFiles(results);
     } catch (error) {
       console.error('Lỗi khi lấy danh sách file:', error);
     } finally {
@@ -44,7 +53,7 @@ export default function DocumentManager({ accessToken, isAdmin }) {
 
   useEffect(() => {
     fetchFiles();
-  }, [accessToken]);
+  }, []);
 
   // Xử lý upload file
   const handleUpload = async (event) => {
@@ -62,30 +71,42 @@ export default function DocumentManager({ accessToken, isAdmin }) {
 
     setUploading(true);
     try {
-      const metadata = {
-        name: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        parents: [targetFolderId] // Đưa file vào thư mục được chọn
-      };
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result.split(',')[1];
+          const payload = {
+            action: 'upload_file',
+            folderId: targetFolderId,
+            name: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            base64: base64
+          };
 
-      const form = new FormData();
-      form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-      form.append('file', file);
+          const res = await axios.post(API_URL, JSON.stringify(payload), {
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+          });
 
-      await axios.post(
-        'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
-        form,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` }
+          if (res.data.status === 'success') {
+            setTimeout(() => fetchFiles(), 1000);
+          } else {
+            throw new Error(res.data.message || 'Lỗi không xác định');
+          }
+        } catch (error) {
+          console.error('Lỗi khi tải file lên:', error);
+          alert('Tải file lên thất bại! File quá lớn hoặc lỗi kết nối.');
+        } finally {
+          setUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
         }
-      );
-      
-      // Tải lại danh sách
-      setTimeout(() => fetchFiles(), 1000);
+      };
+      reader.onerror = () => {
+        alert("Lỗi đọc file!");
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Lỗi khi tải file lên:', error);
-      alert('Tải file lên thất bại! Vui lòng kiểm tra lại quyền truy cập Drive.');
-    } finally {
+      console.error('Lỗi:', error);
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }

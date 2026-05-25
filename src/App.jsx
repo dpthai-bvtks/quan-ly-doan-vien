@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { GoogleOAuthProvider, useGoogleLogin } from '@react-oauth/google'
 import { File as FileIcon } from 'lucide-react'
 import DocumentManager from './components/DocumentManager'
 import Sidebar from './components/Sidebar'
@@ -13,25 +12,14 @@ import PlayerMobile from './components/PlayerMobile'
 import LoginScreen from './components/LoginScreen'
 import FundManager from './components/FundManager'
 import AttendanceManager from './components/AttendanceManager'
-import { RAW_MEMBERS, INIT_PLANS, INIT_QUESTIONS } from './data/constants'
+import { RAW_MEMBERS, INIT_PLANS, INIT_QUESTIONS, API_URL } from './data/constants'
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
-const API_URL = 'https://script.google.com/macros/s/AKfycbwrBrDPYew4uooEFxCPgBumIcj68AiW6DiaGsW4ZmiTXy3O5QdgV-1_od8YLOo0C-Vu/exec';
 
 function AppContent({ currentUser, handleAppLogout }) {
   const isAdmin = currentUser?.role === 'admin';
 
   const [activeTab, setActiveTab] = useState('dashboard')
-  const [accessToken, setAccessToken] = useState(() => {
-    const saved = localStorage.getItem('google_access_token');
-    const expiresAt = localStorage.getItem('google_token_expires_at');
-    if (saved && expiresAt && Date.now() < parseInt(expiresAt, 10)) {
-      return saved;
-    }
-    localStorage.removeItem('google_access_token');
-    localStorage.removeItem('google_token_expires_at');
-    return null;
-  });
   
   // LocalStorage Cache System
   const [members, setMembers] = useState(() => {
@@ -54,7 +42,6 @@ function AppContent({ currentUser, handleAppLogout }) {
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '')
   const [syncStatus, setSyncStatus] = useState('Chưa kết nối')
   const initialLoadDone = useRef(false)
-  const [sessionExpired, setSessionExpired] = useState(false)
 
   // Lưu vào LocalStorage & sync cloud (chỉ admin mới được ghi lên Drive)
   useEffect(() => {
@@ -70,12 +57,6 @@ function AppContent({ currentUser, handleAppLogout }) {
   useEffect(() => {
     downloadFromCloud();
   }, [])
-
-  const logout = () => {
-    setAccessToken(null);
-    localStorage.removeItem('google_access_token');
-    localStorage.removeItem('google_token_expires_at');
-  }
 
   const downloadFromCloud = async () => {
     setSyncStatus('Đang đồng bộ...');
@@ -115,18 +96,6 @@ function AppContent({ currentUser, handleAppLogout }) {
     }
   };
 
-  const login = useGoogleLogin({
-    onSuccess: (codeResponse) => {
-      setSessionExpired(false);
-      setAccessToken(codeResponse.access_token);
-      localStorage.setItem('google_access_token', codeResponse.access_token);
-      const expiresIn = codeResponse.expires_in || 3600;
-      localStorage.setItem('google_token_expires_at', (Date.now() + (expiresIn - 60) * 1000).toString());
-    },
-    onError: (error) => console.log('Login Failed:', error),
-    scope: 'https://www.googleapis.com/auth/drive'
-  })
-
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -138,39 +107,19 @@ function AppContent({ currentUser, handleAppLogout }) {
       case 'attendance':
         return <AttendanceManager members={members} setMembers={setMembers} plans={plans} setPlans={setPlans} isAdmin={isAdmin} />
       case 'plans':
-        return <PlansManager plans={plans} setPlans={setPlans} accessToken={accessToken} onNeedLogin={() => setActiveTab('settings')} isAdmin={isAdmin} geminiApiKey={geminiApiKey} />
+        return <PlansManager plans={plans} setPlans={setPlans} isAdmin={isAdmin} geminiApiKey={geminiApiKey} />
       case 'games':
         return isAdmin
           ? <GameManager questions={questions} setQuestions={setQuestions} geminiApiKey={geminiApiKey} onNeedSettings={() => setActiveTab('settings')} />
           : null
       case 'settings':
         return isAdmin
-          ? <Settings accessToken={accessToken} login={login} logout={logout} geminiApiKey={geminiApiKey} setGeminiApiKey={setGeminiApiKey} syncStatus={syncStatus} />
+          ? <Settings geminiApiKey={geminiApiKey} setGeminiApiKey={setGeminiApiKey} syncStatus={syncStatus} />
           : <div className="bg-white p-12 rounded-2xl text-center text-gray-400 text-lg">🔒 Chức năng này chỉ dành cho Admin.</div>
       case 'documents':
         return (
           <div className="space-y-6">
-            {accessToken ? (
-              <DocumentManager accessToken={accessToken} isAdmin={isAdmin} />
-            ) : (
-              <div className="bg-white p-12 rounded-2xl shadow-sm border border-gray-100 text-center flex flex-col items-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-50 mb-6">
-                  <FileIcon className="h-10 w-10 text-blue-500" />
-                </div>
-                <h2 className="text-xl font-semibold text-gray-800 mb-3">Chưa kết nối Google Drive</h2>
-                <p className="text-gray-500 max-w-md mx-auto mb-6">
-                  Để xem và tải lên văn bản, bạn cần đăng nhập Google tại tab <strong>Cài đặt</strong> trước.
-                </p>
-                {isAdmin && (
-                  <button
-                    onClick={() => setActiveTab('settings')}
-                    className="px-8 py-3 text-sm font-medium text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all"
-                  >
-                    Đi đến Cài đặt để đăng nhập
-                  </button>
-                )}
-              </div>
-            )}
+            <DocumentManager isAdmin={isAdmin} />
           </div>
         )
       default:
@@ -180,15 +129,6 @@ function AppContent({ currentUser, handleAppLogout }) {
 
   return (
     <div className="flex min-h-screen" style={{ background: '#f0f2f8' }}>
-      {sessionExpired && (
-        <div className="fixed top-0 left-64 right-0 z-[100] text-white p-3 flex justify-center items-center gap-4 shadow-lg"
-          style={{ background: 'linear-gradient(90deg, #c8102e, #a50d24)' }}>
-          <span className="font-semibold text-sm">⚠️ Phiên kết nối Google Drive đã hết hạn. Yêu cầu đăng nhập lại để tải file.</span>
-          <button onClick={() => login()} className="bg-white text-red-700 px-4 py-1.5 rounded-lg font-bold text-sm hover:bg-gray-100 shadow-sm transition-colors cursor-pointer">
-            Gia hạn kết nối ngay
-          </button>
-        </div>
-      )}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} currentUser={currentUser} onAppLogout={handleAppLogout} />
       <div className="flex-1 ml-64 p-8">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
@@ -221,9 +161,7 @@ export default function RootApp() {
         <Route path="/play" element={<PlayerMobile />} />
         <Route path="/" element={
           currentUser ? (
-            <GoogleOAuthProvider clientId={clientId}>
-              <AppContent currentUser={currentUser} handleAppLogout={handleAppLogout} />
-            </GoogleOAuthProvider>
+            <AppContent currentUser={currentUser} handleAppLogout={handleAppLogout} />
           ) : (
             <LoginScreen onLogin={handleLogin} />
           )

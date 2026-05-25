@@ -1,3 +1,4 @@
+export const API_URL = 'https://script.google.com/macros/s/AKfycbwrBrDPYew4uooEFxCPgBumIcj68AiW6DiaGsW4ZmiTXy3O5QdgV-1_od8YLOo0C-Vu/exec';
 export const TO_DOAN_LIST = ["Phòng ban+Dược", "Nội TH+YHCT-PHCN", "Ngoại-Sản+LCK", "KB-CLS", "Cơ sở 2"];
 export const CHUC_VU_LIST = ["Bí thư Đoàn cơ sở", "Phó bí thư Đoàn cơ sở", "Bí thư chi đoàn", "Phó bí thư chi đoàn", "Ủy viên Ban chấp hành chi đoàn", "Đoàn viên"];
 export const DAN_TOC_LIST = ["Kinh", "Tày", "Nùng", "Thái", "Mường", "Khmer", "Mông", "Sán Dìu", "Hoa", "Khác"];
