@@ -721,17 +721,10 @@ Yêu cầu: Hãy tối ưu hóa từ ngữ cho thật chuyên nghiệp, súc tí
               <FT label="Mô tả" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} />
               <div style={{ marginBottom: 11 }}>
                 <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: '#666', textTransform: 'uppercase', letterSpacing: 0.4 }}>Đính kèm tệp tin (Google Drive)</label>
-                {!accessToken ? (
-                  <div style={{ padding: '10px 14px', border: '1.5px dashed #f4a261', borderRadius: 8, background: '#fffbf5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 12, color: '#888' }}>⚠️ Cần đăng nhập Google để đính kèm file lên Drive</span>
-                    <button onClick={() => { setShowForm(false); onNeedLogin(); }} style={{ fontSize: 11, padding: '4px 12px', background: '#4285F4', color: '#fff', border: 'none', borderRadius: 6, cursor: 'pointer', fontWeight: 700 }}>Đi tới Cài đặt</button>
-                  </div>
-                ) : (
-                  <div style={{ border: '1.5px dashed #ccc', borderRadius: 8, background: '#fafafa', padding: '10px 14px' }}>
-                    <input type="file" onChange={e => setPendingFile(e.target.files[0] || null)} style={{ fontSize: 13, width: '100%' }} />
-                    {pendingFile && <div style={{ marginTop: 6, fontSize: 12, color: '#34A853', fontWeight: 600 }}>✅ Đã chọn: {pendingFile.name} ({(pendingFile.size / 1024).toFixed(1)} KB) — Sẽ tải lên Drive khi Lưu</div>}
-                  </div>
-                )}
+                <div style={{ border: '1.5px dashed #ccc', borderRadius: 8, background: '#fafafa', padding: '10px 14px' }}>
+                  <input type="file" onChange={e => setPendingFile(e.target.files[0] || null)} style={{ fontSize: 13, width: '100%' }} />
+                  {pendingFile && <div style={{ marginTop: 6, fontSize: 12, color: '#34A853', fontWeight: 600 }}>✅ Đã chọn: {pendingFile.name} ({(pendingFile.size / 1024).toFixed(1)} KB) — Sẽ tải lên Drive khi Lưu</div>}
+                </div>
               </div>
               <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 14, paddingTop: 10, borderTop: '1px solid #eee' }}>
                 <Btn v="s" onClick={() => { setShowForm(false); resetForm(); }}>Hủy</Btn>
