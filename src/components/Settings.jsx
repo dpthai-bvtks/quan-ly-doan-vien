@@ -154,7 +154,8 @@ export default function Settings({ geminiApiKey, setGeminiApiKey, syncStatus, cu
                 return;
               }
               try {
-                const res = await fetch(config.apiUrl);
+                const branch = currentUser?.username === 'bvtks-cs1' ? 'cs1' : 'cs2';
+                const res = await fetch(`${config.apiUrl}?branch=${branch}`);
                 const data = await res.json();
                 const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
@@ -193,6 +194,9 @@ export default function Settings({ geminiApiKey, setGeminiApiKey, syncStatus, cu
                         const content = JSON.parse(evt.target.result);
                         if (!content.members) throw new Error("File không đúng định dạng sao lưu.");
                         
+                        const branch = currentUser?.username === 'bvtks-cs1' ? 'cs1' : 'cs2';
+                        content.branch = branch;
+                        
                         alert("Đang đồng bộ dữ liệu lên máy chủ, vui lòng đợi vài giây...");
                         await fetch(config.apiUrl, {
                           method: 'POST',
@@ -226,11 +230,13 @@ export default function Settings({ geminiApiKey, setGeminiApiKey, syncStatus, cu
               if (window.confirm("CẢNH BÁO NGUY HIỂM: \nBạn có chắc chắn muốn XÓA TRẮNG toàn bộ dữ liệu hệ thống (Đoàn viên, Kế hoạch, Quỹ, Trắc nghiệm) không?")) {
                 if (window.confirm("Thao tác này KHÔNG THỂ HOÀN TÁC! Bạn có thực sự muốn xóa?")) {
                   try {
+                    const branch = currentUser?.username === 'bvtks-cs1' ? 'cs1' : 'cs2';
                     const emptyData = {
                       members: RAW_MEMBERS,
                       plans: INIT_PLANS,
                       questions: INIT_QUESTIONS,
-                      funds: []
+                      funds: [],
+                      branch
                     };
                     await fetch(config.apiUrl, {
                       method: 'POST',

@@ -67,7 +67,8 @@ function AppContent({ currentUser, handleAppLogout }) {
     }
     setSyncStatus('Đang đồng bộ...');
     try {
-      const res = await fetch(config.apiUrl);
+      const branch = currentUser?.username === 'bvtks-cs1' ? 'cs1' : 'cs2';
+      const res = await fetch(`${config.apiUrl}?branch=${branch}`);
       const dbData = await res.json();
       if (dbData.members) setMembers(dbData.members);
       if (dbData.plans) setPlans(dbData.plans);
@@ -89,7 +90,8 @@ function AppContent({ currentUser, handleAppLogout }) {
     }
     setSyncStatus('Đang lưu lên Đám mây...');
     try {
-      const dbContent = { members: m, plans: p, questions: q, funds: f };
+      const branch = currentUser?.username === 'bvtks-cs1' ? 'cs1' : 'cs2';
+      const dbContent = { members: m, plans: p, questions: q, funds: f, branch };
       const res = await fetch(config.apiUrl, { 
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
