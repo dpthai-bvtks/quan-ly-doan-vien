@@ -39,7 +39,7 @@ function AppContent({ currentUser, handleAppLogout }) {
     return saved ? JSON.parse(saved) : [];
   })
   
-  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem(`geminiApiKey_${currentUser?.username}`) || '')
+  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem(`geminiApiKey_${currentUser?.username}`) || 'AIzaSyAfbVq398HoQbsRvYvqQbNBkSSJpvTmZmk')
   const [syncStatus, setSyncStatus] = useState('Chưa kết nối')
   const initialLoadDone = useRef(false)
 
