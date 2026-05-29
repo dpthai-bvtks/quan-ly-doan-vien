@@ -38,9 +38,9 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onAppLog
           }} />
           <div className="flex flex-col items-center text-center relative z-10">
             {/* Emblem */}
-            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3 group-hover:scale-105 transition-transform"
+            <div className="w-14 h-14 rounded-full flex items-center justify-center mb-3 group-hover:scale-105 transition-transform overflow-hidden p-1.5"
               style={{ background: 'linear-gradient(135deg, #ffd700, #ffb300)', boxShadow: '0 4px 16px rgba(255,200,0,0.4)' }}>
-              <span className="text-red-700 font-black text-xl tracking-tight">ĐTN</span>
+              <img src="/logo-doan.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <h2 className="font-bold text-white text-sm leading-tight text-center" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.3)' }}>
               {getBranchConfig(currentUser?.username).title.split('\n').map((line, idx, arr) => (
@@ -88,13 +88,14 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onAppLog
             style={{ background: 'rgba(255,255,255,0.1)' }}
             title="Quản lý tài khoản"
           >
-            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 shadow-md ${isAdmin ? '' : 'bg-white/30'}`}
-              style={isAdmin ? { background: 'linear-gradient(135deg, #ffd700, #ffb300)', color: '#c8102e' } : {}}>
-              {currentUser?.displayName?.[0] || 'G'}
+            <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-md overflow-hidden bg-white/20 p-1">
+              <img src="/logo-doan.png" alt="Logo" className="w-full h-full object-contain" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-white truncate">{currentUser?.displayName}</p>
-              <p className="text-xs" style={{ color: isAdmin ? '#ffd700' : 'rgba(255,255,255,0.55)' }}>
+              <p className="text-xs font-semibold text-white leading-tight" style={{ wordBreak: 'break-word' }}>
+                {currentUser?.displayName ? currentUser.displayName.replace('Bệnh viện Than Khoáng sản', 'BVTKS').replace('Bệnh viện Than - Khoáng sản', 'BVTKS') : ''}
+              </p>
+              <p className="text-[11px] mt-0.5 font-medium" style={{ color: isAdmin ? '#ffd700' : 'rgba(255,255,255,0.55)' }}>
                 {isAdmin ? '👑 Quản trị viên' : '👁 Chỉ xem'}
               </p>
             </div>
