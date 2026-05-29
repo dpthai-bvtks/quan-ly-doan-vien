@@ -50,6 +50,42 @@ function CustomSelect({ label, opts, value, onChange, placeholder = "Tự nhập
 function MemberForm({ initial, onSave, onClose }) {
   const [f, setF] = useState(initial ? { ...initial } : { ...EMPTY_FORM });
   const upd = k => e => setF(p => ({ ...p, [k]: e.target.value }));
+
+  const handleNgaySinhChange = (e) => {
+    const val = e.target.value;
+    setF(p => {
+      let nextTuoi = p.tuoi;
+      if (val) {
+        const birthYear = new Date(val).getFullYear();
+        if (!isNaN(birthYear)) {
+          nextTuoi = new Date().getFullYear() - birthYear;
+        }
+      }
+      return { ...p, ngaySinh: val, tuoi: nextTuoi };
+    });
+  };
+
+  const handleTuoiChange = (e) => {
+    const val = e.target.value;
+    setF(p => {
+      let nextNgaySinh = p.ngaySinh;
+      if (val) {
+        const ageNum = parseInt(val, 10);
+        if (!isNaN(ageNum)) {
+          const currentYear = new Date().getFullYear();
+          const birthYear = currentYear - ageNum;
+          if (p.ngaySinh && p.ngaySinh.length >= 10) {
+            const parts = p.ngaySinh.split('-');
+            nextNgaySinh = `${birthYear}-${parts[1]}-${parts[2]}`;
+          } else {
+            nextNgaySinh = `${birthYear}-01-01`;
+          }
+        }
+      }
+      return { ...p, tuoi: val, ngaySinh: nextNgaySinh };
+    });
+  };
+
   return (
     <Modal title={initial?.id ? "✏️ Chỉnh sửa đoàn viên" : "➕ Thêm đoàn viên mới"} onClose={onClose} wide>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 14px", maxHeight: "72vh", overflowY: "auto", paddingRight: 6 }}>
@@ -57,8 +93,8 @@ function MemberForm({ initial, onSave, onClose }) {
         <FI label="Họ và tên *" value={f.hoTen} onChange={upd("hoTen")} placeholder="Nguyễn Văn A" />
         <CustomSelect label="Tổ đoàn *" opts={TO_DOAN_LIST} value={f.toDoan} onChange={upd("toDoan")} placeholder="Nhập tên tổ đoàn/phòng ban..." />
         <FS label="Giới tính" opts={["Nam", "Nữ"]} value={f.gioiTinh} onChange={upd("gioiTinh")} />
-        <FI label="Ngày sinh" type="date" value={f.ngaySinh} onChange={upd("ngaySinh")} />
-        <FI label="Tuổi" type="number" value={f.tuoi} onChange={upd("tuoi")} min={16} max={35} />
+        <FI label="Ngày sinh" type="date" value={f.ngaySinh} onChange={handleNgaySinhChange} />
+        <FI label="Tuổi" type="number" value={f.tuoi} onChange={handleTuoiChange} min={16} max={35} />
         <CustomSelect label="Dân tộc" opts={DAN_TOC_LIST} value={f.danToc} onChange={upd("danToc")} />
         <CustomSelect label="Tôn giáo" opts={TON_GIAO_LIST} value={f.tonGiao} onChange={upd("tonGiao")} />
         <FI label="Điện thoại" value={f.dienThoai} onChange={upd("dienThoai")} placeholder="09xxxxxxxx" />
