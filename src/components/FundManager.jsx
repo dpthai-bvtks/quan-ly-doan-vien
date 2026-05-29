@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, Download } from 'lucide-react';
 import { Btn, Td, Th } from './UI';
+import * as XLSX from 'xlsx';
 
 export default function FundManager({ funds, setFunds, isAdmin }) {
   const [showForm, setShowForm] = useState(false);
@@ -37,6 +38,32 @@ export default function FundManager({ funds, setFunds, isAdmin }) {
   const totalIncome = funds.filter(f => f.type === 'thu').reduce((sum, f) => sum + f.amount, 0);
   const totalExpense = funds.filter(f => f.type === 'chi').reduce((sum, f) => sum + f.amount, 0);
 
+  const handleExportExcel = () => {
+    const wsData = [
+      ["BẢNG TỔNG HỢP THU CHI QUỸ CHI ĐOÀN"],
+      [`Tổng thu: ${totalIncome.toLocaleString()} đ | Tổng chi: ${totalExpense.toLocaleString()} đ | Tồn quỹ hiện tại: ${currentBalance.toLocaleString()} đ`],
+      [],
+      ["STT", "Ngày tháng", "Loại giao dịch", "Nội dung chi tiết", "Số tiền (đ)", "Tồn quỹ lũy kế (đ)"]
+    ];
+
+    const sortedExport = [...fundsWithBalance].reverse(); // Sắp xếp thời gian tăng dần để tính lũy kế
+    sortedExport.forEach((f, idx) => {
+      wsData.push([
+        idx + 1,
+        new Date(f.date).toLocaleDateString('vi-VN'),
+        f.type === 'thu' ? 'Thu' : 'Chi',
+        f.description,
+        f.amount,
+        f.balance
+      ]);
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, "Tong_Hop_Thu_Chi");
+    XLSX.writeFile(wb, "tong_hop_thu_chi_quy.xlsx");
+  };
+
   return (
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex justify-between items-center mb-6">
@@ -44,11 +71,16 @@ export default function FundManager({ funds, setFunds, isAdmin }) {
           <h2 className="text-2xl font-bold text-gray-800">Quản lý Thu/Chi</h2>
           <p className="text-gray-500 text-sm mt-1">Theo dõi quỹ đoàn phí và các khoản chi</p>
         </div>
-        {isAdmin && (
-          <Btn onClick={() => setShowForm(!showForm)}>
-            <Plus size={18} /> Thêm Giao dịch
+        <div className="flex gap-2">
+          <Btn v="s" onClick={handleExportExcel}>
+            <Download size={18} /> Xuất File Tổng Hợp
           </Btn>
-        )}
+          {isAdmin && (
+            <Btn onClick={() => setShowForm(!showForm)}>
+              <Plus size={18} /> Thêm Giao dịch
+            </Btn>
+          )}
+        </div>
       </div>
 
       {/* Thống kê */}

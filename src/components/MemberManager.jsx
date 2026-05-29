@@ -115,6 +115,36 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const fileInputRef = useRef(null);
 
+  const handleExportTemplate = () => {
+    const wsData = [
+      ["DANH SÁCH ĐOÀN VIÊN MẪU"],
+      ["Hệ thống Quản lý Đoàn viên Chi đoàn"],
+      [
+        "STT", "Họ và tên", "Tổ đoàn", "Mã định danh", "Số thẻ đoàn",
+        "Ngày sinh Nam", "Ngày sinh Nữ", "Tuổi", "Dân tộc", "Tôn giáo",
+        "Quê quán", "Địa chỉ thường trú", "Số CMND/CCCD", "Ngày cấp", "Nơi cấp",
+        "Trình độ văn hóa", "Trình độ chuyên môn", "Trình độ lý luận chính trị", "Tin học", "Ngoại ngữ",
+        "Nơi vào Đoàn", "Thời gian vào Đoàn", "Số NQ chuẩn y", "Thời gian vào Đảng", "Nghề nghiệp hiện nay",
+        "Đối tượng đoàn viên", "Rèn luyện đoàn viên", "Đánh giá xếp loại", "Khen thưởng", "Kỷ luật",
+        "Chức vụ trong chi đoàn", "Hội", "Email", "Điện thoại"
+      ],
+      [
+        "1", "Nguyễn Văn A", "Phòng ban+Dược", "1234567", "0123456789",
+        "1998-03-26", "", "28", "Kinh", "Không",
+        "Thị xã Đông Triều, Quảng Ninh", "Thị xã Đông Triều, Quảng Ninh", "033098001234", "2015-05-10", "Cục Cảnh sát QLHC về TTXH",
+        "Hệ 12/12", "Đại học", "Chưa có", "Chuẩn kỹ năng sử dụng CNTT cơ bản", "Bậc 2",
+        "THPT Đông Triều", "2013-03-26", "NQ-01", "", "Cán bộ",
+        "Sinh hoạt chính", "Đã đăng ký", "Chưa đánh giá", "Không", "Không",
+        "Đoàn viên", "Hội LHTN Việt Nam", "nguyenvana@gmail.com", "0987654321"
+      ]
+    ];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, "Mau_Danh_Sach");
+    XLSX.writeFile(wb, "mau_danh_sach_doan_vien.xlsx");
+  };
+
   const isInactive = m => m.trangThai && m.trangThai !== TRANG_THAI_DV.ACTIVE && m.trangThai !== TRANG_THAI_DV.CHUYEN_DEN;
 
   const handleSort = (key) => {
@@ -257,6 +287,7 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
           {isAdmin && (
             <>
               <input type="file" accept=".xlsx,.xls" ref={fileInputRef} onChange={handleFileUpload} style={{ display: 'none' }} />
+              <Btn v="s" onClick={handleExportTemplate}>📄 Tải file mẫu</Btn>
               <Btn v="s" onClick={() => fileInputRef.current?.click()}>📥 Nhập từ Excel</Btn>
               <Btn onClick={() => { setEditItem(null); setShowForm(true); }}>+ Thêm đoàn viên</Btn>
             </>
