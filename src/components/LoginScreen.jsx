@@ -38,11 +38,12 @@ export default function LoginScreen({ onLogin }) {
         <div className="bg-white/10 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8">
           {/* Logo */}
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/30 shadow-lg">
-              <span className="text-white font-black text-3xl">ĐTN</span>
+            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/30 shadow-lg p-2 overflow-hidden">
+              <img src="/logo-doan.png" alt="Logo Đoàn" className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-white font-bold text-xl leading-tight mt-1">Sổ Chi Đoàn Bệnh Viện Than - Khoáng Sản</h1>
-            <p className="text-blue-200 text-sm mt-1">Hệ thống Quản lý Đoàn viên</p>
+            <h1 className="text-white font-bold text-2xl leading-tight mt-1">Sổ Chi Đoàn</h1>
+            <h2 className="text-white font-bold text-lg leading-tight mt-1">Bệnh Viện Than - Khoáng Sản</h2>
+            <p className="text-blue-200 text-sm mt-2">Hệ thống Quản lý Đoàn viên</p>
           </div>
 
           {/* Form */}
