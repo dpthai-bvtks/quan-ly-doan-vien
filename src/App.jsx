@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { File as FileIcon } from 'lucide-react'
 import DocumentManager from './components/DocumentManager'
 import Sidebar from './components/Sidebar'
@@ -18,8 +18,36 @@ const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
 
 function AppContent({ currentUser, handleAppLogout }) {
   const isAdmin = currentUser?.role === 'admin';
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const pathToTab = (path) => {
+    const p = path.replace(/^\//, '');
+    const validTabs = ['dashboard', 'members', 'funds', 'attendance', 'documents', 'plans', 'games', 'settings'];
+    if (validTabs.includes(p)) return p;
+    return 'dashboard';
+  };
+
+  const [activeTab, setActiveTab] = useState(() => {
+    return pathToTab(location.pathname);
+  });
+
+  // Sync from URL change (e.g. back/forward browser buttons)
+  useEffect(() => {
+    const tab = pathToTab(location.pathname);
+    if (tab !== activeTab) {
+      setActiveTab(tab);
+    }
+  }, [location.pathname]);
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    if (tabId === 'dashboard') {
+      navigate('/');
+    } else {
+      navigate(`/${tabId}`);
+    }
+  };
   
   // LocalStorage Cache System Scoped by Username
   const [members, setMembers] = useState(() => {
@@ -124,7 +152,7 @@ function AppContent({ currentUser, handleAppLogout }) {
         return <PlansManager plans={plans} setPlans={setPlans} isAdmin={isAdmin} geminiApiKey={geminiApiKey} currentUser={currentUser} />
       case 'games':
         return isAdmin
-          ? <GameManager questions={questions} setQuestions={setQuestions} geminiApiKey={geminiApiKey} onNeedSettings={() => setActiveTab('settings')} />
+          ? <GameManager questions={questions} setQuestions={setQuestions} geminiApiKey={geminiApiKey} onNeedSettings={() => handleTabChange('settings')} />
           : null
       case 'settings':
         return isAdmin
@@ -151,7 +179,7 @@ function AppContent({ currentUser, handleAppLogout }) {
 
   return (
     <div className="flex min-h-screen" style={{ background: '#f0f2f8' }}>
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} currentUser={currentUser} onAppLogout={handleAppLogout} />
+      <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} currentUser={currentUser} onAppLogout={handleAppLogout} />
       <div className="flex-1 ml-64 p-8">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
           {renderContent()}
@@ -181,7 +209,7 @@ export default function RootApp() {
     <BrowserRouter>
       <Routes>
         <Route path="/play" element={<PlayerMobile />} />
-        <Route path="/" element={
+        <Route path="/*" element={
           currentUser ? (
             <AppContent currentUser={currentUser} handleAppLogout={handleAppLogout} />
           ) : (
