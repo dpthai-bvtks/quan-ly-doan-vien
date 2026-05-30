@@ -510,17 +510,14 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
                     onMouseLeave={e => e.currentTarget.style.background = ""}
                   >
                     <td style={{ padding: "9px 13px", color: "#bbb", fontSize: 12, width: "50px" }}>{i + 1}</td>
-                    <td style={{ padding: "9px 13px", whiteSpace: "nowrap", width: "180px", maxWidth: "180px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 9, overflow: "hidden" }}>
-                        <Avatar name={m.hoTen} size={30} />
-                        <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
-                          <span onClick={() => setDetail(m)} title={m.hoTen} style={{ fontWeight: 600, color: inactive ? "#999" : "#1a1a2e", cursor: 'pointer', textDecoration: 'underline dotted', textDecorationColor: '#ccc', whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>{m.hoTen}</span>
-                          {st && st !== TRANG_THAI_DV.ACTIVE && (
-                            <div style={{ fontSize: 10, color: STATUS_COLOR[st] || '#aaa', fontWeight: 700, whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" }}>
-                              {STATUS_LABEL[st]}{st === TRANG_THAI_DV.CHUYEN_DI && m.noiDen ? ` → ${m.noiDen}` : ''}{m.ngayBienDong ? ` (${new Date(m.ngayBienDong).toLocaleDateString('vi-VN')})` : ''}
-                            </div>
-                          )}
-                        </div>
+                    <td style={{ padding: "9px 13px", whiteSpace: "nowrap" }}>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span onClick={() => setDetail(m)} style={{ fontWeight: 600, color: inactive ? "#999" : "#1a1a2e", cursor: 'pointer', textDecoration: 'underline dotted', textDecorationColor: '#ccc', whiteSpace: "nowrap" }}>{m.hoTen}</span>
+                        {st && st !== TRANG_THAI_DV.ACTIVE && (
+                          <div style={{ fontSize: 10, color: STATUS_COLOR[st] || '#aaa', fontWeight: 700, whiteSpace: "nowrap" }}>
+                            {STATUS_LABEL[st]}{st === TRANG_THAI_DV.CHUYEN_DI && m.noiDen ? ` → ${m.noiDen}` : ''}{m.ngayBienDong ? ` (${new Date(m.ngayBienDong).toLocaleDateString('vi-VN')})` : ''}
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td style={{ padding: "9px 13px", color: "#666", width: "70px" }}>{m.tuoi}</td>
