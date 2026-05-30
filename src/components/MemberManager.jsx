@@ -397,8 +397,8 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ background: "#fafafa", borderBottom: "2px solid #f0f0f0" }}>
-                {["#", "Họ và tên", "GT", "Tuổi", "Tổ đoàn", "Chức vụ", "Tr.độ CM", "LLCT", "Điện thoại", ""].map(h => {
-                  const colKeys = { "Họ và tên": "hoTen", "GT": "gioiTinh", "Tuổi": "tuoi", "Tổ đoàn": "toDoan", "Chức vụ": "chucVu", "Tr.độ CM": "trinhDoCM", "LLCT": "trinhDoLLCT", "Điện thoại": "dienThoai" };
+                {["#", "Họ và tên", "Tuổi", "Tổ đoàn", "Chức vụ", "Tr.độ CM", "Điện thoại", ""].map(h => {
+                  const colKeys = { "Họ và tên": "hoTen", "Tuổi": "tuoi", "Tổ đoàn": "toDoan", "Chức vụ": "chucVu", "Tr.độ CM": "trinhDoCM", "Điện thoại": "dienThoai" };
                   const isSortable = !!colKeys[h];
                   const isActiveSort = sortConfig.key === colKeys[h];
                   return (
@@ -428,26 +428,24 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
                     onMouseLeave={e => e.currentTarget.style.background = ""}
                   >
                     <td style={{ padding: "9px 13px", color: "#bbb", fontSize: 12 }}>{i + 1}</td>
-                    <td style={{ padding: "9px 13px" }}>
+                    <td style={{ padding: "9px 13px", whiteSpace: "nowrap" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
                         <Avatar name={m.hoTen} size={30} />
-                        <div>
-                          <span onClick={() => setDetail(m)} style={{ fontWeight: 600, color: inactive ? "#999" : "#1a1a2e", cursor: 'pointer', textDecoration: 'underline dotted', textDecorationColor: '#ccc' }}>{m.hoTen}</span>
+                        <div style={{ display: "flex", flexDirection: "column" }}>
+                          <span onClick={() => setDetail(m)} style={{ fontWeight: 600, color: inactive ? "#999" : "#1a1a2e", cursor: 'pointer', textDecoration: 'underline dotted', textDecorationColor: '#ccc', whiteSpace: "nowrap" }}>{m.hoTen}</span>
                           {st && st !== TRANG_THAI_DV.ACTIVE && (
-                            <div style={{ fontSize: 10, color: STATUS_COLOR[st] || '#aaa', fontWeight: 700 }}>
+                            <div style={{ fontSize: 10, color: STATUS_COLOR[st] || '#aaa', fontWeight: 700, whiteSpace: "nowrap" }}>
                               {STATUS_LABEL[st]}{st === TRANG_THAI_DV.CHUYEN_DI && m.noiDen ? ` → ${m.noiDen}` : ''}{m.ngayBienDong ? ` (${new Date(m.ngayBienDong).toLocaleDateString('vi-VN')})` : ''}
                             </div>
                           )}
                         </div>
                       </div>
                     </td>
-                    <td style={{ padding: "9px 13px" }}><Badge text={m.gioiTinh} /></td>
                     <td style={{ padding: "9px 13px", color: "#666" }}>{m.tuoi}</td>
                     <td style={{ padding: "9px 13px", color: "#555", whiteSpace: "nowrap", fontSize: 12 }}>{m.toDoan}</td>
                     <td style={{ padding: "9px 13px" }}><Badge text={m.chucVu} /></td>
                     <td style={{ padding: "9px 13px" }}><Badge text={m.trinhDoCM} /></td>
-                    <td style={{ padding: "9px 13px" }}><Badge text={m.trinhDoLLCT} /></td>
-                    <td style={{ padding: "9px 13px", color: "#888", fontSize: 12 }}>{m.dienThoai}</td>
+                    <td style={{ padding: "9px 13px", color: "#888", fontSize: 12, whiteSpace: "nowrap" }}>{m.dienThoai}</td>
                     <td style={{ padding: "9px 13px" }}>
                       <div style={{ display: "flex", gap: 5 }}>
                         {isAdmin && (
