@@ -278,6 +278,12 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
     setNoiDenInput('');
   };
 
+  const handleDelete = (m) => {
+    if (window.confirm(`Bạn có chắc chắn muốn XÓA VĨNH VIỄN đoàn viên "${m.hoTen}" không?\nThao tác này sẽ xóa hoàn toàn dữ liệu và không thể hoàn tác!`)) {
+      setMembers(prev => prev.filter(item => item.id !== m.id));
+    }
+  };
+
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -448,6 +454,7 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
                           <>
                             <button onClick={() => { setEditItem(m); setShowForm(true); }} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#fff3e0", color: "#e65100", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Sửa</button>
                             <button onClick={() => { setStatusModal(m); setNoiDenInput(m.noiDen||''); setNgayBienDong(new Date().toISOString().split('T')[0]); }} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: '#eef2ff', color: '#4f46e5', cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Biến động</button>
+                            <button onClick={() => handleDelete(m)} style={{ padding: "4px 9px", borderRadius: 6, border: "none", background: "#ffeef0", color: "#c8102e", cursor: "pointer", fontSize: 11, fontWeight: 700 }}>Xóa</button>
                           </>
                         )}
                       </div>
