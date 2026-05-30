@@ -80,7 +80,7 @@ export default function Dashboard({ members }) {
         <CC title="Theo giới tính">
           <ResponsiveContainer width="100%" height={210}>
             <PieChart>
-              <Pie data={genderData} cx="50%" cy="50%" outerRadius={75} dataKey="value" label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`} labelLine>
+              <Pie data={genderData} cx="50%" cy="50%" outerRadius={75} dataKey="value" label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(2)}%)`} labelLine>
                 <Cell fill={NAVY} /><Cell fill="#e76f51" />
               </Pie>
               <Tooltip /><Legend />
@@ -90,7 +90,7 @@ export default function Dashboard({ members }) {
         <CC title="Tỷ lệ Đảng viên">
           <ResponsiveContainer width="100%" height={210}>
             <PieChart>
-              <Pie data={dangVienData} cx="50%" cy="50%" outerRadius={75} dataKey="value" label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(0)}%)`} labelLine>
+              <Pie data={dangVienData} cx="50%" cy="50%" outerRadius={75} dataKey="value" label={({ name, value, percent }) => `${name}: ${value} (${(percent * 100).toFixed(2)}%)`} labelLine>
                 <Cell fill="#d4af37" /><Cell fill={RED} />
               </Pie>
               <Tooltip /><Legend />
