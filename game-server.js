@@ -1,11 +1,21 @@
-import express from 'react'; // Just to prevent syntax error if not using module, wait, we are using ES modules?
-// Wait, package.json says "type": "module". So we use ES imports.
 import expressApp from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
+import crypto from 'crypto';
 
 const app = expressApp();
+
+// Middleware thiết lập các tiêu đề bảo mật để tránh clickjacking, sniff MIME, rò rỉ referrer và tấn công XSS/CSP
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' *; img-src 'self' data: https:; font-src 'self'; object-src 'none'; media-src 'self'; frame-src 'none'");
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(), camera=(), microphone=(), payment=()');
+  next();
+});
+
 app.use(cors());
 
 const server = createServer(app);
@@ -19,8 +29,8 @@ const io = new Server(server, {
 // Lưu trữ trạng thái các phòng chơi
 const rooms = {};
 
-// Helper: Generate random 4-digit PIN
-const generatePIN = () => Math.floor(1000 + Math.random() * 9000).toString();
+// Helper: Generate secure random 4-digit PIN
+const generatePIN = () => crypto.randomInt(1000, 10000).toString();
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
@@ -29,7 +39,7 @@ io.on('connection', (socket) => {
 
   socket.on('host_create_room', () => {
     const pin = generatePIN();
-    const hostToken = Math.random().toString(36).substring(2, 15);
+    const hostToken = crypto.randomBytes(8).toString('hex');
     rooms[pin] = {
       hostId: socket.id,
       hostToken: hostToken,
