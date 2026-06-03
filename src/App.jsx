@@ -312,7 +312,7 @@ function AppContent({ currentUser, handleAppLogout }) {
           ? <GameManager questions={questions} setQuestions={setQuestions} geminiApiKey={geminiApiKey} onNeedSettings={() => handleTabChange('settings')} />
           : null
       case 'settings':
-        return isAdmin
+        return (isAdmin && currentUser?.username !== 'admin-bvtks')
           ? <Settings 
               geminiApiKey={geminiApiKey} 
               setGeminiApiKey={(val) => {

@@ -16,7 +16,11 @@ const ALL_NAV_ITEMS = [
 export default function Sidebar({ activeTab, setActiveTab, currentUser, onAppLogout, selectedBranch, setSelectedBranch }) {
   const [showAccountManager, setShowAccountManager] = useState(false);
   const isAdmin = currentUser?.role === 'admin';
-  const navItems = ALL_NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
+  const isSuperAdmin = currentUser?.username === 'admin-bvtks';
+  const navItems = ALL_NAV_ITEMS.filter(item => {
+    if (isSuperAdmin && item.id === 'settings') return false;
+    return !item.adminOnly || isAdmin;
+  });
 
   return (
     <>
