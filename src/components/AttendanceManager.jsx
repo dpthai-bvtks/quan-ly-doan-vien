@@ -4,31 +4,15 @@ import { Btn, Td, Th } from './UI';
 import { XEP_LOAI_LIST } from '../data/constants';
 
 export default function AttendanceManager({ 
-  members: propMembers, 
+  members, 
   setMembers, 
-  plans: propPlans, 
+  plans, 
   setPlans, 
-  isAdmin,
-  selectedBranch,
-  cs1Members = [],
-  cs2Members = [],
-  cs1Plans = [],
-  cs2Plans = []
+  isAdmin
 }) {
   const [activeTab, setActiveTab] = useState('attendance'); // attendance, evaluation
   const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const isAll = selectedBranch === 'all';
-  const [internalBranch, setInternalBranch] = useState('cs1');
-
-  const members = isAll 
-    ? (internalBranch === 'cs1' ? cs1Members : cs2Members)
-    : propMembers;
-
-  const plans = isAll
-    ? (internalBranch === 'cs1' ? cs1Plans : cs2Plans)
-    : propPlans;
 
   const effectiveSelectedPlanId = selectedPlanId || (plans.length > 0 ? plans[0].id : null);
   const selectedPlan = plans.find(p => p.id === parseInt(effectiveSelectedPlanId, 10)) || plans[0];
@@ -69,30 +53,6 @@ export default function AttendanceManager({
           <h2 className="text-2xl font-bold text-gray-800">Điểm danh & Đánh giá</h2>
           <p className="text-gray-500 text-sm mt-1">Quản lý tham gia phong trào và xếp loại đoàn viên</p>
         </div>
-        {isAll && (
-          <div className="flex gap-1.5 bg-white p-1 rounded-xl shadow-sm border border-gray-100 shrink-0">
-            <button
-              onClick={() => setInternalBranch('cs1')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                internalBranch === 'cs1'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-              }`}
-            >
-              🏢 Cơ sở 1
-            </button>
-            <button
-              onClick={() => setInternalBranch('cs2')}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-                internalBranch === 'cs2'
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
-              }`}
-            >
-              🏢 Cơ sở 2
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Tabs */}

@@ -298,11 +298,6 @@ function AppContent({ currentUser, handleAppLogout }) {
           plans={plans} 
           setPlans={setPlans} 
           isAdmin={effectiveIsAdmin} 
-          selectedBranch={selectedBranch}
-          cs1Members={cs1Members}
-          cs2Members={cs2Members}
-          cs1Plans={cs1Plans}
-          cs2Plans={cs2Plans}
         />
       case 'plans':
         return <PlansManager 
@@ -311,16 +306,13 @@ function AppContent({ currentUser, handleAppLogout }) {
           isAdmin={effectiveIsAdmin} 
           geminiApiKey={geminiApiKey} 
           currentUser={currentUser} 
-          selectedBranch={selectedBranch}
-          cs1Plans={cs1Plans}
-          cs2Plans={cs2Plans}
         />
       case 'games':
-        return effectiveIsAdmin
+        return isAdmin
           ? <GameManager questions={questions} setQuestions={setQuestions} geminiApiKey={geminiApiKey} onNeedSettings={() => handleTabChange('settings')} />
           : null
       case 'settings':
-        return effectiveIsAdmin
+        return isAdmin
           ? <Settings 
               geminiApiKey={geminiApiKey} 
               setGeminiApiKey={(val) => {
