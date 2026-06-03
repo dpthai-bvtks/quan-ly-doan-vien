@@ -91,7 +91,7 @@ function MemberForm({ initial, onSave, onClose }) {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2px 14px", maxHeight: "72vh", overflowY: "auto", paddingRight: 6 }}>
         <SectionDivider label="I. Thông tin cá nhân" />
         <FI label="Họ và tên *" value={f.hoTen} onChange={upd("hoTen")} placeholder="Nguyễn Văn A" />
-        <CustomSelect label="Tổ đoàn *" opts={TO_DOAN_LIST} value={f.toDoan} onChange={upd("toDoan")} placeholder="Nhập tên tổ đoàn/phòng ban..." />
+        <FI label="Khoa/phòng *" value={f.toDoan} onChange={upd("toDoan")} placeholder="Nhập tên khoa/phòng..." />
         <FS label="Giới tính" opts={["Nam", "Nữ"]} value={f.gioiTinh} onChange={upd("gioiTinh")} />
         <FI label="Ngày sinh" type="date" value={f.ngaySinh} onChange={handleNgaySinhChange} />
         <FI label="Tuổi" type="number" value={f.tuoi} onChange={handleTuoiChange} min={16} max={35} />
@@ -142,7 +142,7 @@ function MemberForm({ initial, onSave, onClose }) {
 
 function MemberDetail({ m, onClose }) {
   const rows = [
-    ["Tổ đoàn", m.toDoan], ["Giới tính", m.gioiTinh], ["Ngày sinh", m.ngaySinh], ["Tuổi", m.tuoi],
+    ["Khoa/phòng", m.toDoan], ["Giới tính", m.gioiTinh], ["Ngày sinh", m.ngaySinh], ["Tuổi", m.tuoi],
     ["Dân tộc", m.danToc], ["Tôn giáo", m.tonGiao], ["Điện thoại", m.dienThoai], ["Email", m.email],
     ["Quê quán", m.queQuan], ["Địa chỉ thường trú", m.diaChiThuongTru],
     ["Số CMND/CCCD", m.soCMND], ["Ngày cấp", m.ngayCap], ["Nơi cấp", m.noiCap],
@@ -197,7 +197,7 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
       ["DANH SÁCH ĐOÀN VIÊN MẪU"],
       ["Hệ thống Quản lý Đoàn viên Chi đoàn"],
       [
-        "STT", "Họ và tên", "Tổ đoàn", "Mã định danh", "Số thẻ đoàn",
+        "STT", "Họ và tên", "Khoa/phòng", "Mã định danh", "Số thẻ đoàn",
         "Ngày sinh Nam", "Ngày sinh Nữ", "Tuổi", "Dân tộc", "Tôn giáo",
         "Quê quán", "Địa chỉ thường trú", "Số CMND/CCCD", "Ngày cấp", "Nơi cấp",
         "Trình độ văn hóa", "Trình độ chuyên môn", "Trình độ lý luận chính trị", "Tin học", "Ngoại ngữ",
@@ -223,6 +223,11 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
   };
 
   const isInactive = m => m.trangThai && m.trangThai !== TRANG_THAI_DV.ACTIVE && m.trangThai !== TRANG_THAI_DV.CHUYEN_DEN;
+
+  const uniqueKhoaPhongs = React.useMemo(() => {
+    const set = new Set(members.map(m => m.toDoan).filter(Boolean));
+    return Array.from(set).sort();
+  }, [members]);
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -299,7 +304,7 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
       ["DANH SÁCH ĐOÀN VIÊN"],
       [branchName ? `Đơn vị: ${branchName}` : ""],
       [
-        "STT", "Họ và tên", "Giới tính", "Tổ đoàn", "Mã định danh", "Số thẻ đoàn",
+        "STT", "Họ và tên", "Giới tính", "Khoa/phòng", "Mã định danh", "Số thẻ đoàn",
         "Ngày sinh", "Tuổi", "Dân tộc", "Tôn giáo",
         "Quê quán", "Địa chỉ thường trú", "Số CMND/CCCD", "Ngày cấp", "Nơi cấp",
         "Trình độ văn hóa", "Trình độ chuyên môn", "Trình độ lý luận chính trị", "Tin học", "Ngoại ngữ",
@@ -452,7 +457,8 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
       <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Tìm theo tên, SĐT, số CMND/CCCD..." style={{ flex: 1, minWidth: 200, padding: "9px 14px", border: "1.5px solid #e0e0e0", borderRadius: 10, fontSize: 13, outline: "none" }} />
         <select value={fTD} onChange={e => setFTD(e.target.value)} style={{ padding: "9px 12px", border: "1.5px solid #e0e0e0", borderRadius: 10, fontSize: 13 }}>
-          <option>Tất cả</option>{TO_DOAN_LIST.map(t => <option key={t}>{t}</option>)}
+          <option value="Tất cả">Khoa/phòng: Tất cả</option>
+          {uniqueKhoaPhongs.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
         {["Tất cả", "Nam", "Nữ"].map(g => <button key={g} onClick={() => setFGT(g)} style={{ padding: "8px 14px", borderRadius: 10, border: "none", background: fGT === g ? RED : "#f0f0f0", color: fGT === g ? "#fff" : "#555", fontWeight: 600, cursor: "pointer", fontSize: 13 }}>{g}</button>)}
         <select value={fStatus} onChange={e => setFStatus(e.target.value)} style={{ padding: "9px 12px", border: "1.5px solid #e0e0e0", borderRadius: 10, fontSize: 13 }}>
@@ -469,15 +475,15 @@ export default function MemberManager({ members, setMembers, isAdmin }) {
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ background: "#fafafa", borderBottom: "2px solid #f0f0f0" }}>
-                {["#", "Họ và tên", "Tuổi", "Tổ đoàn", "Chức vụ", "Tr.độ CM", "Điện thoại", ""].map(h => {
-                  const colKeys = { "Họ và tên": "hoTen", "Tuổi": "tuoi", "Tổ đoàn": "toDoan", "Chức vụ": "chucVu", "Tr.độ CM": "trinhDoCM", "Điện thoại": "dienThoai" };
+                {["#", "Họ và tên", "Tuổi", "Khoa/phòng", "Chức vụ", "Tr.độ CM", "Điện thoại", ""].map(h => {
+                  const colKeys = { "Họ và tên": "hoTen", "Tuổi": "tuoi", "Khoa/phòng": "toDoan", "Chức vụ": "chucVu", "Tr.độ CM": "trinhDoCM", "Điện thoại": "dienThoai" };
                   const isSortable = !!colKeys[h];
                   const isActiveSort = sortConfig.key === colKeys[h];
                   const widthMap = {
                     "#": "50px",
                     "Họ và tên": "180px",
                     "Tuổi": "70px",
-                    "Tổ đoàn": "140px",
+                    "Khoa/phòng": "140px",
                     "Chức vụ": "140px",
                     "Tr.độ CM": "150px",
                     "Điện thoại": "120px",

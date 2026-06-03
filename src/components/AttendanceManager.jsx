@@ -3,12 +3,35 @@ import { CheckCircle, Award, ListChecks } from 'lucide-react';
 import { Btn, Td, Th } from './UI';
 import { XEP_LOAI_LIST } from '../data/constants';
 
-export default function AttendanceManager({ members, setMembers, plans, setPlans, isAdmin }) {
+export default function AttendanceManager({ 
+  members: propMembers, 
+  setMembers, 
+  plans: propPlans, 
+  setPlans, 
+  isAdmin,
+  selectedBranch,
+  cs1Members = [],
+  cs2Members = [],
+  cs1Plans = [],
+  cs2Plans = []
+}) {
   const [activeTab, setActiveTab] = useState('attendance'); // attendance, evaluation
-  const [selectedPlanId, setSelectedPlanId] = useState(plans.length > 0 ? plans[0].id : null);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const selectedPlan = plans.find(p => p.id === parseInt(selectedPlanId, 10));
+  const isAll = selectedBranch === 'all';
+  const [internalBranch, setInternalBranch] = useState('cs1');
+
+  const members = isAll 
+    ? (internalBranch === 'cs1' ? cs1Members : cs2Members)
+    : propMembers;
+
+  const plans = isAll
+    ? (internalBranch === 'cs1' ? cs1Plans : cs2Plans)
+    : propPlans;
+
+  const effectiveSelectedPlanId = selectedPlanId || (plans.length > 0 ? plans[0].id : null);
+  const selectedPlan = plans.find(p => p.id === parseInt(effectiveSelectedPlanId, 10)) || plans[0];
   const planAttendees = selectedPlan?.attendees || [];
 
   const handleToggleAttendance = (memberId) => {
@@ -41,11 +64,35 @@ export default function AttendanceManager({ members, setMembers, plans, setPlans
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <div className="flex justify-between items-end mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Điểm danh & Đánh giá</h2>
           <p className="text-gray-500 text-sm mt-1">Quản lý tham gia phong trào và xếp loại đoàn viên</p>
         </div>
+        {isAll && (
+          <div className="flex gap-1.5 bg-white p-1 rounded-xl shadow-sm border border-gray-100 shrink-0">
+            <button
+              onClick={() => setInternalBranch('cs1')}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                internalBranch === 'cs1'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+              }`}
+            >
+              🏢 Cơ sở 1
+            </button>
+            <button
+              onClick={() => setInternalBranch('cs2')}
+              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
+                internalBranch === 'cs2'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+              }`}
+            >
+              🏢 Cơ sở 2
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -107,7 +154,7 @@ export default function AttendanceManager({ members, setMembers, plans, setPlans
                       <tr className="bg-gray-50">
                         <Th>Trạng thái</Th>
                         <Th>Họ tên</Th>
-                        <Th>Chi đoàn</Th>
+                        <Th>Khoa/phòng</Th>
                         <Th>Chức vụ</Th>
                       </tr>
                     </thead>
@@ -156,7 +203,7 @@ export default function AttendanceManager({ members, setMembers, plans, setPlans
                 <thead>
                   <tr className="bg-gray-50">
                     <Th>Họ tên</Th>
-                    <Th>Chi đoàn</Th>
+                    <Th>Khoa/phòng</Th>
                     <Th className="text-center">Số hoạt động tham gia</Th>
                     <Th>Đánh giá & Xếp loại</Th>
                   </tr>

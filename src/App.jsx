@@ -292,9 +292,29 @@ function AppContent({ currentUser, handleAppLogout }) {
       case 'funds':
         return <FundManager funds={funds} setFunds={setFunds} isAdmin={effectiveIsAdmin} isSuperAdmin={isSuperAdmin} />
       case 'attendance':
-        return <AttendanceManager members={members} setMembers={setMembers} plans={plans} setPlans={setPlans} isAdmin={effectiveIsAdmin} />
+        return <AttendanceManager 
+          members={members} 
+          setMembers={setMembers} 
+          plans={plans} 
+          setPlans={setPlans} 
+          isAdmin={effectiveIsAdmin} 
+          selectedBranch={selectedBranch}
+          cs1Members={cs1Members}
+          cs2Members={cs2Members}
+          cs1Plans={cs1Plans}
+          cs2Plans={cs2Plans}
+        />
       case 'plans':
-        return <PlansManager plans={plans} setPlans={setPlans} isAdmin={effectiveIsAdmin} geminiApiKey={geminiApiKey} currentUser={currentUser} />
+        return <PlansManager 
+          plans={plans} 
+          setPlans={setPlans} 
+          isAdmin={effectiveIsAdmin} 
+          geminiApiKey={geminiApiKey} 
+          currentUser={currentUser} 
+          selectedBranch={selectedBranch}
+          cs1Plans={cs1Plans}
+          cs2Plans={cs2Plans}
+        />
       case 'games':
         return effectiveIsAdmin
           ? <GameManager questions={questions} setQuestions={setQuestions} geminiApiKey={geminiApiKey} onNeedSettings={() => handleTabChange('settings')} />
@@ -311,12 +331,6 @@ function AppContent({ currentUser, handleAppLogout }) {
               currentUser={currentUser} 
             />
           : <div className="bg-white p-12 rounded-2xl text-center text-gray-400 text-lg">🔒 Chức năng này chỉ dành cho Admin.</div>
-      case 'documents':
-        return (
-          <div className="space-y-6">
-            <DocumentManager isAdmin={effectiveIsAdmin} currentUser={currentUser} />
-          </div>
-        )
       default:
         return null
     }

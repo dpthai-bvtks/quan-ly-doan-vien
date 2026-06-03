@@ -95,13 +95,30 @@ async function callGeminiAPI(prompt, geminiApiKey, fileObj = null) {
   throw lastError || new Error("Tất cả các AI models đều bị lỗi!");
 }
 
-export default function PlansManager({ plans, setPlans, isAdmin, geminiApiKey, currentUser }) {
+export default function PlansManager({ 
+  plans: propPlans, 
+  setPlans, 
+  isAdmin, 
+  geminiApiKey, 
+  currentUser,
+  selectedBranch,
+  cs1Plans = [],
+  cs2Plans = []
+}) {
   const [subTab, setSubTab] = useState('list'); // list | ai_plan | ai_report
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState(null); // file object chưa upload
   const [editingPlan, setEditingPlan] = useState(null); // plan đang sửa
   const [editPendingFile, setEditPendingFile] = useState(null); // file đính kèm mới khi sửa
+  
+  const isAll = selectedBranch === 'all';
+  const [internalBranch, setInternalBranch] = useState('cs1');
+
+  const plans = isAll 
+    ? (internalBranch === 'cs1' ? cs1Plans : cs2Plans)
+    : propPlans;
+
   const [form, setForm] = useState({
     title: '', category: 'Sinh hoạt', startDate: '', endDate: '',
     status: 'Kế hoạch', responsible: '', description: '', attachment: null
@@ -666,6 +683,31 @@ Yêu cầu: Hãy tối ưu hóa từ ngữ cho thật chuyên nghiệp, súc tí
           <Edit3 size={16} /> Soạn báo cáo
         </button>
       </div>
+
+      {isAll && (
+        <div className="flex gap-1.5 bg-white p-1 rounded-xl shadow-sm border border-gray-100 max-w-xs">
+          <button
+            onClick={() => setInternalBranch('cs1')}
+            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              internalBranch === 'cs1'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+            }`}
+          >
+            🏢 Cơ sở 1
+          </button>
+          <button
+            onClick={() => setInternalBranch('cs2')}
+            className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${
+              internalBranch === 'cs2'
+                ? 'bg-blue-600 text-white shadow-sm'
+                : 'text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+            }`}
+          >
+            🏢 Cơ sở 2
+          </button>
+        </div>
+      )}
 
       {copiedText && (
         <div className="fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2.5 rounded-xl shadow-lg z-50 text-sm font-bold flex items-center gap-2">

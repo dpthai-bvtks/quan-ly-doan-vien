@@ -199,11 +199,7 @@ export default function FundManager({ funds, setFunds, isAdmin, isSuperAdmin }) 
             </table>
           </div>
         </div>
-      ) : (
-        <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm text-center text-gray-400 italic">
-          🔒 Danh sách chi tiết các khoản thu/chi bị ẩn đối với tài khoản tổng hợp.
-        </div>
-      )}
+      ) : null}
     </div>
   );
 }

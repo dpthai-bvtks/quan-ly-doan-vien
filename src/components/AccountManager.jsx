@@ -6,7 +6,7 @@ const STORAGE_KEY = 'app_accounts';
 const DEFAULT_ACCOUNTS = [
   { username: 'bvtks-cs1', password: 'admin@123', role: 'admin', displayName: 'Chi đoàn Bệnh viện Than Khoáng sản CS1' },
   { username: 'bvtks-cs2', password: 'admin@123', role: 'admin', displayName: 'Chi đoàn Bệnh viện Than Khoáng sản CS2' },
-  { username: 'admin-bvtks', password: 'admin@123', role: 'admin', displayName: 'Tổng hợp Chi đoàn BVTKS' },
+  { username: 'admin-bvtks', password: 'admin@123', role: 'admin', displayName: 'Đoàn thanh niên Bệnh viện Than - Khoáng sản' },
 ];
 
 // Xuất hàm load accounts để LoginScreen dùng
@@ -19,7 +19,7 @@ export function loadAccounts() {
   const parsed = JSON.parse(saved);
   // Tự động bổ sung tài khoản admin-bvtks nếu chưa tồn tại
   if (!parsed.some(a => a.username === 'admin-bvtks')) {
-    parsed.push({ username: 'admin-bvtks', password: 'admin@123', role: 'admin', displayName: 'Tổng hợp Chi đoàn BVTKS' });
+    parsed.push({ username: 'admin-bvtks', password: 'admin@123', role: 'admin', displayName: 'Đoàn thanh niên Bệnh viện Than - Khoáng sản' });
     localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
   }
   return parsed;

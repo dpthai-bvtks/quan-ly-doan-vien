@@ -66,7 +66,7 @@ export default function Dashboard({ members }) {
           ["👨", "Nam", nam, NAVY], 
           ["👩", "Nữ", nu, "#e76f51"], 
           ["⭐", "Đảng viên", dangVien, "#d4af37"],
-          ["🏢", "Tổ đoàn", toDoanData.length, GREEN]
+          ["🏢", "Khoa/phòng", toDoanData.length, GREEN]
         ].map(([icon, label, value, color]) => (
           <div key={label} className="card-hover" style={{ background: "#fff", borderRadius: 13, padding: "16px 18px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)", borderLeft: `4px solid ${color}` }}>
             <div style={{ fontSize: 24, marginBottom: 6 }}>{icon}</div>
@@ -125,7 +125,7 @@ export default function Dashboard({ members }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginBottom: 18 }}>
-        <CC title="Theo tổ đoàn">
+        <CC title="Theo khoa/phòng">
           <ResponsiveContainer width="100%" height={210}>
             <BarChart data={toDoanData} layout="vertical" margin={{ top: 0, right: 20, left: 100, bottom: 0 }}>
               <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
