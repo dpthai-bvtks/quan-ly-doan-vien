@@ -6,6 +6,7 @@ const STORAGE_KEY = 'app_accounts';
 const DEFAULT_ACCOUNTS = [
   { username: 'bvtks-cs1', password: 'admin@123', role: 'admin', displayName: 'Chi đoàn Bệnh viện Than Khoáng sản CS1' },
   { username: 'bvtks-cs2', password: 'admin@123', role: 'admin', displayName: 'Chi đoàn Bệnh viện Than Khoáng sản CS2' },
+  { username: 'admin-bvtks', password: 'admin@123', role: 'admin', displayName: 'Tổng hợp Chi đoàn BVTKS' },
 ];
 
 // Xuất hàm load accounts để LoginScreen dùng
@@ -15,7 +16,13 @@ export function loadAccounts() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ACCOUNTS));
     return DEFAULT_ACCOUNTS;
   }
-  return JSON.parse(saved);
+  const parsed = JSON.parse(saved);
+  // Tự động bổ sung tài khoản admin-bvtks nếu chưa tồn tại
+  if (!parsed.some(a => a.username === 'admin-bvtks')) {
+    parsed.push({ username: 'admin-bvtks', password: 'admin@123', role: 'admin', displayName: 'Tổng hợp Chi đoàn BVTKS' });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+  }
+  return parsed;
 }
 
 function saveAccounts(accounts) {
@@ -88,7 +95,7 @@ export default function AccountManager({ currentUser, onClose }) {
   };
 
   const handleDelete = (username) => {
-    if (username === 'bvtks-cs1' || username === 'bvtks-cs2') {
+    if (username === 'bvtks-cs1' || username === 'bvtks-cs2' || username === 'admin-bvtks') {
       showToast('Không thể xóa tài khoản mặc định của hệ thống!', 'error');
       return;
     }

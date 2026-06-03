@@ -14,7 +14,7 @@ const ALL_NAV_ITEMS = [
   { id: 'settings', label: 'Cài đặt', icon: Settings, adminOnly: true },
 ];
 
-export default function Sidebar({ activeTab, setActiveTab, currentUser, onAppLogout }) {
+export default function Sidebar({ activeTab, setActiveTab, currentUser, onAppLogout, selectedBranch, setSelectedBranch }) {
   const [showAccountManager, setShowAccountManager] = useState(false);
   const isAdmin = currentUser?.role === 'admin';
   const navItems = ALL_NAV_ITEMS.filter(item => !item.adminOnly || isAdmin);
@@ -53,6 +53,25 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, onAppLog
             <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.65)' }}>Hệ thống Quản lý</p>
           </div>
         </div>
+
+        {/* Branch Selector for Super Admin */}
+        {currentUser?.username === 'admin-bvtks' && (
+          <div className="px-3 pt-3 pb-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.15)' }}>
+            <label className="block text-[10px] uppercase font-bold text-white/50 mb-1.5 text-left pl-1">
+              Xem dữ liệu chi đoàn:
+            </label>
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="w-full bg-white/10 hover:bg-white/15 border border-white/20 text-white rounded-xl px-3 py-2 text-xs font-semibold outline-none transition-all cursor-pointer"
+              style={{ colorScheme: 'dark' }}
+            >
+              <option value="all" className="bg-[#a50d24] text-white">📊 Tất cả (Tổng hợp)</option>
+              <option value="cs1" className="bg-[#a50d24] text-white">🏢 Chi đoàn Cơ sở 1</option>
+              <option value="cs2" className="bg-[#a50d24] text-white">🏢 Chi đoàn Cơ sở 2</option>
+            </select>
+          </div>
+        )}
 
         {/* Nav Items */}
         <div className="flex-1 overflow-y-auto py-3">

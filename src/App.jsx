@@ -18,8 +18,14 @@ const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
 
 function AppContent({ currentUser, handleAppLogout }) {
   const isAdmin = currentUser?.role === 'admin';
+  const isSuperAdmin = currentUser?.username === 'admin-bvtks';
+  const isReadOnly = isSuperAdmin;
+  const effectiveIsAdmin = isAdmin && !isReadOnly;
+
   const navigate = useNavigate();
   const location = useLocation();
+
+  const [selectedBranch, setSelectedBranch] = useState('all'); // 'all' | 'cs1' | 'cs2'
 
   const pathToTab = (path) => {
     const p = path.replace(/^\//, '');
@@ -49,23 +55,94 @@ function AppContent({ currentUser, handleAppLogout }) {
     }
   };
   
-  // LocalStorage Cache System Scoped by Username
-  const [members, setMembers] = useState(() => {
+  // LocalStorage Cache System for Branch CS1
+  const [cs1Members, setCs1Members] = useState(() => {
+    const saved = localStorage.getItem('db_members_bvtks-cs1');
+    return saved ? JSON.parse(saved) : RAW_MEMBERS;
+  });
+  const [cs1Plans, setCs1Plans] = useState(() => {
+    const saved = localStorage.getItem('db_plans_bvtks-cs1');
+    return saved ? JSON.parse(saved) : INIT_PLANS;
+  });
+  const [cs1Questions, setCs1Questions] = useState(() => {
+    const saved = localStorage.getItem('db_questions_bvtks-cs1');
+    return saved ? JSON.parse(saved) : INIT_QUESTIONS;
+  });
+  const [cs1Funds, setCs1Funds] = useState(() => {
+    const saved = localStorage.getItem('db_funds_bvtks-cs1');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // LocalStorage Cache System for Branch CS2
+  const [cs2Members, setCs2Members] = useState(() => {
+    const saved = localStorage.getItem('db_members_bvtks-cs2');
+    return saved ? JSON.parse(saved) : RAW_MEMBERS;
+  });
+  const [cs2Plans, setCs2Plans] = useState(() => {
+    const saved = localStorage.getItem('db_plans_bvtks-cs2');
+    return saved ? JSON.parse(saved) : INIT_PLANS;
+  });
+  const [cs2Questions, setCs2Questions] = useState(() => {
+    const saved = localStorage.getItem('db_questions_bvtks-cs2');
+    return saved ? JSON.parse(saved) : INIT_QUESTIONS;
+  });
+  const [cs2Funds, setCs2Funds] = useState(() => {
+    const saved = localStorage.getItem('db_funds_bvtks-cs2');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // LocalStorage Cache System for Normal Users
+  const [normalMembers, setNormalMembers] = useState(() => {
+    if (isSuperAdmin) return [];
     const saved = localStorage.getItem(`db_members_${currentUser?.username}`);
     return saved ? JSON.parse(saved) : RAW_MEMBERS;
-  })
-  const [plans, setPlans] = useState(() => {
+  });
+  const [normalPlans, setNormalPlans] = useState(() => {
+    if (isSuperAdmin) return [];
     const saved = localStorage.getItem(`db_plans_${currentUser?.username}`);
     return saved ? JSON.parse(saved) : INIT_PLANS;
-  })
-  const [questions, setQuestions] = useState(() => {
+  });
+  const [normalQuestions, setNormalQuestions] = useState(() => {
+    if (isSuperAdmin) return [];
     const saved = localStorage.getItem(`db_questions_${currentUser?.username}`);
     return saved ? JSON.parse(saved) : INIT_QUESTIONS;
-  })
-  const [funds, setFunds] = useState(() => {
+  });
+  const [normalFunds, setNormalFunds] = useState(() => {
+    if (isSuperAdmin) return [];
     const saved = localStorage.getItem(`db_funds_${currentUser?.username}`);
     return saved ? JSON.parse(saved) : [];
-  })
+  });
+
+  // Computed active states based on current selection
+  const members = isSuperAdmin 
+    ? (selectedBranch === 'cs1' ? cs1Members : (selectedBranch === 'cs2' ? cs2Members : [...cs1Members, ...cs2Members]))
+    : normalMembers;
+
+  const plans = isSuperAdmin 
+    ? (selectedBranch === 'cs1' ? cs1Plans : (selectedBranch === 'cs2' ? cs2Plans : [...cs1Plans, ...cs2Plans]))
+    : normalPlans;
+
+  const questions = isSuperAdmin 
+    ? (selectedBranch === 'cs1' ? cs1Questions : (selectedBranch === 'cs2' ? cs2Questions : cs1Questions))
+    : normalQuestions;
+
+  const funds = isSuperAdmin 
+    ? (selectedBranch === 'cs1' ? cs1Funds : (selectedBranch === 'cs2' ? cs2Funds : [...cs1Funds, ...cs2Funds]))
+    : normalFunds;
+
+  // Setters wrap
+  const setMembers = (newVal) => {
+    if (!isSuperAdmin) setNormalMembers(newVal);
+  };
+  const setPlans = (newVal) => {
+    if (!isSuperAdmin) setNormalPlans(newVal);
+  };
+  const setQuestions = (newVal) => {
+    if (!isSuperAdmin) setNormalQuestions(newVal);
+  };
+  const setFunds = (newVal) => {
+    if (!isSuperAdmin) setNormalFunds(newVal);
+  };
   
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem(`geminiApiKey_${currentUser?.username}`) || 'AIzaSyAfbVq398HoQbsRvYvqQbNBkSSJpvTmZmk')
   const [syncStatus, setSyncStatus] = useState('Chưa kết nối')
@@ -73,6 +150,7 @@ function AppContent({ currentUser, handleAppLogout }) {
 
   // Lưu vào LocalStorage & sync cloud (chỉ admin mới được ghi lên Drive)
   useEffect(() => {
+    if (isSuperAdmin) return;
     localStorage.setItem(`db_members_${currentUser?.username}`, JSON.stringify(members));
     localStorage.setItem(`db_plans_${currentUser?.username}`, JSON.stringify(plans));
     localStorage.setItem(`db_questions_${currentUser?.username}`, JSON.stringify(questions));
@@ -87,6 +165,72 @@ function AppContent({ currentUser, handleAppLogout }) {
   }, [])
 
   const downloadFromCloud = async () => {
+    if (isSuperAdmin) {
+      setSyncStatus('Đang đồng bộ 2 chi đoàn...');
+      try {
+        const config1 = getBranchConfig('bvtks-cs1');
+        const config2 = getBranchConfig('bvtks-cs2');
+
+        let cs1 = { members: RAW_MEMBERS, plans: INIT_PLANS, questions: INIT_QUESTIONS, funds: [] };
+        let cs2 = { members: RAW_MEMBERS, plans: INIT_PLANS, questions: INIT_QUESTIONS, funds: [] };
+
+        if (config1.apiUrl) {
+          try {
+            const res1 = await fetch(`${config1.apiUrl}?branch=cs1`);
+            const data1 = await res1.json();
+            if (data1.members) cs1.members = data1.members;
+            if (data1.plans) cs1.plans = data1.plans;
+            if (data1.questions) cs1.questions = data1.questions;
+            if (data1.funds) cs1.funds = data1.funds;
+          } catch (e) {
+            console.error("Lỗi fetch CS1:", e);
+          }
+        }
+
+        if (config2.apiUrl) {
+          try {
+            const res2 = await fetch(`${config2.apiUrl}?branch=cs2`);
+            const data2 = await res2.json();
+            if (data2.members) cs2.members = data2.members;
+            if (data2.plans) cs2.plans = data2.plans;
+            if (data2.questions) cs2.questions = data2.questions;
+            if (data2.funds) cs2.funds = data2.funds;
+          } catch (e) {
+            console.error("Lỗi fetch CS2:", e);
+          }
+        }
+
+        setCs1Members(cs1.members);
+        setCs1Plans(cs1.plans);
+        setCs1Questions(cs1.questions);
+        setCs1Funds(cs1.funds);
+
+        setCs2Members(cs2.members);
+        setCs2Plans(cs2.plans);
+        setCs2Questions(cs2.questions);
+        setCs2Funds(cs2.funds);
+
+        // Lưu offline cache
+        localStorage.setItem('db_members_bvtks-cs1', JSON.stringify(cs1.members));
+        localStorage.setItem('db_plans_bvtks-cs1', JSON.stringify(cs1.plans));
+        localStorage.setItem('db_questions_bvtks-cs1', JSON.stringify(cs1.questions));
+        localStorage.setItem('db_funds_bvtks-cs1', JSON.stringify(cs1.funds));
+
+        localStorage.setItem('db_members_bvtks-cs2', JSON.stringify(cs2.members));
+        localStorage.setItem('db_plans_bvtks-cs2', JSON.stringify(cs2.plans));
+        localStorage.setItem('db_questions_bvtks-cs2', JSON.stringify(cs2.questions));
+        localStorage.setItem('db_funds_bvtks-cs2', JSON.stringify(cs2.funds));
+
+        setSyncStatus('Đã đồng bộ 2 chi đoàn');
+      } catch (error) {
+        console.error("Lỗi đồng bộ super admin:", error);
+        setSyncStatus('Lỗi đồng bộ');
+      } finally {
+        initialLoadDone.current = true;
+      }
+      return;
+    }
+
     const config = getBranchConfig(currentUser?.username);
     if (!config.apiUrl) {
       setSyncStatus('Chưa cấu hình API URL');
@@ -112,6 +256,7 @@ function AppContent({ currentUser, handleAppLogout }) {
   };
 
   const uploadToCloud = async (m, p, q, f) => {
+    if (isSuperAdmin) return;
     const config = getBranchConfig(currentUser?.username);
     if (!config.apiUrl) {
       setSyncStatus('Chưa cấu hình API URL');
@@ -143,19 +288,19 @@ function AppContent({ currentUser, handleAppLogout }) {
       case 'dashboard':
         return <Dashboard members={members} />
       case 'members':
-        return <MemberManager members={members} setMembers={setMembers} isAdmin={isAdmin} />
+        return <MemberManager members={members} setMembers={setMembers} isAdmin={effectiveIsAdmin} />
       case 'funds':
-        return <FundManager funds={funds} setFunds={setFunds} isAdmin={isAdmin} />
+        return <FundManager funds={funds} setFunds={setFunds} isAdmin={effectiveIsAdmin} isSuperAdmin={isSuperAdmin} />
       case 'attendance':
-        return <AttendanceManager members={members} setMembers={setMembers} plans={plans} setPlans={setPlans} isAdmin={isAdmin} />
+        return <AttendanceManager members={members} setMembers={setMembers} plans={plans} setPlans={setPlans} isAdmin={effectiveIsAdmin} />
       case 'plans':
-        return <PlansManager plans={plans} setPlans={setPlans} isAdmin={isAdmin} geminiApiKey={geminiApiKey} currentUser={currentUser} />
+        return <PlansManager plans={plans} setPlans={setPlans} isAdmin={effectiveIsAdmin} geminiApiKey={geminiApiKey} currentUser={currentUser} />
       case 'games':
-        return isAdmin
+        return effectiveIsAdmin
           ? <GameManager questions={questions} setQuestions={setQuestions} geminiApiKey={geminiApiKey} onNeedSettings={() => handleTabChange('settings')} />
           : null
       case 'settings':
-        return isAdmin
+        return effectiveIsAdmin
           ? <Settings 
               geminiApiKey={geminiApiKey} 
               setGeminiApiKey={(val) => {
@@ -169,7 +314,7 @@ function AppContent({ currentUser, handleAppLogout }) {
       case 'documents':
         return (
           <div className="space-y-6">
-            <DocumentManager isAdmin={isAdmin} currentUser={currentUser} />
+            <DocumentManager isAdmin={effectiveIsAdmin} currentUser={currentUser} />
           </div>
         )
       default:
@@ -179,7 +324,14 @@ function AppContent({ currentUser, handleAppLogout }) {
 
   return (
     <div className="flex min-h-screen" style={{ background: '#f0f2f8' }}>
-      <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} currentUser={currentUser} onAppLogout={handleAppLogout} />
+      <Sidebar 
+        activeTab={activeTab} 
+        setActiveTab={handleTabChange} 
+        currentUser={currentUser} 
+        onAppLogout={handleAppLogout} 
+        selectedBranch={selectedBranch}
+        setSelectedBranch={setSelectedBranch}
+      />
       <div className="flex-1 ml-64 p-8">
         <div className="max-w-6xl mx-auto animate-fade-in-up">
           {renderContent()}

@@ -3,7 +3,7 @@ import { Plus, Trash2, TrendingUp, TrendingDown, Wallet, Download } from 'lucide
 import { Btn, Td, Th } from './UI';
 import * as XLSX from 'xlsx';
 
-export default function FundManager({ funds, setFunds, isAdmin }) {
+export default function FundManager({ funds, setFunds, isAdmin, isSuperAdmin }) {
   const [showForm, setShowForm] = useState(false);
   const [newFund, setNewFund] = useState({ date: new Date().toISOString().split('T')[0], type: 'thu', amount: '', description: '' });
 
@@ -72,10 +72,12 @@ export default function FundManager({ funds, setFunds, isAdmin }) {
           <p className="text-gray-500 text-sm mt-1">Theo dõi quỹ đoàn phí và các khoản chi</p>
         </div>
         <div className="flex gap-2">
-          <Btn v="s" onClick={handleExportExcel}>
-            <Download size={18} /> Xuất File Tổng Hợp
-          </Btn>
-          {isAdmin && (
+          {!isSuperAdmin && (
+            <Btn v="s" onClick={handleExportExcel}>
+              <Download size={18} /> Xuất File Tổng Hợp
+            </Btn>
+          )}
+          {isAdmin && !isSuperAdmin && (
             <Btn onClick={() => setShowForm(!showForm)}>
               <Plus size={18} /> Thêm Giao dịch
             </Btn>
@@ -94,27 +96,31 @@ export default function FundManager({ funds, setFunds, isAdmin }) {
             <div className="text-2xl font-bold text-gray-800">{currentBalance.toLocaleString()} đ</div>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
-            <TrendingUp size={24} />
-          </div>
-          <div>
-            <div className="text-sm text-gray-500 mb-1">Tổng thu</div>
-            <div className="text-2xl font-bold text-green-600">+{totalIncome.toLocaleString()} đ</div>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600">
-            <TrendingDown size={24} />
-          </div>
-          <div>
-            <div className="text-sm text-gray-500 mb-1">Tổng chi</div>
-            <div className="text-2xl font-bold text-red-600">-{totalExpense.toLocaleString()} đ</div>
-          </div>
-        </div>
+        {!isSuperAdmin && (
+          <>
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-green-50 flex items-center justify-center text-green-600">
+                <TrendingUp size={24} />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Tổng thu</div>
+                <div className="text-2xl font-bold text-green-600">+{totalIncome.toLocaleString()} đ</div>
+              </div>
+            </div>
+            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center text-red-600">
+                <TrendingDown size={24} />
+              </div>
+              <div>
+                <div className="text-sm text-gray-500 mb-1">Tổng chi</div>
+                <div className="text-2xl font-bold text-red-600">-{totalExpense.toLocaleString()} đ</div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
-      {showForm && isAdmin && (
+      {showForm && isAdmin && !isSuperAdmin && (
         <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-md animate-fade-in-down">
           <h3 className="font-bold text-gray-800 mb-4">Thêm giao dịch mới</h3>
           <form onSubmit={handleAdd} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
@@ -144,54 +150,60 @@ export default function FundManager({ funds, setFunds, isAdmin }) {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50">
-                <Th>Ngày tháng</Th>
-                <Th>Loại</Th>
-                <Th>Nội dung</Th>
-                <Th>Số tiền</Th>
-                <Th>Quỹ còn lại</Th>
-                {isAdmin && <Th>Thao tác</Th>}
-              </tr>
-            </thead>
-            <tbody>
-              {fundsWithBalance.length === 0 ? (
-                <tr>
-                  <td colSpan={isAdmin ? 6 : 5} className="text-center p-8 text-gray-400 italic">Chưa có dữ liệu thu/chi</td>
+      {!isSuperAdmin ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50">
+                  <Th>Ngày tháng</Th>
+                  <Th>Loại</Th>
+                  <Th>Nội dung</Th>
+                  <Th>Số tiền</Th>
+                  <Th>Quỹ còn lại</Th>
+                  {isAdmin && <Th>Thao tác</Th>}
                 </tr>
-              ) : (
-                fundsWithBalance.map((fund) => (
-                  <tr key={fund.id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                    <Td>{new Date(fund.date).toLocaleDateString('vi-VN')}</Td>
-                    <Td>
-                      <span className={`px-2 py-1 text-xs font-bold rounded-md ${fund.type === 'thu' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {fund.type === 'thu' ? 'Thu' : 'Chi'}
-                      </span>
-                    </Td>
-                    <Td>{fund.description}</Td>
-                    <Td>
-                      <span className={`font-semibold ${fund.type === 'thu' ? 'text-green-600' : 'text-red-600'}`}>
-                        {fund.type === 'thu' ? '+' : '-'}{fund.amount.toLocaleString()} đ
-                      </span>
-                    </Td>
-                    <Td><span className="font-bold text-gray-800">{fund.balance.toLocaleString()} đ</span></Td>
-                    {isAdmin && (
-                      <Td>
-                        <button onClick={() => handleDelete(fund.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                          <Trash2 size={16} />
-                        </button>
-                      </Td>
-                    )}
+              </thead>
+              <tbody>
+                {fundsWithBalance.length === 0 ? (
+                  <tr>
+                    <td colSpan={isAdmin ? 6 : 5} className="text-center p-8 text-gray-400 italic">Chưa có dữ liệu thu/chi</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  fundsWithBalance.map((fund) => (
+                    <tr key={fund.id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                      <Td>{new Date(fund.date).toLocaleDateString('vi-VN')}</Td>
+                      <Td>
+                        <span className={`px-2 py-1 text-xs font-bold rounded-md ${fund.type === 'thu' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {fund.type === 'thu' ? 'Thu' : 'Chi'}
+                        </span>
+                      </Td>
+                      <Td>{fund.description}</Td>
+                      <Td>
+                        <span className={`font-semibold ${fund.type === 'thu' ? 'text-green-600' : 'text-red-600'}`}>
+                          {fund.type === 'thu' ? '+' : '-'}{fund.amount.toLocaleString()} đ
+                        </span>
+                      </Td>
+                      <Td><span className="font-bold text-gray-800">{fund.balance.toLocaleString()} đ</span></Td>
+                      {isAdmin && (
+                        <Td>
+                          <button onClick={() => handleDelete(fund.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                            <Trash2 size={16} />
+                          </button>
+                        </Td>
+                      )}
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm text-center text-gray-400 italic">
+          🔒 Danh sách chi tiết các khoản thu/chi bị ẩn đối với tài khoản tổng hợp.
+        </div>
+      )}
     </div>
   );
 }

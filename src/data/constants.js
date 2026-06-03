@@ -14,6 +14,14 @@ export const BRANCH_CONFIGS = {
     defaultFolderDen: import.meta.env.VITE_FOLDER_VAN_BAN_DEN || '',
     defaultFolderDi: import.meta.env.VITE_FOLDER_VAN_BAN_DI || '',
     defaultFolderKeHoach: import.meta.env.VITE_FOLDER_KE_HOACH || '',
+  },
+  'admin-bvtks': {
+    title: "Tổng hợp Chi đoàn\nBệnh viện Than Khoáng sản",
+    displayName: "Tổng hợp Chi đoàn Bệnh viện Than Khoáng sản",
+    defaultApiUrl: 'https://script.google.com/macros/s/AKfycbwrBrDPYew4uooEFxCPgBumIcj68AiW6DiaGsW4ZmiTXy3O5QdgV-1_od8YLOo0C-Vu/exec',
+    defaultFolderDen: '',
+    defaultFolderDi: '',
+    defaultFolderKeHoach: '',
   }
 };
 

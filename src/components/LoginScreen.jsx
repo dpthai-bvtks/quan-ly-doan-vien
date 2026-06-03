@@ -54,7 +54,7 @@ export default function LoginScreen({ onLogin }) {
                 type="text"
                 value={username}
                 onChange={e => { setUsername(e.target.value); setError(''); }}
-                placeholder="bvtks-cs1 / bvtks-cs2"
+                placeholder="bvtks-cs1 / bvtks-cs2 / admin-bvtks"
                 className="w-full bg-white/10 border border-white/30 text-white placeholder-blue-300 rounded-xl px-4 py-3 outline-none focus:border-white/60 focus:bg-white/20 transition-all"
                 required
                 autoComplete="username"
