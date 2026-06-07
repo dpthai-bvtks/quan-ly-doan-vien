@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import { File as FileIcon } from 'lucide-react'
-import DocumentManager from './components/DocumentManager'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import MemberManager from './components/MemberManager'
