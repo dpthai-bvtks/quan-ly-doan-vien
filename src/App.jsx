@@ -142,7 +142,7 @@ function AppContent({ currentUser, handleAppLogout }) {
     if (!isSuperAdmin) setNormalFunds(newVal);
   };
   
-  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem(`geminiApiKey_${currentUser?.username}`) || 'AIzaSyAfbVq398HoQbsRvYvqQbNBkSSJpvTmZmk')
+  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem(`geminiApiKey_${currentUser?.username}`) || import.meta.env.VITE_GEMINI_API_KEY || '')
   const [syncStatus, setSyncStatus] = useState('Chưa kết nối')
   const initialLoadDone = useRef(false)
 
