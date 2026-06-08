@@ -3,9 +3,9 @@ export const BRANCH_CONFIGS = {
     title: "Chi đoàn Bệnh viện Than\nKhoáng sản CS1",
     displayName: "Chi đoàn Bệnh viện Than Khoáng sản CS1",
     defaultApiUrl: 'https://script.google.com/macros/s/AKfycbwrBrDPYew4uooEFxCPgBumIcj68AiW6DiaGsW4ZmiTXy3O5QdgV-1_od8YLOo0C-Vu/exec',
-    defaultFolderDen: '1Inof8JrojWxheJGeFt2DKNarCNILWwOp',
-    defaultFolderDi: '1yP66ppzCYmuqtuw1XU9NkeqXmJFmdggk',
-    defaultFolderKeHoach: '1g3Y-MgyR6kButQGiBrbuI9OFI5pAwTPn',
+    defaultFolderDen: '1O_UzwJG-57cjsGmQ6_Fh-MLmfgC77ObV',
+    defaultFolderDi: '1Z0heGXWLFM3zr5Z9afyIaDt9t5oKqnL7',
+    defaultFolderKeHoach: '17nCNXjMoYnGwmsySH-HD6XMM1GQHUx8Q',
   },
   'bvtks-cs2': {
     title: "Chi đoàn Bệnh viện Than\nKhoáng sản CS2",
@@ -19,9 +19,9 @@ export const BRANCH_CONFIGS = {
     title: "Đoàn thanh niên Bệnh viện\nThan - Khoáng sản",
     displayName: "Đoàn thanh niên Bệnh viện Than - Khoáng sản",
     defaultApiUrl: 'https://script.google.com/macros/s/AKfycbwrBrDPYew4uooEFxCPgBumIcj68AiW6DiaGsW4ZmiTXy3O5QdgV-1_od8YLOo0C-Vu/exec',
-    defaultFolderDen: '1Inof8JrojWxheJGeFt2DKNarCNILWwOp',
-    defaultFolderDi: '1yP66ppzCYmuqtuw1XU9NkeqXmJFmdggk',
-    defaultFolderKeHoach: '1g3Y-MgyR6kButQGiBrbuI9OFI5pAwTPn',
+    defaultFolderDen: '',
+    defaultFolderDi: '',
+    defaultFolderKeHoach: '',
   }
 };
 
