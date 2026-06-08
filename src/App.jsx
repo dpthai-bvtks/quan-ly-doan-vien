@@ -10,6 +10,7 @@ import PlayerMobile from './components/PlayerMobile'
 import LoginScreen from './components/LoginScreen'
 import FundManager from './components/FundManager'
 import AttendanceManager from './components/AttendanceManager'
+import MinutesManager from './components/MinutesManager'
 import { RAW_MEMBERS, INIT_PLANS, INIT_QUESTIONS, getBranchConfig } from './data/constants'
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
@@ -27,7 +28,7 @@ function AppContent({ currentUser, handleAppLogout }) {
 
   const pathToTab = (path) => {
     const p = path.replace(/^\//, '');
-    const validTabs = ['dashboard', 'members', 'funds', 'attendance', 'documents', 'plans', 'games', 'settings'];
+    const validTabs = ['dashboard', 'members', 'funds', 'attendance', 'documents', 'plans', 'games', 'settings', 'minutes'];
     if (validTabs.includes(p)) return p;
     return 'dashboard';
   };
@@ -304,6 +305,12 @@ function AppContent({ currentUser, handleAppLogout }) {
           isAdmin={effectiveIsAdmin} 
           geminiApiKey={geminiApiKey} 
           currentUser={currentUser} 
+        />
+      case 'minutes':
+        return <MinutesManager 
+          currentUser={currentUser}
+          isAdmin={effectiveIsAdmin}
+          selectedBranch={selectedBranch}
         />
       case 'games':
         return isAdmin

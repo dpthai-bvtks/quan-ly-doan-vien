@@ -5,10 +5,11 @@ import { getBranchConfig } from '../data/constants';
 
 const ALL_NAV_ITEMS = [
   { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard, adminOnly: false },
-  { id: 'members', label: 'Quản lý Đoàn viên', icon: Users, adminOnly: false },
-  { id: 'funds', label: 'Quản lý Thu/Chi', icon: Wallet, adminOnly: false },
-  { id: 'attendance', label: 'Điểm danh & Đánh giá', icon: CheckCircle, adminOnly: false },
+  { id: 'members', label: 'Danh sách đoàn viên', icon: Users, adminOnly: false },
   { id: 'plans', label: 'Kế hoạch & Báo cáo', icon: Calendar, adminOnly: false },
+  { id: 'minutes', label: 'Biên bản BCH', icon: FolderOpen, adminOnly: false },
+  { id: 'attendance', label: 'Điểm danh & Đánh giá', icon: CheckCircle, adminOnly: false },
+  { id: 'funds', label: 'Quản lý Thu/Chi', icon: Wallet, adminOnly: false },
   { id: 'games', label: 'Trò chơi sinh hoạt', icon: Gamepad2, adminOnly: true },
   { id: 'settings', label: 'Cài đặt', icon: Settings, adminOnly: true },
 ];
