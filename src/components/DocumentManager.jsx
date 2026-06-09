@@ -297,6 +297,28 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
     setDeleteDriveFile(true); // mặc định tích chọn xóa tệp trên Drive nếu có
   };
 
+  // Lắng nghe sự kiện nhấn Enter toàn cục để xác nhận nhanh thông báo/modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        if (alertState) {
+          e.preventDefault();
+          setAlertState(null);
+        } else if (deleteConfirmState) {
+          e.preventDefault();
+          const doc = deleteConfirmState;
+          setDeleteConfirmState(null);
+          executeDelete(doc, deleteDriveFile);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [alertState, deleteConfirmState, deleteDriveFile]);
+
   // Lọc dữ liệu Sổ lưu
   const filteredRegistry = documents.filter(d => {
     // Phân loại (đến/đi)
