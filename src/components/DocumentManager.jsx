@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { 
   Upload, File as FileIcon, Download, Eye, Loader2, Trash2, Search, 
@@ -796,7 +797,7 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
       {/* ==========================================
           MODAL THÔNG BÁO TỰ CHẾ (ALERT OVERLAY)
           ========================================== */}
-      {alertState && (
+      {alertState && createPortal(
         <div 
           className="modal-overlay" 
           style={{ 
@@ -877,13 +878,14 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
               Đồng ý
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ==========================================
           MODAL XÁC NHẬN XÓA TỰ CHẾ (DELETE CONFIRM OVERLAY)
           ========================================== */}
-      {deleteConfirmState && (
+      {deleteConfirmState && createPortal(
         <div 
           className="modal-overlay" 
           style={{ 
@@ -1004,7 +1006,8 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
     </div>
