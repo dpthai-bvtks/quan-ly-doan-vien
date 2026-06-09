@@ -782,9 +782,9 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
             inset: 0, 
             zIndex: 10005, 
             display: "flex", 
-            alignItems: "center", 
+            alignItems: "flex-start", 
             justifyContent: "center", 
-            padding: 16, 
+            padding: "80px 16px 16px 16px", 
             background: "rgba(0,0,0,0.6)", 
             backdropFilter: "blur(4px)" 
           }}
@@ -869,9 +869,9 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
             inset: 0, 
             zIndex: 10005, 
             display: "flex", 
-            alignItems: "center", 
+            alignItems: "flex-start", 
             justifyContent: "center", 
-            padding: 16, 
+            padding: "80px 16px 16px 16px", 
             background: "rgba(0,0,0,0.6)", 
             backdropFilter: "blur(4px)" 
           }}
