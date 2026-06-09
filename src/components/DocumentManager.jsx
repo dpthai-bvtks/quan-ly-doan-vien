@@ -1,892 +1,769 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Modal, FI, FS, FT, Btn, Th, Td } from './UI';
 import { 
-  Upload, FileText, Download, Eye, Loader2, Trash2, 
-  Search, Plus, Filter, Calendar, Users, CheckCircle2, 
-  BookOpen, Edit3, ArrowUpRight, ArrowDownLeft, AlertCircle 
+  Upload, File as FileIcon, Download, Eye, Loader2, Trash2, Search, 
+  Plus, Edit, BookOpen, FolderOpen, Inbox, Send, RefreshCw, AlertCircle, FileCheck
 } from 'lucide-react';
-
+import { Modal, FI, FS, FT, Btn, Th, Td } from './UI';
 import { getBranchConfig } from '../data/constants';
 
-// Hàm upload file lên Google Drive
-async function uploadFileToDrive(file, folderId, apiUrl) {
-  if (!apiUrl) {
-    throw new Error("Chưa cấu hình Google Apps Script URL cho Chi đoàn này!");
-  }
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const base64 = reader.result.split(',')[1];
-        const payload = {
-          action: 'upload_file',
-          folderId: folderId,
-          name: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          base64: base64
-        };
-
-        const res = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        if (data.status === 'success') {
-          resolve({ id: data.fileId, name: file.name, webViewLink: data.url });
-        } else {
-          reject(new Error(data.message || 'Lỗi không xác định'));
-        }
-      } catch (e) {
-        reject(e);
-      }
-    };
-    reader.onerror = () => reject(new Error("Lỗi đọc file"));
-    reader.readAsDataURL(file);
-  });
-}
-
-// Hàm xóa file từ Google Drive
-async function deleteFileFromDrive(fileId, apiUrl) {
-  if (!apiUrl) return;
-  const res = await fetch(apiUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action: 'delete_file', fileId })
-  });
-  const data = await res.json();
-  if (data.status === 'error') {
-    throw new Error(data.message);
-  }
-}
-
 export default function DocumentManager({ isAdmin, currentUser, selectedBranch, documents = [], setDocuments }) {
-  // State quản lý bộ lọc
-  const [activeTab, setActiveTab] = useState('OUT'); // 'OUT' (Đi) | 'IN' (Đến)
-  const [search, setSearch] = useState('');
-  
-  // State quản lý Modals
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [search, setSearch] = useState('');
+  const [previewFile, setPreviewFile] = useState(null);
+
+  // Tab chính: 'REGISTRY' (Sổ lưu) hoặc 'DRIVE' (Kho tệp Drive)
+  const [mainTab, setMainTab] = useState('REGISTRY');
+  
+  // Sub-tab cho Sổ lưu: 'INCOMING' (Công văn đến) hoặc 'OUTGOING' (Công văn đi)
+  const [registryTab, setRegistryTab] = useState('INCOMING');
+  
+  // Sub-tab cho Kho tệp Drive: 'ALL', 'DEN', 'DI'
+  const [driveTab, setDriveTab] = useState('ALL');
+
+  // State cho tệp quét Drive (Kho tệp Drive)
+  const [driveFiles, setDriveFiles] = useState([]);
+  const [driveLoading, setDriveLoading] = useState(false);
+
+  // Modal thêm/sửa Sổ lưu
+  const [showDocModal, setShowDocModal] = useState(false);
+  const [editingDoc, setEditingDoc] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // State Form Văn bản đi
-  const [docNumber, setDocNumber] = useState('');
-  const [dateIssued, setDateIssued] = useState('');
-  const [recipient, setRecipient] = useState('');
+  // Form Fields cho Sổ lưu
+  const [docType, setDocType] = useState('incoming'); // 'incoming' | 'outgoing'
+  const [documentNo, setDocumentNo] = useState('');
+  const [docDate, setDocDate] = useState('');
+  const [senderOrReceiver, setSenderOrReceiver] = useState('');
+  const [refNo, setRefNo] = useState('');
   const [summary, setSummary] = useState('');
-  const [signer, setSigner] = useState('');
-  const [notes, setNotes] = useState('');
+  const [signerOrRecipient, setSignerOrRecipient] = useState('');
+  const [noteOrDirection, setNoteOrDirection] = useState('');
 
-  // State Form Văn bản đến
-  const [inNumber, setInNumber] = useState('');
-  const [dateReceived, setDateReceived] = useState('');
-  const [sender, setSender] = useState('');
-  const [docNumberCấpTrên, setDocNumberCấpTrên] = useState('');
-  const [receiver, setReceiver] = useState('');
-  const [direction, setDirection] = useState('');
+  const fileInputRef = useRef(null);
 
-  // State chọn chi đoàn (chỉ cho Super Admin xem, tuy nhiên khi upload thì theo tài khoản hiện tại)
-  const [uploadBranch, setUploadBranch] = useState('cs1');
   const isSuperAdmin = currentUser?.username === 'admin-bvtks';
   const currentBranch = currentUser?.username === 'bvtks-cs1' ? 'cs1' : 'cs2';
+  
+  // Config của chi đoàn hiện tại
+  const config = getBranchConfig(currentUser?.username);
+  const API_URL_BRANCH = config.apiUrl;
 
-  // Mở modal thêm văn bản mới
-  const handleOpenAddModal = () => {
-    // Reset form
-    setDocNumber('');
-    setDateIssued(new Date().toISOString().split('T')[0]);
-    setRecipient('');
-    setSummary('');
-    setSigner('');
-    setNotes('');
+  // Lấy danh sách file vật lý trên Drive (Kho tệp Drive)
+  const fetchDriveFiles = async () => {
+    setDriveLoading(true);
+    try {
+      let branchesToFetch = [];
+      if (isSuperAdmin) {
+        branchesToFetch = selectedBranch === 'all' ? ['cs1', 'cs2'] : [selectedBranch];
+      } else {
+        branchesToFetch = [currentBranch];
+      }
 
-    setInNumber('');
-    setDateReceived(new Date().toISOString().split('T')[0]);
-    setSender('');
-    setDocNumberCấpTrên('');
-    setReceiver('');
-    setDirection('');
+      const results = [];
+      for (const branch of branchesToFetch) {
+        const configKey = branch === 'cs1' ? 'bvtks-cs1' : 'bvtks-cs2';
+        const brConfig = getBranchConfig(configKey);
+        const FOLDER_DEN = brConfig.folderDen;
+        const FOLDER_DI = brConfig.folderDi;
+        const API_URL = brConfig.apiUrl;
 
-    setSelectedFile(null);
-    setShowAddModal(true);
+        if (API_URL) {
+          if (FOLDER_DEN) {
+            try {
+              const res1 = await axios.get(`${API_URL}?action=get_files&folderId=${FOLDER_DEN}`);
+              if (res1.data.files) {
+                res1.data.files.forEach(f => {
+                  f.parents = [FOLDER_DEN];
+                  f.branch = branch;
+                  f.configKey = configKey;
+                  f.type = 'incoming';
+                });
+                results.push(...res1.data.files);
+              }
+            } catch (err) {
+              console.error(`Lỗi tải văn bản đến của ${branch}:`, err);
+            }
+          }
+          if (FOLDER_DI) {
+            try {
+              const res2 = await axios.get(`${API_URL}?action=get_files&folderId=${FOLDER_DI}`);
+              if (res2.data.files) {
+                res2.data.files.forEach(f => {
+                  f.parents = [FOLDER_DI];
+                  f.branch = branch;
+                  f.configKey = configKey;
+                  f.type = 'outgoing';
+                });
+                results.push(...res2.data.files);
+              }
+            } catch (err) {
+              console.error(`Lỗi tải văn bản đi của ${branch}:`, err);
+            }
+          }
+        }
+      }
+      results.sort((a, b) => b.createdTime - a.createdTime);
+      setDriveFiles(results);
+    } catch (error) {
+      console.error('Lỗi khi lấy danh sách file Drive:', error);
+    } finally {
+      setDriveLoading(false);
+    }
   };
 
-  // Lưu đăng ký văn bản mới
-  const handleSaveDoc = async () => {
-    if (!isAdmin) {
-      alert("Tài khoản khách không có quyền đăng ký văn bản!");
-      return;
+  useEffect(() => {
+    if (mainTab === 'DRIVE') {
+      fetchDriveFiles();
+    }
+  }, [mainTab, selectedBranch]);
+
+  // Xử lý upload file vật lý trực tiếp từ tệp tin đã chọn
+  const uploadAttachment = async (file, type) => {
+    const targetBranch = currentBranch; // Chỉ admin chi đoàn mới được upload sổ lưu của mình
+    const configKey = targetBranch === 'cs1' ? 'bvtks-cs1' : 'bvtks-cs2';
+    const brConfig = getBranchConfig(configKey);
+    const folderId = type === 'incoming' ? brConfig.folderDen : brConfig.folderDi;
+    const apiUrl = brConfig.apiUrl;
+
+    if (!folderId || !apiUrl) {
+      throw new Error("Chưa cấu hình thư mục Google Drive hoặc API URL!");
     }
 
-    if (activeTab === 'OUT') {
-      if (!docNumber.trim() || !recipient.trim() || !summary.trim() || !signer.trim()) {
-        alert("Vui lòng điền đầy đủ thông tin bắt buộc của Công văn đi!");
-        return;
-      }
-    } else {
-      if (!inNumber.trim() || !sender.trim() || !summary.trim() || !receiver.trim()) {
-        alert("Vui lòng điền đầy đủ thông tin bắt buộc của Công văn đến!");
-        return;
-      }
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result.split(',')[1];
+          const payload = {
+            action: 'upload_file',
+            folderId: folderId,
+            name: file.name,
+            mimeType: file.type || 'application/octet-stream',
+            base64: base64
+          };
+
+          const res = await axios.post(apiUrl, JSON.stringify(payload), {
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+          });
+
+          if (res.data.status === 'success') {
+            resolve({
+              fileId: res.data.fileId,
+              name: file.name,
+              url: res.data.url
+            });
+          } else {
+            reject(new Error(res.data.message || 'Lỗi không xác định'));
+          }
+        } catch (e) {
+          reject(e);
+        }
+      };
+      reader.onerror = () => reject(new Error("Lỗi đọc file"));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Mở modal thêm mới
+  const handleOpenAddModal = (type) => {
+    setEditingDoc(null);
+    setDocType(type);
+    setDocumentNo('');
+    setDocDate(new Date().toISOString().split('T')[0]);
+    setSenderOrReceiver('');
+    setRefNo('');
+    setSummary('');
+    setSignerOrRecipient('');
+    setNoteOrDirection('');
+    setSelectedFile(null);
+    setShowDocModal(true);
+  };
+
+  // Mở modal chỉnh sửa
+  const handleOpenEditModal = (doc) => {
+    setEditingDoc(doc);
+    setDocType(doc.type);
+    setDocumentNo(doc.documentNo || '');
+    setDocDate(doc.date || '');
+    setSenderOrReceiver(doc.senderOrReceiver || '');
+    setRefNo(doc.refNo || '');
+    setSummary(doc.summary || '');
+    setSignerOrRecipient(doc.signerOrRecipient || '');
+    setNoteOrDirection(doc.noteOrDirection || '');
+    setSelectedFile(null);
+    setShowDocModal(true);
+  };
+
+  // Lưu Sổ lưu (Thêm mới hoặc cập nhật)
+  const handleSaveDoc = async () => {
+    if (!isAdmin) {
+      alert("Tài khoản khách không có quyền sửa đổi Sổ lưu!");
+      return;
+    }
+    if (!documentNo.trim()) {
+      alert("Vui lòng điền Số/Ký hiệu văn bản!");
+      return;
+    }
+    if (!docDate) {
+      alert("Vui lòng điền ngày tháng!");
+      return;
     }
 
     setUploading(true);
     try {
-      let attachment = null;
-      const targetBranch = isSuperAdmin ? uploadBranch : currentBranch;
-      const configKey = targetBranch === 'cs1' ? 'bvtks-cs1' : 'bvtks-cs2';
-      const config = getBranchConfig(configKey);
+      let attachment = editingDoc?.attachment || null;
 
-      // Upload file nếu có đính kèm
+      // Nếu có chọn file mới thì tải lên Drive trước
       if (selectedFile) {
-        const folderId = activeTab === 'OUT' ? config.folderDi : config.folderDen;
-        if (!folderId) {
-          throw new Error("Chưa cấu hình ID thư mục Drive cho luồng văn bản này!");
-        }
-        attachment = await uploadFileToDrive(selectedFile, folderId, config.apiUrl);
+        attachment = await uploadAttachment(selectedFile, docType);
       }
 
-      // Tạo object dữ liệu mới
       const newDoc = {
-        id: 'doc_' + Date.now(),
-        type: activeTab,
-        branch: targetBranch,
-        configKey,
-        createdTime: Date.now(),
-        fileId: attachment ? attachment.id : null,
-        fileUrl: attachment ? attachment.webViewLink : null,
-        fileName: attachment ? attachment.name : null,
-        // Dữ liệu đi
-        docNumber: activeTab === 'OUT' ? docNumber.trim() : '',
-        dateIssued: activeTab === 'OUT' ? dateIssued : '',
-        recipient: activeTab === 'OUT' ? recipient.trim() : '',
-        signer: activeTab === 'OUT' ? signer.trim() : '',
-        notes: activeTab === 'OUT' ? notes.trim() : '',
-        // Dữ liệu đến
-        inNumber: activeTab === 'IN' ? inNumber.trim() : '',
-        dateReceived: activeTab === 'IN' ? dateReceived : '',
-        sender: activeTab === 'IN' ? sender.trim() : '',
-        docNumberCấpTrên: activeTab === 'IN' ? docNumberCấpTrên.trim() : '',
-        receiver: activeTab === 'IN' ? receiver.trim() : '',
-        direction: activeTab === 'IN' ? direction.trim() : '',
-        summary: summary.trim()
+        id: editingDoc ? editingDoc.id : Date.now(),
+        type: docType,
+        documentNo,
+        date: docDate,
+        senderOrReceiver,
+        refNo: docType === 'incoming' ? refNo : '',
+        summary,
+        signerOrRecipient,
+        noteOrDirection,
+        attachment,
+        branch: currentBranch
       };
 
-      setDocuments([newDoc, ...documents]);
-      alert("🎉 Đã lưu văn bản vào sổ đăng ký thành công!");
-      setShowAddModal(false);
-    } catch (error) {
-      alert("Lỗi khi đăng ký văn bản: " + error.message);
+      let updatedDocs = [];
+      if (editingDoc) {
+        updatedDocs = documents.map(d => d.id === editingDoc.id ? newDoc : d);
+      } else {
+        updatedDocs = [newDoc, ...documents];
+      }
+
+      setDocuments(updatedDocs);
+      alert("💾 Đã lưu thông tin công văn thành công!");
+      setShowDocModal(false);
+      setSelectedFile(null);
+    } catch (err) {
+      alert("Lỗi khi lưu công văn: " + err.message);
     } finally {
       setUploading(false);
     }
   };
 
-  // Xem chi tiết văn bản
-  const handleViewDetail = (doc) => {
-    setSelectedDoc(doc);
-    setIsEditing(false);
-    
-    // Nạp dữ liệu vào form để chỉnh sửa nếu cần
-    setDocNumber(doc.docNumber || '');
-    setDateIssued(doc.dateIssued || '');
-    setRecipient(doc.recipient || '');
-    setSummary(doc.summary || '');
-    setSigner(doc.signer || '');
-    setNotes(doc.notes || '');
-
-    setInNumber(doc.inNumber || '');
-    setDateReceived(doc.dateReceived || '');
-    setSender(doc.sender || '');
-    setDocNumberCấpTrên(doc.docNumberCấpTrên || '');
-    setReceiver(doc.receiver || '');
-    setDirection(doc.direction || '');
-
-    setShowDetailModal(true);
-  };
-
-  // Cập nhật chi tiết văn bản (Sửa)
-  const handleUpdateDoc = async () => {
-    if (!isAdmin) return;
-
-    const updated = documents.map(d => {
-      if (d.id === selectedDoc.id) {
-        return {
-          ...d,
-          summary: summary.trim(),
-          docNumber: d.type === 'OUT' ? docNumber.trim() : '',
-          dateIssued: d.type === 'OUT' ? dateIssued : '',
-          recipient: d.type === 'OUT' ? recipient.trim() : '',
-          signer: d.type === 'OUT' ? signer.trim() : '',
-          notes: d.type === 'OUT' ? notes.trim() : '',
-          inNumber: d.type === 'IN' ? inNumber.trim() : '',
-          dateReceived: d.type === 'IN' ? dateReceived : '',
-          sender: d.type === 'IN' ? sender.trim() : '',
-          docNumberCấpTrên: d.type === 'IN' ? docNumberCấpTrên.trim() : '',
-          receiver: d.type === 'IN' ? receiver.trim() : '',
-          direction: d.type === 'IN' ? direction.trim() : '',
-        };
-      }
-      return d;
-    });
-
-    setDocuments(updated);
-    alert("Đã cập nhật thông tin văn bản thành công!");
-    setShowDetailModal(false);
-  };
-
-  // Xóa văn bản khỏi sổ đăng ký
+  // Xóa Công văn khỏi Sổ lưu
   const handleDeleteDoc = async (doc) => {
     if (!isAdmin) {
-      alert("Tài khoản khách không có quyền xóa văn bản!");
+      alert("Tài khoản khách không có quyền xóa!");
       return;
     }
-
-    if (window.confirm(`Bạn có chắc chắn muốn xóa văn bản "${doc.summary}" khỏi sổ lưu trữ?`)) {
-      try {
-        // Nếu có tệp đính kèm trên Google Drive, cố gắng xóa tệp đó
-        if (doc.fileId) {
-          const config = getBranchConfig(doc.configKey);
-          await deleteFileFromDrive(doc.fileId, config.apiUrl);
-        }
-      } catch (err) {
-        console.error("Lỗi xóa file trên Drive:", err);
+    if (window.confirm(`Bạn có chắc chắn muốn xóa công văn "${doc.documentNo}" khỏi Sổ lưu?`)) {
+      // Hỏi người dùng có muốn xóa file đính kèm trên Google Drive hay không
+      let deleteDriveFile = false;
+      if (doc.attachment) {
+        deleteDriveFile = window.confirm("Tài liệu này có tệp đính kèm trên Google Drive. Bạn có muốn xóa tệp tin này trên Google Drive luôn không?");
       }
 
-      setDocuments(documents.filter(d => d.id !== doc.id));
-      alert("Đã xóa văn bản khỏi sổ đăng ký!");
-      setShowDetailModal(false);
+      setLoading(true);
+      try {
+        if (deleteDriveFile && doc.attachment) {
+          const brConfig = getBranchConfig(doc.branch === 'cs1' ? 'bvtks-cs1' : 'bvtks-cs2');
+          if (brConfig.apiUrl) {
+            await axios.post(brConfig.apiUrl, JSON.stringify({
+              action: 'delete_file',
+              fileId: doc.attachment.fileId
+            }), {
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            });
+          }
+        }
+
+        const updatedDocs = documents.filter(d => d.id !== doc.id);
+        setDocuments(updatedDocs);
+        alert("Đã xóa công văn thành công!");
+      } catch (err) {
+        alert("Lỗi xóa công văn: " + err.message);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  // Định dạng ngày hiển thị tiếng Việt
-  const formatDateStr = (dateStr) => {
-    if (!dateStr) return '';
-    const [y, m, d] = dateStr.split('-');
-    return `${d}/${m}/${y}`;
-  };
+  // Lọc dữ liệu Sổ lưu
+  const filteredRegistry = documents.filter(d => {
+    // Phân loại (đến/đi)
+    const matchesTab = registryTab === 'INCOMING' ? d.type === 'incoming' : d.type === 'outgoing';
+    if (!matchesTab) return false;
 
-  // Lọc danh sách hiển thị
-  const filteredDocs = documents.filter(d => {
-    // Lọc theo loại văn bản (Đến/Đi)
-    if (d.type !== activeTab) return false;
-
-    // Lọc theo chi đoàn (Super Admin)
-    if (isSuperAdmin && selectedBranch !== 'all' && d.branch !== selectedBranch) {
-      return false;
-    } else if (!isSuperAdmin && d.branch !== currentBranch) {
-      return false;
-    }
-
-    // Lọc theo nội dung tìm kiếm
+    // Tìm kiếm
     const searchLower = search.toLowerCase();
     const matchesSearch = 
+      (d.documentNo || '').toLowerCase().includes(searchLower) ||
+      (d.senderOrReceiver || '').toLowerCase().includes(searchLower) ||
       (d.summary || '').toLowerCase().includes(searchLower) ||
-      (d.docNumber || '').toLowerCase().includes(searchLower) ||
-      (d.inNumber || '').toLowerCase().includes(searchLower) ||
-      (d.recipient || '').toLowerCase().includes(searchLower) ||
-      (d.sender || '').toLowerCase().includes(searchLower) ||
-      (d.signer || '').toLowerCase().includes(searchLower) ||
-      (d.notes || '').toLowerCase().includes(searchLower);
+      (d.signerOrRecipient || '').toLowerCase().includes(searchLower);
 
     return matchesSearch;
   });
 
+  // Lọc file của Kho tệp Drive
+  const filteredDriveFiles = driveFiles.filter(f => {
+    const matchesSearch = f.name.toLowerCase().includes(search.toLowerCase());
+    if (!matchesSearch) return false;
+
+    const brConfig = getBranchConfig(f.configKey);
+    if (driveTab === 'ALL') return true;
+    if (driveTab === 'DEN') return f.parents?.includes(brConfig.folderDen);
+    if (driveTab === 'DI') return f.parents?.includes(brConfig.folderDi);
+    return false;
+  });
+
   return (
     <div className="space-y-6">
-      {/* Tabs chuyển đổi Sổ lưu Công văn */}
-      <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1">
+      
+      {/* Tab Switcher: Sổ lưu công văn vs Kho tệp Drive */}
+      <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 p-1.5 max-w-md mx-auto">
         <button 
-          onClick={() => { setActiveTab('OUT'); setSearch(''); }}
-          className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
-            activeTab === 'OUT' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-          }`}
+          onClick={() => setMainTab('REGISTRY')}
+          className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${mainTab === 'REGISTRY' ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
-          <ArrowUpRight size={18} />
-          <span>Sổ lưu Công văn đi</span>
-          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-            activeTab === 'OUT' ? 'bg-white text-red-600' : 'bg-gray-100 text-gray-600'
-          }`}>
-            {documents.filter(d => d.type === 'OUT' && (isSuperAdmin ? (selectedBranch === 'all' || d.branch === selectedBranch) : d.branch === currentBranch)).length}
-          </span>
+          <BookOpen size={16} />
+          Sổ lưu Công văn
         </button>
         <button 
-          onClick={() => { setActiveTab('IN'); setSearch(''); }}
-          className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${
-            activeTab === 'IN' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-          }`}
+          onClick={() => setMainTab('DRIVE')}
+          className={`flex-1 py-3 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer ${mainTab === 'DRIVE' ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
-          <ArrowDownLeft size={18} />
-          <span>Sổ lưu Công văn đến</span>
-          <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-            activeTab === 'IN' ? 'bg-white text-red-600' : 'bg-gray-100 text-gray-600'
-          }`}>
-            {documents.filter(d => d.type === 'IN' && (isSuperAdmin ? (selectedBranch === 'all' || d.branch === selectedBranch) : d.branch === currentBranch)).length}
-          </span>
+          <FolderOpen size={16} />
+          Kho tệp tin Drive
         </button>
       </div>
 
-      {/* Thanh công cụ tìm kiếm và thêm */}
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <input
-            type="text"
-            placeholder={activeTab === 'OUT' ? "Tìm theo Số/Ký hiệu, trích yếu, nơi nhận..." : "Tìm theo Số đến, cơ quan gửi, trích yếu..."}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 transition-all text-sm"
-          />
-        </div>
+      {mainTab === 'REGISTRY' ? (
+        // ==========================================
+        // VIEW: SỔ LƯU CÔNG VĂN
+        // ==========================================
+        <div className="space-y-6">
+          {/* Sub-tab Sổ lưu */}
+          <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1">
+            <button 
+              onClick={() => setRegistryTab('INCOMING')}
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${registryTab === 'INCOMING' ? 'bg-blue-50 text-blue-700 border border-blue-100 font-bold' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Inbox size={16} />
+              Sổ lưu Công văn ĐẾN
+            </button>
+            <button 
+              onClick={() => setRegistryTab('OUTGOING')}
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer ${registryTab === 'OUTGOING' ? 'bg-blue-50 text-blue-700 border border-blue-100 font-bold' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              <Send size={16} />
+              Sổ lưu Công văn ĐI
+            </button>
+          </div>
 
-        {isAdmin && (
-          <Btn onClick={handleOpenAddModal} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <Plus size={16} />
-            <span>Đăng ký văn bản</span>
-          </Btn>
-        )}
-      </div>
-
-      {/* Danh sách văn bản */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          {activeTab === 'OUT' ? (
-            // Bảng Công văn đi
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <Th className="text-left w-28">Số / Ký hiệu</Th>
-                  <Th className="text-left w-32">Ngày ban hành</Th>
-                  <Th className="text-left">Trích yếu nội dung</Th>
-                  <Th className="text-left">Nơi nhận</Th>
-                  <Th className="text-left">Người ký</Th>
-                  {isSuperAdmin && selectedBranch === 'all' && <Th className="text-center w-24">Chi đoàn</Th>}
-                  <Th className="text-center w-28">Thao tác</Th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {filteredDocs.length === 0 ? (
-                  <tr>
-                    <td colSpan={isSuperAdmin && selectedBranch === 'all' ? 7 : 6} className="px-6 py-16 text-center text-gray-400">
-                      <div className="bg-gray-50 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <FileText className="text-gray-300" size={28} />
-                      </div>
-                      <p className="font-bold text-gray-500 text-sm">Chưa có công văn đi nào trong sổ đăng ký</p>
-                      <p className="text-xs text-gray-400 mt-1">Bấm "Đăng ký văn bản" để tạo hồ sơ lưu trữ mới</p>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredDocs.map((doc) => (
-                    <tr key={doc.id} className="hover:bg-gray-50/50 transition-colors">
-                      <Td className="font-bold text-gray-900">{doc.docNumber}</Td>
-                      <Td className="text-gray-500 text-xs font-semibold">{formatDateStr(doc.dateIssued)}</Td>
-                      <Td className="font-medium text-gray-800 break-all max-w-xs">{doc.summary}</Td>
-                      <Td className="text-gray-600 text-xs font-semibold">{doc.recipient}</Td>
-                      <Td className="text-gray-600 text-xs font-medium">{doc.signer}</Td>
-                      {isSuperAdmin && selectedBranch === 'all' && (
-                        <Td className="text-center">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            doc.branch === 'cs1' ? 'bg-indigo-50 text-indigo-600' : 'bg-teal-50 text-teal-600'
-                          }`}>
-                            {doc.branch === 'cs1' ? 'CS1' : 'CS2'}
-                          </span>
-                        </Td>
-                      )}
-                      <Td className="text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button 
-                            onClick={() => handleViewDetail(doc)}
-                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                            title="Xem chi tiết & Đính kèm"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          {doc.fileUrl && (
-                            <a 
-                              href={doc.fileUrl} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors cursor-pointer"
-                              title="Tải tệp đính kèm"
-                            >
-                              <Download size={16} />
-                            </a>
-                          )}
-                          {isAdmin && (
-                            <button 
-                              onClick={() => handleDeleteDoc(doc)}
-                              className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-                              title="Xóa công văn"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-                        </div>
-                      </Td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          ) : (
-            // Bảng Công văn đến
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-100">
-                  <Th className="text-left w-20">Số đến</Th>
-                  <Th className="text-left w-32">Ngày nhận</Th>
-                  <Th className="text-left">Cơ quan gửi</Th>
-                  <Th className="text-left">Số ký hiệu cấp trên</Th>
-                  <Th className="text-left">Trích yếu nội dung</Th>
-                  <Th className="text-left">Người nhận</Th>
-                  {isSuperAdmin && selectedBranch === 'all' && <Th className="text-center w-24">Chi đoàn</Th>}
-                  <Th className="text-center w-28">Thao tác</Th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100 bg-white">
-                {filteredDocs.length === 0 ? (
-                  <tr>
-                    <td colSpan={isSuperAdmin && selectedBranch === 'all' ? 8 : 7} className="px-6 py-16 text-center text-gray-400">
-                      <div className="bg-gray-50 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3">
-                        <FileText className="text-gray-300" size={28} />
-                      </div>
-                      <p className="font-bold text-gray-500 text-sm">Chưa có công văn đến nào trong sổ đăng ký</p>
-                      <p className="text-xs text-gray-400 mt-1">Bấm "Đăng ký văn bản" để tạo hồ sơ lưu trữ mới</p>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredDocs.map((doc) => (
-                    <tr key={doc.id} className="hover:bg-gray-50/50 transition-colors">
-                      <Td className="font-bold text-red-600">#{doc.inNumber}</Td>
-                      <Td className="text-gray-500 text-xs font-semibold">{formatDateStr(doc.dateReceived)}</Td>
-                      <Td className="text-gray-800 text-xs font-bold">{doc.sender}</Td>
-                      <Td className="text-gray-600 text-xs font-medium">{doc.docNumberCấpTrên || '---'}</Td>
-                      <Td className="font-medium text-gray-800 break-all max-w-xs">{doc.summary}</Td>
-                      <Td className="text-gray-600 text-xs font-medium">{doc.receiver}</Td>
-                      {isSuperAdmin && selectedBranch === 'all' && (
-                        <Td className="text-center">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            doc.branch === 'cs1' ? 'bg-indigo-50 text-indigo-600' : 'bg-teal-50 text-teal-600'
-                          }`}>
-                            {doc.branch === 'cs1' ? 'CS1' : 'CS2'}
-                          </span>
-                        </Td>
-                      )}
-                      <Td className="text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button 
-                            onClick={() => handleViewDetail(doc)}
-                            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                            title="Xem chi tiết & Đính kèm"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          {doc.fileUrl && (
-                            <a 
-                              href={doc.fileUrl} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              className="p-1.5 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors cursor-pointer"
-                              title="Tải tệp đính kèm"
-                            >
-                              <Download size={16} />
-                            </a>
-                          )}
-                          {isAdmin && (
-                            <button 
-                              onClick={() => handleDeleteDoc(doc)}
-                              className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-                              title="Xóa công văn"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
-                        </div>
-                      </Td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
-      {/* Modal đăng ký văn bản mới */}
-      {showAddModal && (
-        <Modal 
-          title={activeTab === 'OUT' ? "Đăng ký Công văn đi (Ban hành)" : "Đăng ký Công văn đến (Nhận về)"} 
-          onClose={() => { setShowAddModal(false); setSelectedFile(null); }}
-          wide
-        >
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Form Văn bản đi */}
-              {activeTab === 'OUT' ? (
-                <>
-                  <FI 
-                    label="Số / Ký hiệu văn bản *" 
-                    placeholder="Ví dụ: Số 01/CV-CĐ" 
-                    value={docNumber} 
-                    onChange={e => setDocNumber(e.target.value)} 
-                  />
-                  <FI 
-                    label="Ngày tháng năm ban hành *" 
-                    type="date" 
-                    value={dateIssued} 
-                    onChange={e => setDateIssued(e.target.value)} 
-                  />
-                  <FI 
-                    label="Nơi nhận *" 
-                    placeholder="Đoàn cấp trên hoặc đơn vị phối hợp..." 
-                    value={recipient} 
-                    onChange={e => setRecipient(e.target.value)} 
-                  />
-                  <FI 
-                    label="Người ký *" 
-                    placeholder="Bí thư hoặc Phó Bí thư chi đoàn..." 
-                    value={signer} 
-                    onChange={e => setSigner(e.target.value)} 
-                  />
-                  <div className="col-span-1 md:col-span-2">
-                    <FT 
-                      label="Trích yếu nội dung *" 
-                      placeholder="Tóm tắt ngắn gọn mục đích công văn..." 
-                      value={summary} 
-                      onChange={e => setSummary(e.target.value)} 
-                    />
-                  </div>
-                  <div className="col-span-1 md:col-span-2">
-                    <FI 
-                      label="Ghi chú" 
-                      placeholder="Lưu bản gốc, đính kèm biên bản họp, v.v..." 
-                      value={notes} 
-                      onChange={e => setNotes(e.target.value)} 
-                    />
-                  </div>
-                </>
-              ) : (
-                // Form Văn bản đến
-                <>
-                  <FI 
-                    label="Số đến (Thứ tự nhận) *" 
-                    placeholder="Ví dụ: 08" 
-                    value={inNumber} 
-                    onChange={e => setInNumber(e.target.value)} 
-                  />
-                  <FI 
-                    label="Ngày nhận văn bản *" 
-                    type="date" 
-                    value={dateReceived} 
-                    onChange={e => setDateReceived(e.target.value)} 
-                  />
-                  <FI 
-                    label="Cơ quan gửi *" 
-                    placeholder="Đoàn cấp trên, Bệnh viện, v.v..." 
-                    value={sender} 
-                    onChange={e => setSender(e.target.value)} 
-                  />
-                  <FI 
-                    label="Số / Ký hiệu của cấp trên" 
-                    placeholder="Ví dụ: Số 45-QĐ/ĐTN" 
-                    value={docNumberCấpTrên} 
-                    onChange={e => setDocNumberCấpTrên(e.target.value)} 
-                  />
-                  <FI 
-                    label="Người nhận *" 
-                    placeholder="Ủy viên BCH, Bí thư hoặc Phó Bí thư..." 
-                    value={receiver} 
-                    onChange={e => setReceiver(e.target.value)} 
-                  />
-                  <FI 
-                    label="Ý kiến chỉ đạo / Hướng xử lý" 
-                    placeholder="Lưu trữ, triển khai hành động, hạn nộp..." 
-                    value={direction} 
-                    onChange={e => setDirection(e.target.value)} 
-                  />
-                  <div className="col-span-1 md:col-span-2">
-                    <FT 
-                      label="Trích yếu nội dung *" 
-                      placeholder="Tóm tắt nội dung chỉ đạo, thông báo..." 
-                      value={summary} 
-                      onChange={e => setSummary(e.target.value)} 
-                    />
-                  </div>
-                </>
-              )}
+          {/* Thanh công cụ */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div className="relative w-full sm:w-85">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm công văn theo số, nơi gửi/nhận, trích yếu..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+              />
             </div>
 
-            {/* Chi đoàn và Đính kèm file */}
-            <div className="p-4 bg-gray-50 rounded-xl space-y-4 border border-gray-100">
-              {isSuperAdmin && (
-                <FS 
-                  label="Lưu vào chi đoàn" 
-                  opts={['Cơ sở 1', 'Cơ sở 2']} 
-                  value={uploadBranch === 'cs1' ? 'Cơ sở 1' : 'Cơ sở 2'}
-                  onChange={e => setUploadBranch(e.target.value === 'Cơ sở 1' ? 'cs1' : 'cs2')}
-                />
+            {isAdmin && (
+              <Btn onClick={() => handleOpenAddModal(registryTab === 'INCOMING' ? 'incoming' : 'outgoing')}>
+                Thêm văn bản lưu sổ
+              </Btn>
+            )}
+          </div>
+
+          {/* Bảng dữ liệu Sổ lưu */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-xs uppercase font-bold">
+                    {registryTab === 'INCOMING' ? (
+                      <>
+                        <Th className="w-[12%]">Số đến</Th>
+                        <Th className="w-[12%]">Ngày nhận</Th>
+                        <Th className="w-[20%]">Cơ quan gửi</Th>
+                        <Th className="w-[15%]">Số/Ký hiệu gốc</Th>
+                        <Th>Trích yếu nội dung</Th>
+                        <Th className="w-[15%]">Người nhận</Th>
+                        <Th className="w-[15%]">Ý kiến chỉ đạo/Xử lý</Th>
+                      </>
+                    ) : (
+                      <>
+                        <Th className="w-[15%]">Số/Ký hiệu</Th>
+                        <Th className="w-[12%]">Ngày ban hành</Th>
+                        <Th className="w-[20%]">Nơi nhận</Th>
+                        <Th>Trích yếu nội dung</Th>
+                        <Th className="w-[15%]">Người ký</Th>
+                        <Th className="w-[15%]">Ghi chú</Th>
+                      </>
+                    )}
+                    <Th className="w-[12%] text-center">Tệp tin</Th>
+                    <Th className="w-[10%] text-center">Thao tác</Th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {loading && filteredRegistry.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" className="px-6 py-12 text-center text-gray-500">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
+                        Đang đồng bộ dữ liệu sổ công văn...
+                      </td>
+                    </tr>
+                  ) : filteredRegistry.length === 0 ? (
+                    <tr>
+                      <td colSpan="9" className="px-6 py-16 text-center text-gray-500">
+                        <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <FileCheck className="h-8 w-8 text-gray-400" />
+                        </div>
+                        <p className="font-bold text-gray-500 text-sm">Chưa có công văn nào được lưu trong sổ</p>
+                        <p className="text-gray-400 text-xs mt-1">Sử dụng nút "Thêm văn bản lưu sổ" để khởi tạo bản ghi</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredRegistry.map((doc) => (
+                      <tr key={doc.id} className="hover:bg-gray-50/50 transition-colors">
+                        <Td className="font-bold text-gray-800">{doc.documentNo}</Td>
+                        <Td className="text-gray-500 text-xs whitespace-nowrap">
+                          {doc.date ? new Date(doc.date).toLocaleDateString('vi-VN') : ''}
+                        </Td>
+                        <Td className="font-semibold text-gray-700">{doc.senderOrReceiver}</Td>
+                        {doc.type === 'incoming' && (
+                          <Td className="text-gray-500 font-medium">{doc.refNo || '—'}</Td>
+                        )}
+                        <Td className="text-gray-600 text-xs font-medium max-w-xs truncate" title={doc.summary}>
+                          {doc.summary}
+                        </Td>
+                        <Td className="text-gray-700 text-xs font-semibold">{doc.signerOrRecipient}</Td>
+                        <Td className="text-gray-500 text-xs">{doc.noteOrDirection || '—'}</Td>
+                        <Td className="text-center">
+                          {doc.attachment ? (
+                            <div className="flex items-center justify-center gap-1">
+                              <a 
+                                href={doc.attachment.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-700 hover:bg-green-100 rounded-lg text-xs font-bold transition-all border border-green-200 cursor-pointer"
+                                title={doc.attachment.name}
+                              >
+                                <Eye size={12} />
+                                Xem
+                              </a>
+                            </div>
+                          ) : (
+                            <span className="text-gray-300 text-xs">Không có</span>
+                          )}
+                        </Td>
+                        <Td className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            {isAdmin && (
+                              <>
+                                <button 
+                                  onClick={() => handleOpenEditModal(doc)}
+                                  className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                  title="Chỉnh sửa bản ghi"
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteDoc(doc)}
+                                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                  title="Xóa công văn"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </Td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ) : (
+        // ==========================================
+        // VIEW: KHO TỆP TIN DRIVE
+        // ==========================================
+        <div className="space-y-6">
+          {/* Sub-tab Drive */}
+          <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1">
+            <button 
+              onClick={() => setDriveTab('ALL')}
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all cursor-pointer ${driveTab === 'ALL' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+            >
+              Tất cả văn bản Drive
+            </button>
+            <button 
+              onClick={() => setDriveTab('DEN')}
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all cursor-pointer ${driveTab === 'DEN' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+            >
+              Thư mục văn bản ĐẾN
+            </button>
+            <button 
+              onClick={() => setDriveTab('DI')}
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all cursor-pointer ${driveTab === 'DI' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+            >
+              Thư mục văn bản ĐI
+            </button>
+          </div>
+
+          {/* Thanh công cụ */}
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <div className="relative w-full sm:w-80">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm tệp văn bản trên Drive..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm"
+              />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={fetchDriveFiles}
+                disabled={driveLoading}
+                className="p-2.5 text-gray-500 hover:text-blue-600 hover:bg-gray-50 rounded-xl transition-all cursor-pointer"
+                title="Làm mới danh sách Drive"
+              >
+                <RefreshCw size={18} className={driveLoading ? 'animate-spin' : ''} />
+              </button>
+            </div>
+          </div>
+
+          {/* Bảng Drive */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100 text-gray-500 text-sm font-bold">
+                    <th className="px-6 py-4">Tên văn bản</th>
+                    <th className="px-6 py-4">Phân loại / Chi đoàn</th>
+                    <th className="px-6 py-4">Ngày tạo</th>
+                    <th className="px-6 py-4 text-right">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 bg-white">
+                  {driveLoading && driveFiles.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
+                        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2 text-blue-500" />
+                        Đang đồng bộ danh sách văn bản với Drive...
+                      </td>
+                    </tr>
+                  ) : filteredDriveFiles.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-12 text-center text-gray-500">
+                        <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <FileIcon className="h-8 w-8 text-gray-400" />
+                        </div>
+                        Chưa có văn bản nào trong thư mục này.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredDriveFiles.map((file) => {
+                      const brConfig = getBranchConfig(file.configKey);
+                      const isDen = file.parents?.includes(brConfig.folderDen);
+                      return (
+                        <tr key={file.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <div className="flex items-center">
+                              <img src={file.iconLink || 'https://ssl.gstatic.com/docs/doclist/images/icon_10_pdf_list.png'} alt="icon" className="w-5 h-5 mr-3 shrink-0" />
+                              <span className="font-semibold text-gray-700 truncate max-w-[250px] sm:max-w-md" title={file.name}>
+                                {file.name}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1 items-start">
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                isDen ? 'bg-green-50 text-green-600' : 'bg-orange-50 text-orange-600'
+                              }`}>
+                                {isDen ? 'Văn bản đến' : 'Văn bản đi'}
+                              </span>
+                              {isSuperAdmin && (
+                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                  file.branch === 'cs1' ? 'bg-indigo-50 text-indigo-600' : 'bg-teal-50 text-teal-600'
+                                }`}>
+                                  {file.branch === 'cs1' ? 'Cơ sở 1' : 'Cơ sở 2'}
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 text-gray-500 text-xs">
+                            {new Date(file.createdTime).toLocaleString('vi-VN')}
+                          </td>
+                          <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                            <button 
+                              onClick={() => setPreviewFile(file)}
+                              className="inline-flex items-center p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                              title="Xem trước"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <a 
+                              href={file.webViewLink} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="inline-flex items-center p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors cursor-pointer"
+                              title="Tải về / Xem trên Drive"
+                            >
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL: THÊM / CẬP NHẬT CÔNG VĂN SỔ LƯU
+          ========================================== */}
+      {showDocModal && (
+        <Modal 
+          title={editingDoc ? "Cập nhật thông tin công văn" : `Thêm công văn ${docType === 'incoming' ? 'ĐẾN' : 'ĐI'} mới`}
+          onClose={() => setShowDocModal(false)}
+        >
+          <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1">
+            
+            <FI 
+              label={docType === 'incoming' ? "Số đến (Thứ tự nhận tại chi đoàn)" : "Số/Ký hiệu văn bản (Ví dụ: Số 01/CV-CĐ)"}
+              value={documentNo}
+              onChange={e => setDocumentNo(e.target.value)}
+              placeholder={docType === 'incoming' ? "Ví dụ: 01" : "Ví dụ: Số 01/CV-CĐ"}
+            />
+
+            <FI 
+              label={docType === 'incoming' ? "Ngày nhận" : "Ngày ban hành"}
+              type="date"
+              value={docDate}
+              onChange={e => setDocDate(e.target.value)}
+            />
+
+            <FI 
+              label={docType === 'incoming' ? "Cơ quan gửi (Cấp trên, Đoàn xã, v.v.)" : "Nơi nhận (Cấp trên hoặc đơn vị phối hợp)"}
+              value={senderOrReceiver}
+              onChange={e => setSenderOrReceiver(e.target.value)}
+              placeholder={docType === 'incoming' ? "Ví dụ: Đoàn thanh niên cấp trên" : "Ví dụ: Đảng ủy, Đoàn khối"}
+            />
+
+            {docType === 'incoming' && (
+              <FI 
+                label="Số/Ký hiệu văn bản của cấp trên (Nếu có)"
+                value={refNo}
+                onChange={e => setRefNo(e.target.value)}
+                placeholder="Ví dụ: 12-KH/ĐTN"
+              />
+            )}
+
+            <FT 
+              label="Trích yếu nội dung (Tóm tắt ngắn gọn)"
+              value={summary}
+              onChange={e => setSummary(e.target.value)}
+              placeholder="Nhập tóm tắt mục đích công văn..."
+            />
+
+            <FI 
+              label={docType === 'incoming' ? "Người nhận" : "Người ký (Bí thư/Phó Bí thư)"}
+              value={signerOrRecipient}
+              onChange={e => setSignerOrRecipient(e.target.value)}
+              placeholder={docType === 'incoming' ? "Ví dụ: Nguyễn Văn A" : "Ví dụ: Lê Văn B"}
+            />
+
+            <FT 
+              label={docType === 'incoming' ? "Ý kiến chỉ đạo / Phương án xử lý" : "Ghi chú"}
+              value={noteOrDirection}
+              onChange={e => setNoteOrDirection(e.target.value)}
+              placeholder={docType === 'incoming' ? "Ví dụ: Lưu hồ sơ, triển khai trước ngày 15/6" : "Ví dụ: Lưu bản gốc, đính kèm biên bản họp"}
+            />
+
+            <div className="border-t border-gray-100 pt-4">
+              <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Tệp đính kèm (Lưu trữ trên Google Drive)</label>
+              
+              {editingDoc?.attachment && !selectedFile && (
+                <div className="mb-2 p-2 bg-blue-50 text-blue-700 rounded-lg text-xs font-semibold flex items-center justify-between">
+                  <span className="truncate">📎 Đang đính kèm: {editingDoc.attachment.name}</span>
+                  <a href={editingDoc.attachment.url} target="_blank" rel="noreferrer" className="underline font-bold ml-2">Xem</a>
+                </div>
               )}
 
-              <div>
-                <label className="block text-xs font-bold text-gray-600 uppercase mb-2">Đính kèm bản scan / Tệp văn bản (Tùy chọn)</label>
-                <div className="border border-dashed border-gray-300 rounded-lg p-4 bg-white hover:bg-gray-50 transition-all text-center relative">
-                  <input 
-                    type="file" 
-                    onChange={e => setSelectedFile(e.target.files[0] || null)}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  />
-                  <div className="flex flex-col items-center justify-center gap-1">
-                    <Upload size={24} className="text-gray-400" />
-                    <span className="text-xs font-semibold text-gray-500">Nhấp vào đây để đính kèm tệp văn bản</span>
-                  </div>
+              <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50/50 hover:bg-gray-50 transition-all text-center relative">
+                <input
+                  type="file"
+                  onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div className="flex flex-col items-center justify-center gap-1">
+                  <Upload size={24} className="text-gray-400" />
+                  <span className="text-xs font-semibold text-gray-500">
+                    {selectedFile ? `📎 Tệp đã chọn: ${selectedFile.name}` : 'Click hoặc Kéo thả để thay thế/thêm tệp đính kèm'}
+                  </span>
                 </div>
-                {selectedFile && (
-                  <div className="mt-2 p-2 bg-green-50 rounded-lg border border-green-100 flex items-center justify-between text-xs text-green-700 font-semibold">
-                    <span className="truncate max-w-[320px]">📎 {selectedFile.name}</span>
-                    <span>({(selectedFile.size / 1024).toFixed(1)} KB)</span>
-                  </div>
-                )}
               </div>
             </div>
 
             <div className="flex gap-2 justify-end pt-4 border-t border-gray-100">
-              <Btn v="s" onClick={() => { setShowAddModal(false); setSelectedFile(null); }}>Hủy</Btn>
+              <Btn v="s" onClick={() => setShowDocModal(false)}>Hủy</Btn>
               <Btn onClick={handleSaveDoc} disabled={uploading}>
-                {uploading ? '⏳ Đang đăng ký...' : '💾 Lưu Sổ đăng ký'}
+                {uploading ? '⏳ Đang lưu lên đám mây...' : '💾 Lưu công văn'}
               </Btn>
             </div>
+
           </div>
         </Modal>
       )}
 
-      {/* Modal xem chi tiết & chỉnh sửa văn bản */}
-      {showDetailModal && selectedDoc && (
-        <Modal 
-          title={selectedDoc.type === 'OUT' ? `Công văn đi: ${selectedDoc.docNumber}` : `Công văn đến: #${selectedDoc.inNumber}`} 
-          onClose={() => setShowDetailModal(false)}
-          wide
-        >
-          <div className="space-y-6">
-            {!isEditing ? (
-              // Chế độ Xem chi tiết (Chính sách giấy tờ sang trọng)
-              <div className="space-y-6">
-                <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 relative overflow-hidden">
-                  {/* Decorative badge */}
-                  <div className="absolute top-0 right-0 p-3">
-                    <span className={`px-3 py-1 rounded-bl-xl text-xs font-extrabold tracking-wider uppercase ${
-                      selectedDoc.type === 'OUT' ? 'bg-orange-50 text-orange-600 border-l border-b border-orange-200' : 'bg-green-50 text-green-600 border-l border-b border-green-200'
-                    }`}>
-                      {selectedDoc.type === 'OUT' ? 'Văn bản đi' : 'Văn bản đến'}
-                    </span>
-                  </div>
-
-                  <h4 className="text-lg font-black text-gray-800 border-b pb-3 mb-4 max-w-[85%]">{selectedDoc.summary}</h4>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6 text-sm">
-                    {selectedDoc.type === 'OUT' ? (
-                      <>
-                        <div>
-                          <span className="block text-xs font-bold text-gray-400 uppercase">Số / Ký hiệu:</span>
-                          <span className="font-extrabold text-gray-800">{selectedDoc.docNumber}</span>
-                        </div>
-                        <div>
-                          <span className="block text-xs font-bold text-gray-400 uppercase">Ngày ban hành:</span>
-                          <span className="font-semibold text-gray-800">{formatDateStr(selectedDoc.dateIssued)}</span>
-                        </div>
-                        <div>
-                          <span className="block text-xs font-bold text-gray-400 uppercase">Nơi nhận:</span>
-                          <span className="font-bold text-red-600">{selectedDoc.recipient}</span>
-                        </div>
-                        <div>
-                          <span className="block text-xs font-bold text-gray-400 uppercase">Người ký ban hành:</span>
-                          <span className="font-semibold text-gray-800">{selectedDoc.signer}</span>
-                        </div>
-                        <div className="col-span-1 md:col-span-2">
-                          <span className="block text-xs font-bold text-gray-400 uppercase">Ghi chú:</span>
-                          <span className="font-medium text-gray-700 italic">{selectedDoc.notes || 'Không có ghi chú'}</span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div>
-                          <span className="block text-xs font-bold text-gray-400 uppercase">Số thứ tự đến:</span>
-                          <span className="font-extrabold text-red-600">#{selectedDoc.inNumber}</span>
-                        </div>
-                        <div>
-                          <span className="block text-xs font-bold text-gray-400 uppercase">Ngày nhận:</span>
-                          <span className="font-semibold text-gray-800">{formatDateStr(selectedDoc.dateReceived)}</span>
-                        </div>
-                        <div>
-                          <span className="block text-xs font-bold text-gray-400 uppercase">Cơ quan gửi đến:</span>
-                          <span className="font-bold text-gray-800">{selectedDoc.sender}</span>
-                        </div>
-                        <div>
-                          <span className="block text-xs font-bold text-gray-400 uppercase">Số ký hiệu cấp trên:</span>
-                          <span className="font-semibold text-gray-800">{selectedDoc.docNumberCấpTrên || 'Không có'}</span>
-                        </div>
-                        <div>
-                          <span className="block text-xs font-bold text-gray-400 uppercase">Người nhận văn bản:</span>
-                          <span className="font-semibold text-gray-800">{selectedDoc.receiver}</span>
-                        </div>
-                        <div className="col-span-1 md:col-span-2">
-                          <span className="block text-xs font-bold text-gray-400 uppercase text-red-600">Ý kiến chỉ đạo / Hướng xử lý:</span>
-                          <span className="font-semibold text-red-600 bg-red-50 p-2.5 rounded-lg border border-red-100 block mt-1">
-                            💡 {selectedDoc.direction || 'Chưa lập hướng xử lý'}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Phần tệp đính kèm */}
-                <div className="border border-gray-100 rounded-xl p-4 bg-gray-50 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileText className="text-red-500" size={24} />
-                    <div>
-                      <span className="block text-xs text-gray-400 font-bold uppercase">Tệp văn bản đính kèm:</span>
-                      <span className="text-sm font-semibold text-gray-700 truncate max-w-[280px] sm:max-w-md block">
-                        {selectedDoc.fileName || 'Không có bản scan đính kèm'}
-                      </span>
-                    </div>
-                  </div>
-                  {selectedDoc.fileUrl && (
-                    <div className="flex gap-2">
-                      <a 
-                        href={selectedDoc.fileUrl} 
-                        target="_blank" 
-                        rel="noreferrer"
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-xs font-bold rounded-lg hover:bg-green-700 transition-colors"
-                      >
-                        <Download size={14} />
-                        <span>Tải về</span>
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                {/* PDF/Word iframe preview if there is an attachment */}
-                {selectedDoc.fileUrl && (
-                  <div className="border border-gray-200 rounded-xl overflow-hidden h-[350px] bg-white">
-                    <iframe 
-                      src={selectedDoc.fileUrl.replace('/view', '/preview')} 
-                      className="w-full h-full border-none"
-                      title="File Preview"
-                    />
-                  </div>
-                )}
-
-                <div className="flex gap-2 justify-end pt-4 border-t border-gray-100">
-                  {isAdmin && (
-                    <>
-                      <Btn v="d" onClick={() => handleDeleteDoc(selectedDoc)}>Xóa</Btn>
-                      <Btn onClick={() => setIsEditing(true)}>Sửa thông tin</Btn>
-                    </>
-                  )}
-                  <Btn v="s" onClick={() => setShowDetailModal(false)}>Đóng</Btn>
-                </div>
-              </div>
-            ) : (
-              // Chế độ Chỉnh sửa thông tin
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {selectedDoc.type === 'OUT' ? (
-                    <>
-                      <FI 
-                        label="Số / Ký hiệu văn bản *" 
-                        value={docNumber} 
-                        onChange={e => setDocNumber(e.target.value)} 
-                      />
-                      <FI 
-                        label="Ngày tháng năm ban hành *" 
-                        type="date" 
-                        value={dateIssued} 
-                        onChange={e => setDateIssued(e.target.value)} 
-                      />
-                      <FI 
-                        label="Nơi nhận *" 
-                        value={recipient} 
-                        onChange={e => setRecipient(e.target.value)} 
-                      />
-                      <FI 
-                        label="Người ký *" 
-                        value={signer} 
-                        onChange={e => setSigner(e.target.value)} 
-                      />
-                      <div className="col-span-1 md:col-span-2">
-                        <FT 
-                          label="Trích yếu nội dung *" 
-                          value={summary} 
-                          onChange={e => setSummary(e.target.value)} 
-                        />
-                      </div>
-                      <div className="col-span-1 md:col-span-2">
-                        <FI 
-                          label="Ghi chú" 
-                          value={notes} 
-                          onChange={e => setNotes(e.target.value)} 
-                        />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <FI 
-                        label="Số đến *" 
-                        value={inNumber} 
-                        onChange={e => setInNumber(e.target.value)} 
-                      />
-                      <FI 
-                        label="Ngày nhận văn bản *" 
-                        type="date" 
-                        value={dateReceived} 
-                        onChange={e => setDateReceived(e.target.value)} 
-                      />
-                      <FI 
-                        label="Cơ quan gửi *" 
-                        value={sender} 
-                        onChange={e => setSender(e.target.value)} 
-                      />
-                      <FI 
-                        label="Số / Ký hiệu của cấp trên" 
-                        value={docNumberCấpTrên} 
-                        onChange={e => setDocNumberCấpTrên(e.target.value)} 
-                      />
-                      <FI 
-                        label="Người nhận *" 
-                        value={receiver} 
-                        onChange={e => setReceiver(e.target.value)} 
-                      />
-                      <FI 
-                        label="Ý kiến chỉ đạo / Hướng xử lý" 
-                        value={direction} 
-                        onChange={e => setDirection(e.target.value)} 
-                      />
-                      <div className="col-span-1 md:col-span-2">
-                        <FT 
-                          label="Trích yếu nội dung *" 
-                          value={summary} 
-                          onChange={e => setSummary(e.target.value)} 
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="flex gap-2 justify-end pt-4 border-t border-gray-100">
-                  <Btn v="s" onClick={() => setIsEditing(false)}>Hủy</Btn>
-                  <Btn onClick={handleUpdateDoc}>💾 Lưu thay đổi</Btn>
-                </div>
-              </div>
-            )}
+      {/* ==========================================
+          MODAL: XEM TRƯỚC VĂN BẢN (PREVIEW)
+          ========================================== */}
+      {previewFile && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h3 className="font-semibold text-lg flex items-center text-gray-800">
+                <img src={previewFile.iconLink || 'https://ssl.gstatic.com/docs/doclist/images/icon_10_pdf_list.png'} alt="icon" className="w-5 h-5 mr-2" />
+                {previewFile.name}
+              </h3>
+              <button 
+                onClick={() => setPreviewFile(null)}
+                className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-lg transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+            <div className="flex-1 bg-gray-100">
+              <iframe 
+                src={previewFile.webViewLink.replace('/view', '/preview')} 
+                className="w-full h-full border-none"
+                title="Preview"
+              />
+            </div>
           </div>
-        </Modal>
+        </div>
       )}
+
     </div>
   );
 }

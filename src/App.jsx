@@ -283,7 +283,7 @@ function AppContent({ currentUser, handleAppLogout }) {
     }
   };
 
-  const uploadToCloud = async (m, p, q, f, doc) => {
+  const uploadToCloud = async (m, p, q, f, d) => {
     if (isSuperAdmin) return;
     const config = getBranchConfig(currentUser?.username);
     if (!config.apiUrl) {
@@ -293,7 +293,7 @@ function AppContent({ currentUser, handleAppLogout }) {
     setSyncStatus('Đang lưu lên Đám mây...');
     try {
       const branch = currentUser?.username === 'bvtks-cs1' ? 'cs1' : 'cs2';
-      const dbContent = { members: m, plans: p, questions: q, funds: f, documents: doc, branch };
+      const dbContent = { members: m, plans: p, questions: q, funds: f, documents: d, branch };
       const res = await fetch(config.apiUrl, { 
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
