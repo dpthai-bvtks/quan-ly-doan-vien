@@ -775,14 +775,52 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
           MODAL THÔNG BÁO TỰ CHẾ (ALERT OVERLAY)
           ========================================== */}
       {alertState && (
-        <div className="fixed inset-0 bg-black/60 z-[10001] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl border border-gray-100 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200">
-            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${
-              alertState.type === 'success' ? 'bg-green-50 text-green-500' :
-              alertState.type === 'error' ? 'bg-red-50 text-red-500' :
-              alertState.type === 'warning' ? 'bg-orange-50 text-orange-500' :
-              'bg-blue-50 text-blue-500'
-            }`}>
+        <div 
+          className="modal-overlay" 
+          style={{ 
+            position: "fixed", 
+            inset: 0, 
+            zIndex: 10005, 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            padding: 16, 
+            background: "rgba(0,0,0,0.6)", 
+            backdropFilter: "blur(4px)" 
+          }}
+        >
+          <div 
+            className="modal-content" 
+            style={{ 
+              background: "#fff", 
+              borderRadius: 16, 
+              padding: 24, 
+              width: "100%", 
+              maxWidth: 360, 
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)", 
+              display: "flex", 
+              flexDirection: "column", 
+              alignItems: "center", 
+              textAlign: "center" 
+            }}
+          >
+            <div 
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+                background: alertState.type === 'success' ? '#e8f5e9' :
+                            alertState.type === 'error' ? '#ffeef0' :
+                            alertState.type === 'warning' ? '#fff3e0' : '#eef2ff',
+                color: alertState.type === 'success' ? '#2e7d32' :
+                       alertState.type === 'error' ? '#c1121f' :
+                       alertState.type === 'warning' ? '#e65100' : '#4f46e5'
+              }}
+            >
               {alertState.type === 'success' ? (
                 <FileCheck size={28} />
               ) : alertState.type === 'error' ? (
@@ -794,14 +832,25 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
               )}
             </div>
 
-            <h3 className="font-bold text-base text-gray-800 mb-2">Thông báo hệ thống</h3>
-            <p className="text-gray-600 text-sm font-semibold leading-relaxed mb-6">
+            <h3 style={{ margin: "0 0 8px 0", color: "#1a1a2e", fontSize: 16, fontWeight: 700 }}>Thông báo hệ thống</h3>
+            <p style={{ margin: "0 0 24px 0", color: "#555", fontSize: 13, fontWeight: 600, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
               {alertState.message}
             </p>
 
             <button 
               onClick={() => setAlertState(null)}
-              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow transition-all cursor-pointer w-full"
+              style={{
+                width: "100%",
+                padding: "10px 16px",
+                background: "linear-gradient(135deg, #1e3a8a, #3b82f6)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 10,
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer",
+                boxShadow: "0 4px 12px rgba(59, 130, 246, 0.2)"
+              }}
             >
               Đồng ý
             </button>
@@ -813,37 +862,100 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
           MODAL XÁC NHẬN XÓA TỰ CHẾ (DELETE CONFIRM OVERLAY)
           ========================================== */}
       {deleteConfirmState && (
-        <div className="fixed inset-0 bg-black/60 z-[10001] flex items-center justify-center p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4 mx-auto">
+        <div 
+          className="modal-overlay" 
+          style={{ 
+            position: "fixed", 
+            inset: 0, 
+            zIndex: 10005, 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center", 
+            padding: 16, 
+            background: "rgba(0,0,0,0.6)", 
+            backdropFilter: "blur(4px)" 
+          }}
+        >
+          <div 
+            className="modal-content" 
+            style={{ 
+              background: "#fff", 
+              borderRadius: 16, 
+              padding: 24, 
+              width: "100%", 
+              maxWidth: 420, 
+              boxShadow: "0 20px 60px rgba(0,0,0,0.3)", 
+              display: "flex", 
+              flexDirection: "column", 
+              alignItems: "center", 
+              textAlign: "center" 
+            }}
+          >
+            <div 
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+                background: "#ffeef0",
+                color: "#c1121f"
+              }}
+            >
               <Trash2 size={28} />
             </div>
 
-            <h3 className="font-bold text-base text-gray-800 mb-2 text-center">Xác nhận xóa công văn</h3>
-            <p className="text-gray-600 text-sm font-semibold leading-relaxed mb-4 text-center">
-              Bạn có chắc chắn muốn xóa công văn <strong className="text-red-600">"{deleteConfirmState.documentNo}"</strong> khỏi Sổ lưu không?
+            <h3 style={{ margin: "0 0 8px 0", color: "#1a1a2e", fontSize: 16, fontWeight: 700 }}>Xác nhận xóa công văn</h3>
+            <p style={{ margin: "0 0 16px 0", color: "#555", fontSize: 13, fontWeight: 600, lineHeight: 1.5 }}>
+              Bạn có chắc chắn muốn xóa công văn <strong style={{ color: "#c1121f" }}>"{deleteConfirmState.documentNo}"</strong> khỏi Sổ lưu không?
             </p>
 
             {deleteConfirmState.attachment && (
-              <div className="mb-6 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+              <div 
+                style={{ 
+                  width: "100%",
+                  boxSizing: "border-box",
+                  marginBottom: 20, 
+                  padding: 12, 
+                  background: "#f9fafb", 
+                  borderRadius: 12, 
+                  border: "1px solid #f1f5f9", 
+                  display: "flex", 
+                  alignItems: "center", 
+                  gap: 10,
+                  textAlign: "left"
+                }}
+              >
                 <input 
                   type="checkbox" 
                   id="deleteDriveFileCheckbox"
                   checked={deleteDriveFile} 
                   onChange={(e) => setDeleteDriveFile(e.target.checked)}
-                  className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                  style={{ width: 16, height: 16, cursor: "pointer", margin: 0 }}
                 />
-                <label htmlFor="deleteDriveFileCheckbox" className="text-xs text-gray-600 font-semibold cursor-pointer select-none">
+                <label htmlFor="deleteDriveFileCheckbox" style={{ fontSize: 12, color: "#475569", fontWeight: 700, cursor: "pointer", userSelect: "none", flex: 1 }}>
                   Đồng thời xóa tệp đính kèm trên Google Drive<br/>
-                  <span className="text-gray-400 font-normal">({deleteConfirmState.attachment.name})</span>
+                  <span style={{ color: "#94a3b8", fontWeight: 400 }}>({deleteConfirmState.attachment.name})</span>
                 </label>
               </div>
             )}
 
-            <div className="flex gap-3 w-full justify-center">
+            <div style={{ display: "flex", gap: 10, width: "100%" }}>
               <button 
                 onClick={() => setDeleteConfirmState(null)}
-                className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  background: "#f3f4f6",
+                  color: "#4b5563",
+                  border: "none",
+                  borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer"
+                }}
               >
                 Hủy bỏ
               </button>
@@ -853,7 +965,18 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
                   setDeleteConfirmState(null);
                   executeDelete(doc, deleteDriveFile);
                 }}
-                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow transition-all cursor-pointer"
+                style={{
+                  flex: 1,
+                  padding: "10px 16px",
+                  background: "#c1121f",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 10,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  boxShadow: "0 4px 12px rgba(193, 18, 31, 0.2)"
+                }}
               >
                 Xác nhận xóa
               </button>
