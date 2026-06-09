@@ -41,6 +41,15 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
   const [signerOrRecipient, setSignerOrRecipient] = useState('');
   const [noteOrDirection, setNoteOrDirection] = useState('');
 
+  // State thông báo & xác nhận
+  const [alertState, setAlertState] = useState(null); // { message, type }
+  const [deleteConfirmState, setDeleteConfirmState] = useState(null); // doc or null
+  const [deleteDriveFile, setDeleteDriveFile] = useState(true);
+
+  const showAlert = (message, type = 'info') => {
+    setAlertState({ message, type });
+  };
+
   const fileInputRef = useRef(null);
 
   const isSuperAdmin = currentUser?.username === 'admin-bvtks';
@@ -199,15 +208,15 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
   // Lưu Sổ lưu (Thêm mới hoặc cập nhật)
   const handleSaveDoc = async () => {
     if (!isAdmin) {
-      alert("Tài khoản khách không có quyền sửa đổi Sổ lưu!");
+      showAlert("Tài khoản khách không có quyền sửa đổi Sổ lưu!", "warning");
       return;
     }
     if (!documentNo.trim()) {
-      alert("Vui lòng điền Số/Ký hiệu văn bản!");
+      showAlert("Vui lòng điền Số/Ký hiệu văn bản!", "warning");
       return;
     }
     if (!docDate) {
-      alert("Vui lòng điền ngày tháng!");
+      showAlert("Vui lòng điền ngày tháng!", "warning");
       return;
     }
 
@@ -242,52 +251,50 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
       }
 
       setDocuments(updatedDocs);
-      alert("💾 Đã lưu thông tin công văn thành công!");
+      showAlert("💾 Đã lưu thông tin công văn thành công!", "success");
       setShowDocModal(false);
       setSelectedFile(null);
     } catch (err) {
-      alert("Lỗi khi lưu công văn: " + err.message);
+      showAlert("Lỗi khi lưu công văn: " + err.message, "error");
     } finally {
       setUploading(false);
     }
   };
 
-  // Xóa Công văn khỏi Sổ lưu
-  const handleDeleteDoc = async (doc) => {
+  // Hàm thực thi xóa thực tế
+  const executeDelete = async (doc, shouldDeleteDriveFile) => {
+    setLoading(true);
+    try {
+      if (shouldDeleteDriveFile && doc.attachment) {
+        const brConfig = getBranchConfig(doc.branch === 'cs1' ? 'bvtks-cs1' : 'bvtks-cs2');
+        if (brConfig.apiUrl) {
+          await axios.post(brConfig.apiUrl, JSON.stringify({
+            action: 'delete_file',
+            fileId: doc.attachment.fileId
+          }), {
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+          });
+        }
+      }
+
+      const updatedDocs = documents.filter(d => d.id !== doc.id);
+      setDocuments(updatedDocs);
+      showAlert("🎉 Đã xóa công văn thành công!", "success");
+    } catch (err) {
+      showAlert("Lỗi xóa công văn: " + err.message, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Xóa Công văn khỏi Sổ lưu (kích hoạt modal xác nhận)
+  const handleDeleteDoc = (doc) => {
     if (!isAdmin) {
-      alert("Tài khoản khách không có quyền xóa!");
+      showAlert("Tài khoản khách không có quyền xóa!", "warning");
       return;
     }
-    if (window.confirm(`Bạn có chắc chắn muốn xóa công văn "${doc.documentNo}" khỏi Sổ lưu?`)) {
-      // Hỏi người dùng có muốn xóa file đính kèm trên Google Drive hay không
-      let deleteDriveFile = false;
-      if (doc.attachment) {
-        deleteDriveFile = window.confirm("Tài liệu này có tệp đính kèm trên Google Drive. Bạn có muốn xóa tệp tin này trên Google Drive luôn không?");
-      }
-
-      setLoading(true);
-      try {
-        if (deleteDriveFile && doc.attachment) {
-          const brConfig = getBranchConfig(doc.branch === 'cs1' ? 'bvtks-cs1' : 'bvtks-cs2');
-          if (brConfig.apiUrl) {
-            await axios.post(brConfig.apiUrl, JSON.stringify({
-              action: 'delete_file',
-              fileId: doc.attachment.fileId
-            }), {
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-            });
-          }
-        }
-
-        const updatedDocs = documents.filter(d => d.id !== doc.id);
-        setDocuments(updatedDocs);
-        alert("Đã xóa công văn thành công!");
-      } catch (err) {
-        alert("Lỗi xóa công văn: " + err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
+    setDeleteConfirmState(doc);
+    setDeleteDriveFile(true); // mặc định tích chọn xóa tệp trên Drive nếu có
   };
 
   // Lọc dữ liệu Sổ lưu
@@ -759,6 +766,97 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
                 className="w-full h-full border-none"
                 title="Preview"
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL THÔNG BÁO TỰ CHẾ (ALERT OVERLAY)
+          ========================================== */}
+      {alertState && (
+        <div className="fixed inset-0 bg-black/60 z-[10001] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl border border-gray-100 flex flex-col items-center text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${
+              alertState.type === 'success' ? 'bg-green-50 text-green-500' :
+              alertState.type === 'error' ? 'bg-red-50 text-red-500' :
+              alertState.type === 'warning' ? 'bg-orange-50 text-orange-500' :
+              'bg-blue-50 text-blue-500'
+            }`}>
+              {alertState.type === 'success' ? (
+                <FileCheck size={28} />
+              ) : alertState.type === 'error' ? (
+                <AlertCircle size={28} />
+              ) : alertState.type === 'warning' ? (
+                <AlertCircle size={28} />
+              ) : (
+                <FileIcon size={28} />
+              )}
+            </div>
+
+            <h3 className="font-bold text-base text-gray-800 mb-2">Thông báo hệ thống</h3>
+            <p className="text-gray-600 text-sm font-semibold leading-relaxed mb-6">
+              {alertState.message}
+            </p>
+
+            <button 
+              onClick={() => setAlertState(null)}
+              className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow transition-all cursor-pointer w-full"
+            >
+              Đồng ý
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          MODAL XÁC NHẬN XÓA TỰ CHẾ (DELETE CONFIRM OVERLAY)
+          ========================================== */}
+      {deleteConfirmState && (
+        <div className="fixed inset-0 bg-black/60 z-[10001] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-14 h-14 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4 mx-auto">
+              <Trash2 size={28} />
+            </div>
+
+            <h3 className="font-bold text-base text-gray-800 mb-2 text-center">Xác nhận xóa công văn</h3>
+            <p className="text-gray-600 text-sm font-semibold leading-relaxed mb-4 text-center">
+              Bạn có chắc chắn muốn xóa công văn <strong className="text-red-600">"{deleteConfirmState.documentNo}"</strong> khỏi Sổ lưu không?
+            </p>
+
+            {deleteConfirmState.attachment && (
+              <div className="mb-6 p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center gap-3">
+                <input 
+                  type="checkbox" 
+                  id="deleteDriveFileCheckbox"
+                  checked={deleteDriveFile} 
+                  onChange={(e) => setDeleteDriveFile(e.target.checked)}
+                  className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 cursor-pointer"
+                />
+                <label htmlFor="deleteDriveFileCheckbox" className="text-xs text-gray-600 font-semibold cursor-pointer select-none">
+                  Đồng thời xóa tệp đính kèm trên Google Drive<br/>
+                  <span className="text-gray-400 font-normal">({deleteConfirmState.attachment.name})</span>
+                </label>
+              </div>
+            )}
+
+            <div className="flex gap-3 w-full justify-center">
+              <button 
+                onClick={() => setDeleteConfirmState(null)}
+                className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={() => {
+                  const doc = deleteConfirmState;
+                  setDeleteConfirmState(null);
+                  executeDelete(doc, deleteDriveFile);
+                }}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-xl shadow transition-all cursor-pointer"
+              >
+                Xác nhận xóa
+              </button>
             </div>
           </div>
         </div>
