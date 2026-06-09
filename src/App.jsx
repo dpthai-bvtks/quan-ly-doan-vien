@@ -11,6 +11,7 @@ import LoginScreen from './components/LoginScreen'
 import FundManager from './components/FundManager'
 import AttendanceManager from './components/AttendanceManager'
 import MinutesManager from './components/MinutesManager'
+import DocumentManager from './components/DocumentManager'
 import { RAW_MEMBERS, INIT_PLANS, INIT_QUESTIONS, getBranchConfig } from './data/constants'
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
@@ -305,6 +306,12 @@ function AppContent({ currentUser, handleAppLogout }) {
           isAdmin={effectiveIsAdmin} 
           geminiApiKey={geminiApiKey} 
           currentUser={currentUser} 
+        />
+      case 'documents':
+        return <DocumentManager 
+          isAdmin={effectiveIsAdmin} 
+          currentUser={currentUser} 
+          selectedBranch={selectedBranch}
         />
       case 'minutes':
         return <MinutesManager 

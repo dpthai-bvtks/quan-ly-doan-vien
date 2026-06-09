@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, FolderOpen, Calendar, Gamepad2, Settings, LogOut, ChevronRight, Wallet, CheckCircle } from 'lucide-react';
+import { LayoutDashboard, Users, FolderOpen, Calendar, Gamepad2, Settings, LogOut, ChevronRight, Wallet, CheckCircle, FileText } from 'lucide-react';
 import AccountManager from './AccountManager';
 import { getBranchConfig } from '../data/constants';
 
@@ -7,7 +7,8 @@ const ALL_NAV_ITEMS = [
   { id: 'dashboard', label: 'Tổng quan', icon: LayoutDashboard, adminOnly: false },
   { id: 'members', label: 'Danh sách đoàn viên', icon: Users, adminOnly: false },
   { id: 'plans', label: 'Kế hoạch & Báo cáo', icon: Calendar, adminOnly: false },
-  { id: 'minutes', label: 'Biên bản BCH', icon: FolderOpen, adminOnly: false },
+  { id: 'documents', label: 'Quản lý văn bản đi/đến', icon: FolderOpen, adminOnly: false },
+  { id: 'minutes', label: 'Biên bản BCH', icon: FileText, adminOnly: false },
   { id: 'attendance', label: 'Điểm danh & Đánh giá', icon: CheckCircle, adminOnly: false },
   { id: 'funds', label: 'Quản lý Thu/Chi', icon: Wallet, adminOnly: false },
   { id: 'games', label: 'Trò chơi sinh hoạt', icon: Gamepad2, adminOnly: true },
