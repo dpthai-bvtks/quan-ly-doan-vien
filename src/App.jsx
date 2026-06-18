@@ -72,6 +72,10 @@ function AppContent({ currentUser, handleAppLogout }) {
     const saved = localStorage.getItem('db_funds_bvtks-cs1');
     return saved ? JSON.parse(saved) : [];
   });
+  const [cs1DoanPhi, setCs1DoanPhi] = useState(() => {
+    const saved = localStorage.getItem('db_doanphi_bvtks-cs1');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [cs1Documents, setCs1Documents] = useState(() => {
     const saved = localStorage.getItem('db_documents_bvtks-cs1');
     return saved ? JSON.parse(saved) : [];
@@ -92,6 +96,10 @@ function AppContent({ currentUser, handleAppLogout }) {
   });
   const [cs2Funds, setCs2Funds] = useState(() => {
     const saved = localStorage.getItem('db_funds_bvtks-cs2');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [cs2DoanPhi, setCs2DoanPhi] = useState(() => {
+    const saved = localStorage.getItem('db_doanphi_bvtks-cs2');
     return saved ? JSON.parse(saved) : [];
   });
   const [cs2Documents, setCs2Documents] = useState(() => {
@@ -120,6 +128,11 @@ function AppContent({ currentUser, handleAppLogout }) {
     const saved = localStorage.getItem(`db_funds_${currentUser?.username}`);
     return saved ? JSON.parse(saved) : [];
   });
+  const [normalDoanPhi, setNormalDoanPhi] = useState(() => {
+    if (isSuperAdmin) return [];
+    const saved = localStorage.getItem(`db_doanphi_${currentUser?.username}`);
+    return saved ? JSON.parse(saved) : [];
+  });
   const [normalDocuments, setNormalDocuments] = useState(() => {
     if (isSuperAdmin) return [];
     const saved = localStorage.getItem(`db_documents_${currentUser?.username}`);
@@ -143,6 +156,10 @@ function AppContent({ currentUser, handleAppLogout }) {
     ? (selectedBranch === 'cs1' ? cs1Funds : (selectedBranch === 'cs2' ? cs2Funds : [...cs1Funds, ...cs2Funds]))
     : normalFunds;
 
+  const doanPhi = isSuperAdmin
+    ? (selectedBranch === 'cs1' ? cs1DoanPhi : (selectedBranch === 'cs2' ? cs2DoanPhi : [...cs1DoanPhi, ...cs2DoanPhi]))
+    : normalDoanPhi;
+
   const documents = isSuperAdmin 
     ? (selectedBranch === 'cs1' ? cs1Documents : (selectedBranch === 'cs2' ? cs2Documents : [...cs1Documents, ...cs2Documents]))
     : normalDocuments;
@@ -160,6 +177,9 @@ function AppContent({ currentUser, handleAppLogout }) {
   const setFunds = (newVal) => {
     if (!isSuperAdmin) setNormalFunds(newVal);
   };
+  const setDoanPhi = (newVal) => {
+    if (!isSuperAdmin) setNormalDoanPhi(newVal);
+  };
   const setDocuments = (newVal) => {
     if (!isSuperAdmin) setNormalDocuments(newVal);
   };
@@ -175,11 +195,12 @@ function AppContent({ currentUser, handleAppLogout }) {
     localStorage.setItem(`db_plans_${currentUser?.username}`, JSON.stringify(plans));
     localStorage.setItem(`db_questions_${currentUser?.username}`, JSON.stringify(questions));
     localStorage.setItem(`db_funds_${currentUser?.username}`, JSON.stringify(funds));
+    localStorage.setItem(`db_doanphi_${currentUser?.username}`, JSON.stringify(doanPhi));
     localStorage.setItem(`db_documents_${currentUser?.username}`, JSON.stringify(documents));
     if (initialLoadDone.current && isAdmin) {
-      uploadToCloud(members, plans, questions, funds, documents);
+      uploadToCloud(members, plans, questions, funds, doanPhi, documents);
     }
-  }, [members, plans, questions, funds, documents])
+  }, [members, plans, questions, funds, doanPhi, documents])
 
   useEffect(() => {
     downloadFromCloud();
@@ -192,8 +213,8 @@ function AppContent({ currentUser, handleAppLogout }) {
         const config1 = getBranchConfig('bvtks-cs1');
         const config2 = getBranchConfig('bvtks-cs2');
 
-        let cs1 = { members: RAW_MEMBERS, plans: INIT_PLANS, questions: INIT_QUESTIONS, funds: [], documents: [] };
-        let cs2 = { members: RAW_MEMBERS, plans: INIT_PLANS, questions: INIT_QUESTIONS, funds: [], documents: [] };
+        let cs1 = { members: RAW_MEMBERS, plans: INIT_PLANS, questions: INIT_QUESTIONS, funds: [], doanPhi: [], documents: [] };
+        let cs2 = { members: RAW_MEMBERS, plans: INIT_PLANS, questions: INIT_QUESTIONS, funds: [], doanPhi: [], documents: [] };
 
         if (config1.apiUrl) {
           try {
@@ -203,6 +224,7 @@ function AppContent({ currentUser, handleAppLogout }) {
             if (data1.plans) cs1.plans = data1.plans;
             if (data1.questions) cs1.questions = data1.questions;
             if (data1.funds) cs1.funds = data1.funds;
+            if (data1.doanPhi) cs1.doanPhi = data1.doanPhi;
             if (data1.documents) cs1.documents = data1.documents;
           } catch (e) {
             console.error("Lỗi fetch CS1:", e);
@@ -217,6 +239,7 @@ function AppContent({ currentUser, handleAppLogout }) {
             if (data2.plans) cs2.plans = data2.plans;
             if (data2.questions) cs2.questions = data2.questions;
             if (data2.funds) cs2.funds = data2.funds;
+            if (data2.doanPhi) cs2.doanPhi = data2.doanPhi;
             if (data2.documents) cs2.documents = data2.documents;
           } catch (e) {
             console.error("Lỗi fetch CS2:", e);
@@ -227,12 +250,14 @@ function AppContent({ currentUser, handleAppLogout }) {
         setCs1Plans(cs1.plans);
         setCs1Questions(cs1.questions);
         setCs1Funds(cs1.funds);
+        setCs1DoanPhi(cs1.doanPhi);
         setCs1Documents(cs1.documents);
 
         setCs2Members(cs2.members);
         setCs2Plans(cs2.plans);
         setCs2Questions(cs2.questions);
         setCs2Funds(cs2.funds);
+        setCs2DoanPhi(cs2.doanPhi);
         setCs2Documents(cs2.documents);
 
         // Lưu offline cache
@@ -240,12 +265,14 @@ function AppContent({ currentUser, handleAppLogout }) {
         localStorage.setItem('db_plans_bvtks-cs1', JSON.stringify(cs1.plans));
         localStorage.setItem('db_questions_bvtks-cs1', JSON.stringify(cs1.questions));
         localStorage.setItem('db_funds_bvtks-cs1', JSON.stringify(cs1.funds));
+        localStorage.setItem('db_doanphi_bvtks-cs1', JSON.stringify(cs1.doanPhi));
         localStorage.setItem('db_documents_bvtks-cs1', JSON.stringify(cs1.documents));
 
         localStorage.setItem('db_members_bvtks-cs2', JSON.stringify(cs2.members));
         localStorage.setItem('db_plans_bvtks-cs2', JSON.stringify(cs2.plans));
         localStorage.setItem('db_questions_bvtks-cs2', JSON.stringify(cs2.questions));
         localStorage.setItem('db_funds_bvtks-cs2', JSON.stringify(cs2.funds));
+        localStorage.setItem('db_doanphi_bvtks-cs2', JSON.stringify(cs2.doanPhi));
         localStorage.setItem('db_documents_bvtks-cs2', JSON.stringify(cs2.documents));
 
         setSyncStatus('Đã đồng bộ 2 chi đoàn');
@@ -273,6 +300,7 @@ function AppContent({ currentUser, handleAppLogout }) {
       if (dbData.plans) setPlans(dbData.plans);
       if (dbData.questions) setQuestions(dbData.questions);
       if (dbData.funds) setFunds(dbData.funds);
+      if (dbData.doanPhi) setDoanPhi(dbData.doanPhi);
       if (dbData.documents) setDocuments(dbData.documents);
       setSyncStatus('Đã đồng bộ');
     } catch (error) {
@@ -283,7 +311,7 @@ function AppContent({ currentUser, handleAppLogout }) {
     }
   };
 
-  const uploadToCloud = async (m, p, q, f, d) => {
+  const uploadToCloud = async (m, p, q, f, dp, d) => {
     if (isSuperAdmin) return;
     const config = getBranchConfig(currentUser?.username);
     if (!config.apiUrl) {
@@ -293,7 +321,7 @@ function AppContent({ currentUser, handleAppLogout }) {
     setSyncStatus('Đang lưu lên Đám mây...');
     try {
       const branch = currentUser?.username === 'bvtks-cs1' ? 'cs1' : 'cs2';
-      const dbContent = { members: m, plans: p, questions: q, funds: f, documents: d, branch };
+      const dbContent = { members: m, plans: p, questions: q, funds: f, doanPhi: dp, documents: d, branch };
       const res = await fetch(config.apiUrl, { 
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -318,7 +346,14 @@ function AppContent({ currentUser, handleAppLogout }) {
       case 'members':
         return <MemberManager members={members} setMembers={setMembers} isAdmin={effectiveIsAdmin} />
       case 'funds':
-        return <FundManager funds={funds} setFunds={setFunds} isAdmin={effectiveIsAdmin} isSuperAdmin={isSuperAdmin} />
+        return <FundManager
+          funds={funds} setFunds={setFunds}
+          doanPhi={doanPhi} setDoanPhi={setDoanPhi}
+          members={members}
+          isAdmin={effectiveIsAdmin}
+          isSuperAdmin={isSuperAdmin}
+          currentUser={currentUser}
+        />
       case 'attendance':
         return <AttendanceManager 
           members={members} 
