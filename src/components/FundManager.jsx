@@ -267,7 +267,7 @@ function DoanPhiGrid({ members, doanPhi, setDoanPhi, isAdmin }) {
                               onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
                             >
                               {paid
-                                ? <CheckCircle2 size={18} color="#fff" />
+                                ? <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>5.000đ</span>
                                 : <XCircle size={16} color="#fff" opacity={0.7} />
                               }
                             </button>

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { Modal, FI, FS, FT, Btn, Th, Td } from './UI';
 import { getBranchConfig } from '../data/constants';
+import * as XLSX from 'xlsx';
 
 export default function DocumentManager({ isAdmin, currentUser, selectedBranch, documents = [], setDocuments }) {
   const [loading, setLoading] = useState(false);
@@ -349,6 +350,119 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
     return false;
   });
 
+  // Xử lý Xuất Excel Sổ lưu
+  const handleExportRegistry = () => {
+    const isIncoming = registryTab === 'INCOMING';
+    const wsData = [
+      [`SỔ LƯU CÔNG VĂN ${isIncoming ? 'ĐẾN' : 'ĐI'}`],
+      [],
+      isIncoming 
+        ? ['STT', 'Số đến', 'Ngày nhận', 'Cơ quan gửi', 'Số/Ký hiệu gốc', 'Trích yếu nội dung', 'Người nhận', 'Ý kiến chỉ đạo/Xử lý', 'Link Đính kèm']
+        : ['STT', 'Số/Ký hiệu', 'Ngày ban hành', 'Nơi nhận', 'Trích yếu nội dung', 'Người ký', 'Ghi chú', 'Link Đính kèm']
+    ];
+
+    filteredRegistry.forEach((doc, idx) => {
+      const row = isIncoming 
+        ? [
+            idx + 1,
+            doc.documentNo || '',
+            doc.date ? new Date(doc.date).toLocaleDateString('vi-VN') : '',
+            doc.senderOrReceiver || '',
+            doc.refNo || '',
+            doc.summary || '',
+            doc.signerOrRecipient || '',
+            doc.noteOrDirection || '',
+            doc.attachment?.url || ''
+          ]
+        : [
+            idx + 1,
+            doc.documentNo || '',
+            doc.date ? new Date(doc.date).toLocaleDateString('vi-VN') : '',
+            doc.senderOrReceiver || '',
+            doc.summary || '',
+            doc.signerOrRecipient || '',
+            doc.noteOrDirection || '',
+            doc.attachment?.url || ''
+          ];
+      wsData.push(row);
+    });
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    XLSX.utils.book_append_sheet(wb, ws, `So_Luu_CV_${isIncoming ? 'Den' : 'Di'}`);
+    XLSX.writeFile(wb, `so_luu_cong_van_${isIncoming ? 'den' : 'di'}.xlsx`);
+  };
+
+  // Xử lý Nhập Excel Sổ lưu
+  const handleImportRegistry = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        
+        if (data.length <= 3) {
+          showAlert('File Excel không có dữ liệu hợp lệ', 'error');
+          return;
+        }
+
+        const isIncoming = registryTab === 'INCOMING';
+        const newDocs = [];
+
+        for (let i = 3; i < data.length; i++) {
+          const row = data[i];
+          if (!row || row.length === 0 || !row[1]) continue;
+
+          let docDate = '';
+          if (row[2]) {
+             const parts = String(row[2]).split('/');
+             if (parts.length === 3) docDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+             else docDate = String(row[2]);
+          }
+
+          const docObj = {
+            id: Date.now() + i,
+            type: isIncoming ? 'incoming' : 'outgoing',
+            documentNo: String(row[1] || ''),
+            date: docDate,
+            senderOrReceiver: String(row[3] || ''),
+            branch: currentBranch
+          };
+
+          if (isIncoming) {
+            docObj.refNo = String(row[4] || '');
+            docObj.summary = String(row[5] || '');
+            docObj.signerOrRecipient = String(row[6] || '');
+            docObj.noteOrDirection = String(row[7] || '');
+            if (row[8]) docObj.attachment = { url: String(row[8]), name: 'Tệp đính kèm' };
+          } else {
+            docObj.summary = String(row[4] || '');
+            docObj.signerOrRecipient = String(row[5] || '');
+            docObj.noteOrDirection = String(row[6] || '');
+            if (row[7]) docObj.attachment = { url: String(row[7]), name: 'Tệp đính kèm' };
+          }
+          newDocs.push(docObj);
+        }
+
+        if (newDocs.length > 0) {
+          setDocuments(prev => [...newDocs, ...prev]);
+          showAlert(`Đã nhập thành công ${newDocs.length} công văn!`, 'success');
+        } else {
+          showAlert('Không tìm thấy dòng dữ liệu hợp lệ nào để nhập.', 'warning');
+        }
+      } catch (err) {
+        showAlert('Lỗi khi đọc file Excel: ' + err.message, 'error');
+      }
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsBinaryString(file);
+  };
+
   return (
     <div className="space-y-6">
       
@@ -407,9 +521,14 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
             </div>
 
             {isAdmin && (
-              <Btn onClick={() => handleOpenAddModal(registryTab === 'INCOMING' ? 'incoming' : 'outgoing')}>
-                Thêm văn bản lưu sổ
-              </Btn>
+              <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+                <Btn v="s" onClick={handleExportRegistry}><Download size={16} /> Xuất Excel</Btn>
+                <input type="file" accept=".xlsx, .xls" ref={fileInputRef} className="hidden" onChange={handleImportRegistry} />
+                <Btn v="s" onClick={() => fileInputRef.current?.click()}><Upload size={16} /> Nhập Excel</Btn>
+                <Btn onClick={() => handleOpenAddModal(registryTab === 'INCOMING' ? 'incoming' : 'outgoing')}>
+                  <Plus size={16} className="mr-1 inline" /> Thêm văn bản lưu sổ
+                </Btn>
+              </div>
             )}
           </div>
 
@@ -472,7 +591,7 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
                         {doc.type === 'incoming' && (
                           <Td className="text-gray-500 font-medium">{doc.refNo || '—'}</Td>
                         )}
-                        <Td className="text-gray-600 text-xs font-medium max-w-xs truncate" title={doc.summary}>
+                        <Td className="text-gray-600 text-xs font-medium min-w-[200px] whitespace-normal break-words">
                           {doc.summary}
                         </Td>
                         <Td className="text-gray-700 text-xs font-semibold">{doc.signerOrRecipient}</Td>
