@@ -77,15 +77,40 @@ function ConfirmPortal({ confirm, onOk, onCancel }) {
 ═══════════════════════════════════════ */
 function DoanPhiGrid({ members, doanPhi, setDoanPhi, isAdmin }) {
   const [year, setYear] = useState(CURRENT_YEAR);
-  const activeMembers = members.filter(m => !m.trangThaiHoatDong || m.trangThaiHoatDong === 'active');
+
+  const isInactive = m => m.trangThai && m.trangThai !== 'active' && m.trangThai !== 'chuyen_den';
+
+  const displayMembers = members.filter(m => {
+    if (!isInactive(m)) return true;
+    if (m.ngayBienDong) {
+      const bdYear = new Date(m.ngayBienDong).getFullYear();
+      if (bdYear >= year) return true;
+    } else {
+      return true;
+    }
+    return false;
+  });
+
+  const isMonthDisabled = (member, month) => {
+    if (!isInactive(member)) return false;
+    if (!member.ngayBienDong) return false;
+    const bdDate = new Date(member.ngayBienDong);
+    const bdYear = bdDate.getFullYear();
+    const bdMonth = bdDate.getMonth() + 1;
+    if (year > bdYear) return true;
+    if (year === bdYear && month > bdMonth) return true;
+    return false;
+  };
 
   const getPaid = (memberId, month) => {
     const rec = doanPhi.find(d => d.memberId === memberId && d.year === year);
     return rec ? !!rec.months[String(month)] : false;
   };
 
-  const togglePaid = (memberId, month) => {
+  const togglePaid = (member, month) => {
     if (!isAdmin) return;
+    if (isMonthDisabled(member, month)) return;
+    const memberId = member.id;
     setDoanPhi(prev => {
       const existing = prev.find(d => d.memberId === memberId && d.year === year);
       if (existing) {
@@ -107,7 +132,8 @@ function DoanPhiGrid({ members, doanPhi, setDoanPhi, isAdmin }) {
     if (!isAdmin) return;
     setDoanPhi(prev => {
       const updated = [...prev];
-      activeMembers.forEach(member => {
+      displayMembers.forEach(member => {
+        if (isMonthDisabled(member, month)) return;
         const idx = updated.findIndex(d => d.memberId === member.id && d.year === year);
         if (idx >= 0) {
           updated[idx] = { ...updated[idx], months: { ...updated[idx].months, [String(month)]: val } };
@@ -123,18 +149,33 @@ function DoanPhiGrid({ members, doanPhi, setDoanPhi, isAdmin }) {
   };
 
   const getMonthStats = (month) => {
-    const paid = activeMembers.filter(m => getPaid(m.id, month)).length;
-    return { paid, total: activeMembers.length };
+    const validMembers = displayMembers.filter(m => !isMonthDisabled(m, month));
+    const paid = validMembers.filter(m => getPaid(m.id, month)).length;
+    return { paid, total: validMembers.length };
   };
 
-  const getMemberStats = (memberId) => {
-    const rec = doanPhi.find(d => d.memberId === memberId && d.year === year);
-    if (!rec) return 0;
-    return Object.values(rec.months).filter(Boolean).length;
+  const getMemberStats = (member) => {
+    const rec = doanPhi.find(d => d.memberId === member.id && d.year === year);
+    let count = 0;
+    if (rec) {
+      for (let m = 1; m <= 12; m++) {
+        if (!isMonthDisabled(member, m) && rec.months[String(m)]) count++;
+      }
+    }
+    const validCount = MONTHS.filter((_, i) => !isMonthDisabled(member, i + 1)).length;
+    return { paidCount: count, validCount };
   };
 
-  const totalPaid = activeMembers.reduce((sum, m) => sum + getMemberStats(m.id), 0);
-  const totalCells = activeMembers.length * 12;
+  let totalPaid = 0;
+  let totalCells = 0;
+  displayMembers.forEach(m => {
+    for (let mo = 1; mo <= 12; mo++) {
+      if (!isMonthDisabled(m, mo)) {
+        totalCells++;
+        if (getPaid(m.id, mo)) totalPaid++;
+      }
+    }
+  });
 
   const exportExcel = () => {
     const wsData = [
@@ -142,10 +183,15 @@ function DoanPhiGrid({ members, doanPhi, setDoanPhi, isAdmin }) {
       [],
       ['STT', 'Họ và Tên', 'Khoa/Phòng', ...MONTHS.map((_, i) => `Tháng ${i + 1}`), 'Số tháng đóng', 'Tỷ lệ']
     ];
-    activeMembers.forEach((m, idx) => {
-      const months = MONTHS.map((_, i) => getPaid(m.id, i + 1) ? '✔' : '');
+    displayMembers.forEach((m, idx) => {
+      const months = MONTHS.map((_, i) => {
+        if (isMonthDisabled(m, i + 1)) return '-';
+        return getPaid(m.id, i + 1) ? '✔' : '';
+      });
+      const validCount = MONTHS.filter((_, i) => !isMonthDisabled(m, i + 1)).length;
       const paid = months.filter(v => v === '✔').length;
-      wsData.push([idx + 1, m.hoTen, m.toDoan || '', ...months, paid, `${Math.round(paid / 12 * 100)}%`]);
+      const pct = validCount > 0 ? Math.round(paid / validCount * 100) : 0;
+      wsData.push([idx + 1, m.hoTen, m.toDoan || '', ...months, `${paid}/${validCount}`, `${pct}%`]);
     });
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -225,16 +271,16 @@ function DoanPhiGrid({ members, doanPhi, setDoanPhi, isAdmin }) {
               </tr>
             </thead>
             <tbody>
-              {activeMembers.length === 0 ? (
+              {displayMembers.length === 0 ? (
                 <tr>
                   <td colSpan={15} style={{ textAlign: 'center', padding: 32, color: '#9ca3af', fontStyle: 'italic', fontSize: 14 }}>
                     Chưa có đoàn viên nào
                   </td>
                 </tr>
               ) : (
-                activeMembers.map((member, idx) => {
-                  const paidCount = getMemberStats(member.id);
-                  const allPaid = paidCount === 12;
+                displayMembers.map((member, idx) => {
+                  const { paidCount, validCount } = getMemberStats(member);
+                  const allPaid = validCount > 0 && paidCount === validCount;
                   return (
                     <tr key={member.id} style={{ borderBottom: '1px solid #f3f4f6', background: idx % 2 === 0 ? '#fff' : '#fafafa' }}
                       onMouseEnter={e => e.currentTarget.style.background = '#eff6ff'}
@@ -247,30 +293,37 @@ function DoanPhiGrid({ members, doanPhi, setDoanPhi, isAdmin }) {
                       </td>
                       {MONTHS.map((_, mIdx) => {
                         const month = mIdx + 1;
+                        const disabled = isMonthDisabled(member, month);
                         const paid = getPaid(member.id, month);
                         return (
                           <td key={month} style={{ padding: '6px', textAlign: 'center' }}>
-                            <button
-                              onClick={() => togglePaid(member.id, month)}
-                              disabled={!isAdmin}
-                              title={paid ? `Tháng ${month}: Đã đóng — click để hủy` : `Tháng ${month}: Chưa đóng — click để đánh dấu`}
-                              style={{
-                                width: 44, height: 36, borderRadius: 8, border: 'none',
-                                background: paid ? '#10b981' : '#fca5a5',
-                                cursor: isAdmin ? 'pointer' : 'default',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto',
-                                transition: 'all 0.15s',
-                                boxShadow: paid ? '0 2px 6px rgba(16,185,129,0.35)' : '0 1px 3px rgba(252,165,165,0.4)',
-                                transform: 'scale(1)',
-                              }}
-                              onMouseEnter={e => { if (isAdmin) e.currentTarget.style.transform = 'scale(1.12)'; }}
-                              onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
-                            >
-                              {paid
-                                ? <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>5.000đ</span>
-                                : <XCircle size={16} color="#fff" opacity={0.7} />
-                              }
-                            </button>
+                            {disabled ? (
+                              <div style={{ width: 44, height: 36, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f3f4f6', borderRadius: 8, border: '1px dashed #d1d5db' }}>
+                                <span style={{ fontSize: 18, color: '#9ca3af' }}>-</span>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => togglePaid(member, month)}
+                                disabled={!isAdmin}
+                                title={paid ? `Tháng ${month}: Đã đóng — click để hủy` : `Tháng ${month}: Chưa đóng — click để đánh dấu`}
+                                style={{
+                                  width: 44, height: 36, borderRadius: 8, border: 'none',
+                                  background: paid ? '#10b981' : '#fca5a5',
+                                  cursor: isAdmin ? 'pointer' : 'default',
+                                  display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto',
+                                  transition: 'all 0.15s',
+                                  boxShadow: paid ? '0 2px 6px rgba(16,185,129,0.35)' : '0 1px 3px rgba(252,165,165,0.4)',
+                                  transform: 'scale(1)',
+                                }}
+                                onMouseEnter={e => { if (isAdmin) e.currentTarget.style.transform = 'scale(1.12)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                              >
+                                {paid
+                                  ? <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>5.000đ</span>
+                                  : <XCircle size={16} color="#fff" opacity={0.7} />
+                                }
+                              </button>
+                            )}
                           </td>
                         );
                       })}
@@ -278,10 +331,10 @@ function DoanPhiGrid({ members, doanPhi, setDoanPhi, isAdmin }) {
                         <span style={{
                           display: 'inline-block', padding: '3px 10px', borderRadius: 20,
                           fontSize: 12, fontWeight: 700,
-                          background: paidCount === 12 ? '#d1fae5' : paidCount >= 6 ? '#fef9c3' : '#fee2e2',
-                          color: paidCount === 12 ? '#065f46' : paidCount >= 6 ? '#92400e' : '#991b1b',
+                          background: allPaid ? '#d1fae5' : paidCount >= (validCount / 2) ? '#fef9c3' : '#fee2e2',
+                          color: allPaid ? '#065f46' : paidCount >= (validCount / 2) ? '#92400e' : '#991b1b',
                         }}>
-                          {paidCount}/12
+                          {paidCount}/{validCount}
                         </span>
                       </td>
                     </tr>
