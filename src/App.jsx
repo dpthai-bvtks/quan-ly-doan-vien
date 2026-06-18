@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { CheckCircle2, AlertCircle } from 'lucide-react'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import MemberManager from './components/MemberManager'
@@ -15,6 +17,28 @@ import DocumentManager from './components/DocumentManager'
 import { RAW_MEMBERS, INIT_PLANS, INIT_QUESTIONS, getBranchConfig } from './data/constants'
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
+
+export function ToastNotification({ message, type }) {
+  if (!message) return null;
+  const isSuccess = type === 'success';
+  return createPortal(
+    <div style={{
+      position: 'fixed', bottom: 24, right: 24, zIndex: 99999,
+      background: isSuccess ? '#10b981' : '#dc2626', color: '#fff', 
+      padding: '14px 24px', borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+      display: 'flex', alignItems: 'center', gap: 10,
+      fontWeight: 600, fontSize: 14,
+      animation: 'slideUp 0.3s ease forwards'
+    }}>
+      {isSuccess ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
+      {message}
+      <style>{`
+        @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+      `}</style>
+    </div>,
+    document.body
+  );
+}
 
 function AppContent({ currentUser, handleAppLogout }) {
   const isAdmin = currentUser?.role === 'admin';
@@ -188,6 +212,15 @@ function AppContent({ currentUser, handleAppLogout }) {
   const [syncStatus, setSyncStatus] = useState('Chưa kết nối')
   const initialLoadDone = useRef(false)
 
+  const [toast, setToast] = useState({ msg: '', type: 'success' });
+  const toastTimer = useRef(null);
+  
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast({ msg: '', type: 'success' }), 3000);
+  };
+
   // Lưu vào LocalStorage & sync cloud (chỉ admin mới được ghi lên Drive)
   useEffect(() => {
     if (isSuperAdmin) return;
@@ -330,12 +363,14 @@ function AppContent({ currentUser, handleAppLogout }) {
       const data = await res.json();
       if (data.status === 'success') {
         setSyncStatus('Đã đồng bộ');
+        showToast('Đã lưu thông tin thành công!', 'success');
       } else {
         throw new Error(data.message);
       }
     } catch (error) {
       console.error("Lỗi lưu lên Cloud:", error);
       setSyncStatus('Lỗi đồng bộ');
+      showToast('Lỗi lưu thông tin', 'error');
     }
   };
 
@@ -420,6 +455,7 @@ function AppContent({ currentUser, handleAppLogout }) {
           {renderContent()}
         </div>
       </div>
+      <ToastNotification message={toast.msg} type={toast.type} />
     </div>
   )
 }
