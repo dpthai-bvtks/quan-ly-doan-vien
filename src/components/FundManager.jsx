@@ -364,7 +364,7 @@ const stickyCol = {
 /* ═══════════════════════════════════════
    SUB-TAB 2: NHẬT KÝ THU-CHI
 ═══════════════════════════════════════ */
-function ThuChiLedger({ funds, setFunds, isAdmin, isSuperAdmin, currentUser }) {
+function ThuChiLedger({ funds, setFunds, doanPhi, isAdmin, isSuperAdmin, currentUser }) {
   const emptyForm = {
     date: new Date().toISOString().split('T')[0],
     type: 'thu', amount: '', description: '', performer: '',
@@ -437,15 +437,50 @@ function ThuChiLedger({ funds, setFunds, isAdmin, isSuperAdmin, currentUser }) {
     showAlert('Đã xóa giao dịch.', 'warning');
   };
 
-  const sortedFunds = [...funds].sort((a, b) => new Date(a.date) - new Date(b.date));
+  const autoFunds = [];
+  const years = [...new Set((doanPhi || []).map(d => d.year))];
+  
+  years.forEach(year => {
+    for (let month = 1; month <= 12; month++) {
+      let count = 0;
+      (doanPhi || []).forEach(d => {
+        if (d.year === year && d.months[String(month)]) {
+          count++;
+        }
+      });
+      if (count > 0) {
+        autoFunds.push({
+          id: `auto-thu-${year}-${month}`,
+          date: `${year}-${month.toString().padStart(2, '0')}-28`,
+          type: 'thu',
+          amount: count * 5000,
+          description: `Thu đoàn phí tháng ${month} năm ${year} (${count} ĐV x 5.000đ)`,
+          performer: 'Hệ thống tự động',
+          isAuto: true
+        });
+        autoFunds.push({
+          id: `auto-chi-${year}-${month}`,
+          date: `${year}-${month.toString().padStart(2, '0')}-28`,
+          type: 'chi',
+          amount: Math.round((count * 5000) / 3),
+          description: `Nộp cho đoàn cấp trên tháng ${month} năm ${year} (1/3 đoàn phí)`,
+          performer: 'Hệ thống tự động',
+          isAuto: true
+        });
+      }
+    }
+  });
+
+  const combinedFunds = [...funds, ...autoFunds];
+  const sortedFunds = combinedFunds.sort((a, b) => new Date(a.date) - new Date(b.date));
   let currentBalance = 0;
   const fundsWithBalance = sortedFunds.map(f => {
     currentBalance += f.type === 'thu' ? f.amount : -f.amount;
     return { ...f, balance: currentBalance };
   }).reverse();
 
-  const totalIncome = funds.filter(f => f.type === 'thu').reduce((s, f) => s + f.amount, 0);
-  const totalExpense = funds.filter(f => f.type === 'chi').reduce((s, f) => s + f.amount, 0);
+  const totalIncome = combinedFunds.filter(f => f.type === 'thu').reduce((s, f) => s + f.amount, 0);
+  const totalExpense = combinedFunds.filter(f => f.type === 'chi').reduce((s, f) => s + f.amount, 0);
 
   const handleExportExcel = () => {
     const wsData = [
@@ -616,7 +651,7 @@ function ThuChiLedger({ funds, setFunds, isAdmin, isSuperAdmin, currentUser }) {
                     </td>
                   </tr>
                 ) : fundsWithBalance.map(fund => (
-                  <tr key={fund.id} className="border-b border-gray-50 hover:bg-blue-50/30 transition-colors">
+                  <tr key={fund.id} className={`border-b border-gray-50 hover:bg-blue-50/30 transition-colors ${fund.isAuto ? 'bg-amber-50/20' : ''}`}>
                     <Td>{new Date(fund.date).toLocaleDateString('vi-VN')}</Td>
                     <Td>
                       <span className={`px-2.5 py-1 text-xs font-bold rounded-lg ${fund.type === 'thu' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
@@ -645,10 +680,12 @@ function ThuChiLedger({ funds, setFunds, isAdmin, isSuperAdmin, currentUser }) {
                     </Td>
                     {isAdmin && (
                       <Td>
-                        <button onClick={() => handleDelete(fund)}
-                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                          <Trash2 size={15} />
-                        </button>
+                        {!fund.isAuto && (
+                          <button onClick={() => handleDelete(fund)}
+                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Xóa giao dịch">
+                            <Trash2 size={15} />
+                          </button>
+                        )}
                       </Td>
                     )}
                   </tr>
@@ -710,7 +747,7 @@ export default function FundManager({ funds, setFunds, doanPhi, setDoanPhi, memb
       {/* Content */}
       {subTab === 'doanphi'
         ? <DoanPhiGrid members={safeMembers} doanPhi={safeDoanPhi} setDoanPhi={setDoanPhi} isAdmin={isAdmin} />
-        : <ThuChiLedger funds={funds} setFunds={setFunds} isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} currentUser={currentUser} />
+        : <ThuChiLedger funds={funds} setFunds={setFunds} doanPhi={safeDoanPhi} isAdmin={isAdmin} isSuperAdmin={isSuperAdmin} currentUser={currentUser} />
       }
     </div>
   );
