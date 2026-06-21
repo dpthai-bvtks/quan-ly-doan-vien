@@ -353,44 +353,78 @@ export default function DocumentManager({ isAdmin, currentUser, selectedBranch, 
   // Xử lý Xuất Excel Sổ lưu
   const handleExportRegistry = () => {
     const isIncoming = registryTab === 'INCOMING';
-    const wsData = [
-      [`SỔ LƯU CÔNG VĂN ${isIncoming ? 'ĐẾN' : 'ĐI'}`],
-      [],
-      isIncoming 
-        ? ['STT', 'Số đến', 'Ngày nhận', 'Cơ quan gửi', 'Số/Ký hiệu gốc', 'Trích yếu nội dung', 'Người nhận', 'Ý kiến chỉ đạo/Xử lý', 'Link Đính kèm']
-        : ['STT', 'Số/Ký hiệu', 'Ngày ban hành', 'Nơi nhận', 'Trích yếu nội dung', 'Người ký', 'Ghi chú', 'Link Đính kèm']
-    ];
 
-    filteredRegistry.forEach((doc, idx) => {
-      const row = isIncoming 
-        ? [
-            idx + 1,
-            doc.documentNo || '',
-            doc.date ? new Date(doc.date).toLocaleDateString('vi-VN') : '',
-            doc.senderOrReceiver || '',
-            doc.refNo || '',
-            doc.summary || '',
-            doc.signerOrRecipient || '',
-            doc.noteOrDirection || '',
-            doc.attachment?.url || ''
-          ]
-        : [
-            idx + 1,
-            doc.documentNo || '',
-            doc.date ? new Date(doc.date).toLocaleDateString('vi-VN') : '',
-            doc.senderOrReceiver || '',
-            doc.summary || '',
-            doc.signerOrRecipient || '',
-            doc.noteOrDirection || '',
-            doc.attachment?.url || ''
-          ];
-      wsData.push(row);
+    // Sắp xếp từ cũ đến mới (theo ngày)
+    const sortedRegistry = [...filteredRegistry].sort((a, b) => {
+      const dateA = new Date(a.date || 0);
+      const dateB = new Date(b.date || 0);
+      return dateA - dateB;
     });
 
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-    XLSX.utils.book_append_sheet(wb, ws, `So_Luu_CV_${isIncoming ? 'Den' : 'Di'}`);
-    XLSX.writeFile(wb, `so_luu_cong_van_${isIncoming ? 'den' : 'di'}.xlsx`);
+    const colCount = 8;
+    const title = `SỔ LƯU CÔNG VĂN ${isIncoming ? 'ĐẾN' : 'ĐI'}`;
+
+    let html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          table { border-collapse: collapse; font-family: 'Times New Roman', serif; font-size: 14pt; }
+          th, td { border: 1px solid black; padding: 8px; vertical-align: middle; }
+          th { font-weight: bold; text-align: center; }
+          .title-row th { font-size: 16pt; border: none; text-align: left; }
+          .empty-row td { border: none; }
+        </style>
+      </head>
+      <body>
+        <table>
+          <tr class="title-row"><th colspan="${colCount}">${title}</th></tr>
+          <tr class="empty-row"><td colspan="${colCount}"></td></tr>
+          <tr>
+            <th>STT</th>
+            <th>${isIncoming ? 'Số đến' : 'Số/Ký hiệu'}</th>
+            <th>${isIncoming ? 'Ngày nhận' : 'Ngày ban hành'}</th>
+            <th>${isIncoming ? 'Cơ quan gửi' : 'Nơi nhận'}</th>
+            ${isIncoming ? '<th>Số/Ký hiệu gốc</th>' : ''}
+            <th>Trích yếu nội dung</th>
+            <th>${isIncoming ? 'Người nhận' : 'Người ký'}</th>
+            ${!isIncoming ? '<th>Ghi chú</th>' : ''}
+            <th>Link Đính kèm</th>
+          </tr>
+    `;
+
+    sortedRegistry.forEach((doc, idx) => {
+      const dateStr = doc.date ? new Date(doc.date).toLocaleDateString('vi-VN') : '';
+      html += `
+          <tr>
+            <td style="text-align: center;">${idx + 1}</td>
+            <td style="text-align: center;">${doc.documentNo || ''}</td>
+            <td style="text-align: center;">${dateStr}</td>
+            <td>${doc.senderOrReceiver || ''}</td>
+            ${isIncoming ? `<td style="text-align: center;">${doc.refNo || ''}</td>` : ''}
+            <td>${doc.summary || ''}</td>
+            <td style="text-align: center;">${doc.signerOrRecipient || ''}</td>
+            ${!isIncoming ? `<td>${doc.noteOrDirection || ''}</td>` : ''}
+            <td style="text-align: center;">${doc.attachment?.url ? `<a href="${doc.attachment.url}">Link</a>` : ''}</td>
+          </tr>
+      `;
+    });
+
+    html += `
+        </table>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `so_luu_cong_van_${isIncoming ? 'den' : 'di'}.xls`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // Xử lý Nhập Excel Sổ lưu
