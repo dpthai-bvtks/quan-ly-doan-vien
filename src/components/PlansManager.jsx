@@ -64,7 +64,7 @@ export default function PlansManager({
   const sc = { 'Hoàn thành': GREEN, 'Đang thực hiện': GOLD, 'Kế hoạch': '#aaa' };
 
   const getFilteredPlans = () => {
-    return (plans || []).filter(p => {
+    const filtered = (plans || []).filter(p => {
       const t = (p.title || '').toLowerCase();
       
       const isBaoCao = t.includes('báo cáo') || t.includes('bao_cao') || t.includes('bao cao');
@@ -77,6 +77,13 @@ export default function PlansManager({
       
       // ke_hoach is everything else
       return !(isBaoCao || isBienBan || isNghiQuyet);
+    });
+    
+    // Sort by startDate descending (newest first)
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.startDate || 0);
+      const dateB = new Date(b.startDate || 0);
+      return dateB - dateA;
     });
   };
 
