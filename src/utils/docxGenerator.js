@@ -23,11 +23,11 @@ const createHeaderTable = (branchName, dkDocNo, dkYear, dkDate, dkMonth, docType
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: "BCH CHI ĐOÀN", font: "Times New Roman", size: 28, bold: true })]
+                children: [new TextRun({ text: "BCH CHI ĐOÀN BỆNH VIỆN", font: "Times New Roman", size: 28, bold: true })]
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: branchName.toUpperCase(), font: "Times New Roman", size: 28, bold: true })]
+                children: [new TextRun({ text: "THAN - KHOÁNG SẢN CS2", font: "Times New Roman", size: 28, bold: true })]
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
@@ -35,7 +35,7 @@ const createHeaderTable = (branchName, dkDocNo, dkYear, dkDate, dkMonth, docType
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: `Số: ${dkDocNo}/${dkYear}-${docType}/ĐTN`, font: "Times New Roman", size: 28 })]
+                children: [new TextRun({ text: `Số: ${dkDocNo}/${dkYear}-${docType}/ĐTNCS2`, font: "Times New Roman", size: 28 })]
               }),
             ]
           }),

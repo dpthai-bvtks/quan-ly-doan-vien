@@ -234,7 +234,7 @@ export default function PlansManager({
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <a href={p.attachment.viewUrl} target="_blank" rel="noreferrer" style={{ fontSize: 11, padding: '5px 12px', background: '#f0f0f0', color: '#333', borderRadius: 6, textDecoration: 'none', fontWeight: 700 }}>👁 Xem</a>
-                      <a href={p.attachment.downloadUrl} target="_blank" rel="noreferrer" style={{ fontSize: 11, padding: '5px 12px', background: '#eef2ff', color: '#4f46e5', borderRadius: 6, textDecoration: 'none', fontWeight: 700 }}>⬇ Tải về</a>
+                      <a href={p.attachment.downloadUrl || `https://drive.google.com/uc?export=download&id=${p.attachment.fileId}`} target="_blank" rel="noreferrer" style={{ fontSize: 11, padding: '5px 12px', background: '#eef2ff', color: '#4f46e5', borderRadius: 6, textDecoration: 'none', fontWeight: 700 }}>⬇ Tải về</a>
                     </div>
                   </div>
                 )}
