@@ -667,31 +667,6 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
           )}
         </div>
       )}
-
-      {/* CONTENT: TỔNG HỢP */}
-      {activeTab === 'tonghop' && (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Máy tổng hợp Báo cáo Sơ kết / Tổng kết năm</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Tính năng này sử dụng kỹ thuật <strong>Map-Reduce</strong>: Tự động quét và gom nhóm các Kế hoạch/Hoạt động có trạng thái "Hoàn thành" trong cơ sở dữ liệu, sau đó sinh báo cáo tổng kết toàn diện.
-          </p>
-          <div className="max-w-xs mb-4">
-            <FI label="Năm cần tổng hợp" type="number" value={thYear} onChange={e => setThYear(e.target.value)} />
-          </div>
-          <div className="flex justify-start">
-            <Btn onClick={handleGenerateTh} disabled={loadingAI}>
-               {loadingAI ? '⏳ Đang quét DB & phân tích...' : '🔍 Khởi chạy Map-Reduce'}
-            </Btn>
-          </div>
-          {thResult && (
-            <div className="mt-6 p-5 bg-blue-50 rounded-xl border border-blue-100">
-              <h3 className="font-bold text-blue-800 mb-3 text-lg">Báo cáo Tổng kết tự động</h3>
-              <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans">{thResult}</pre>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* CONTENT: TỔNG HỢP */}
       {activeTab === 'tonghop' && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
