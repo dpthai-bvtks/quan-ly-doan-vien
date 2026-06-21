@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, FolderOpen, Calendar, Gamepad2, Settings, LogOut, ChevronRight, Wallet, CheckCircle, FileText } from 'lucide-react';
+import { LayoutDashboard, Users, FolderOpen, Calendar, Gamepad2, Settings, LogOut, ChevronRight, Wallet, CheckCircle, FileText, PenTool } from 'lucide-react';
 import AccountManager from './AccountManager';
 import { getBranchConfig } from '../data/constants';
 
@@ -11,6 +11,7 @@ const ALL_NAV_ITEMS = [
   { id: 'minutes', label: 'Biên bản BCH', icon: FileText, adminOnly: false },
   { id: 'attendance', label: 'Điểm danh & Đánh giá', icon: CheckCircle, adminOnly: false },
   { id: 'funds', label: 'Quản lý Thu/Chi', icon: Wallet, adminOnly: false },
+  { id: 'tools', label: 'Công cụ hỗ trợ', icon: PenTool, adminOnly: true },
   { id: 'games', label: 'Trò chơi sinh hoạt', icon: Gamepad2, adminOnly: true },
   { id: 'settings', label: 'Cài đặt', icon: Settings, adminOnly: true },
 ];

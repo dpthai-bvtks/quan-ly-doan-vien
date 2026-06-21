@@ -14,6 +14,7 @@ import FundManager from './components/FundManager'
 import AttendanceManager from './components/AttendanceManager'
 import MinutesManager from './components/MinutesManager'
 import DocumentManager from './components/DocumentManager'
+import ToolsManager from './components/ToolsManager'
 import { RAW_MEMBERS, INIT_PLANS, INIT_QUESTIONS, getBranchConfig } from './data/constants'
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
@@ -53,7 +54,7 @@ function AppContent({ currentUser, handleAppLogout }) {
 
   const pathToTab = (path) => {
     const p = path.replace(/^\//, '');
-    const validTabs = ['dashboard', 'members', 'funds', 'attendance', 'documents', 'plans', 'games', 'settings', 'minutes'];
+    const validTabs = ['dashboard', 'members', 'funds', 'attendance', 'documents', 'plans', 'games', 'settings', 'minutes', 'tools'];
     if (validTabs.includes(p)) return p;
     return 'dashboard';
   };
@@ -419,6 +420,15 @@ function AppContent({ currentUser, handleAppLogout }) {
           isAdmin={effectiveIsAdmin}
           selectedBranch={selectedBranch}
         />
+      case 'tools':
+        return isAdmin
+          ? <ToolsManager
+              plans={plans}
+              isAdmin={effectiveIsAdmin}
+              currentUser={currentUser}
+              geminiApiKey={geminiApiKey}
+            />
+          : null
       case 'games':
         return isAdmin
           ? <GameManager questions={questions} setQuestions={setQuestions} geminiApiKey={geminiApiKey} onNeedSettings={() => handleTabChange('settings')} />
