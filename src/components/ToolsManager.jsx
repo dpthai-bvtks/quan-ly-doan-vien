@@ -4,7 +4,7 @@ import { Sparkles, Calendar, FileText, Download, Briefcase, Activity, Check, Edi
 import { getBranchConfig } from '../data/constants';
 
 import { saveAs } from 'file-saver';
-import htmlDocx from 'html-docx-js/dist/html-docx';
+import { generateDinhKyDocx, exportDocxBlob } from '../utils/docxGenerator';
 
 // Utility to export HTML to a .docx file
 export const exportHTMLToDoc = (htmlContent, filename) => {
@@ -132,16 +132,37 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
       let filename = '';
       if (type === 'bao_cao') {
         folderId = '1uPciReR36oYs_8bdvRke8PbjJf0YL9HY';
-        filename = `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}.doc`;
+        filename = `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}`;
       } else if (type === 'bien_ban') {
         folderId = '1-1cfuEFcYXab-GUvnULl7dD5nN4i5LmV';
-        filename = `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}.doc`;
+        filename = `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}`;
       } else if (type === 'nghi_quyet') {
         folderId = '1sbRu-eADECV4MN_uDQ7vwP0LjZ5lqeJu';
-        filename = `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}.doc`;
+        filename = `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}`;
       } else if (type === 'ke_hoach') {
         folderId = '1g3Y-MgyR6kButQGiBrbuI9OFI5pAwTPn';
-        filename = `Ke_Hoach_Chuyen_De.doc`;
+        filename = `Ke_Hoach_Chuyen_De`;
+      }
+
+      setLoadingDrive(prev => ({ ...prev, [type]: true }));
+
+      // Mô-đun Định kỳ uses docx generator
+      if (['bao_cao', 'bien_ban', 'nghi_quyet'].includes(type)) {
+        const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
+        const nextYearStr = dkMonth === '12' ? (parseInt(dkYear, 10) + 1).toString() : dkYear;
+        const branchName = config.title;
+
+        const docxBlob = await generateDinhKyDocx(type, {
+          branchName, dkDocNo, dkDate, dkMonth, dkYear,
+          results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
+          nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
+        });
+
+        const file = new File([docxBlob], `${filename}.docx`, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        await uploadFileToDrive(file, folderId, config.apiUrl);
+        showToast(`Đã lưu ${filename}.docx lên Google Drive thành công!`);
+        setLoadingDrive(prev => ({ ...prev, [type]: false }));
+        return;
       }
 
       // If content already contains HTML tags (like from Dinh Ky), do not convert
@@ -150,12 +171,13 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
       const header = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Document</title></head><body>`;
       const sourceHTML = header + finalHTML + "</body></html>";
       
-      const blob = htmlDocx.asBlob(sourceHTML);
-      const file = new File([blob], filename, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+      const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+      const response = await fetch(source);
+      const blob = await response.blob();
+      const file = new File([blob], `${filename}.doc`, { type: 'application/msword' });
 
-      setLoadingDrive(prev => ({ ...prev, [type]: true }));
       await uploadFileToDrive(file, folderId, config.apiUrl);
-      showToast(`Đã lưu ${filename} lên Google Drive!`);
+      showToast(`Đã lưu ${filename}.doc lên Google Drive!`);
     } catch (err) {
       alert("Lỗi lưu Drive: " + err.message);
     } finally {
@@ -613,8 +635,16 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-red-700">📄 Báo cáo hoạt động</h3>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => {
-                      exportHTMLToDoc(dkResults.bao_cao, `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}`);
+                    <button onClick={async () => {
+const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
+                      const nextYearStr = dkMonth === '12' ? (parseInt(dkYear, 10) + 1).toString() : dkYear;
+                      const config = getBranchConfig(currentUser?.username);
+                      const blob = await generateDinhKyDocx('bao_cao', {
+                        branchName: config.title, dkDocNo, dkDate, dkMonth, dkYear,
+                        results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
+                        nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
+                      });
+                      exportDocxBlob(blob, `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}`);
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
                       <Download size={14} /> Tải Word (.docx)
                     </button>
@@ -629,8 +659,16 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-blue-700">📝 Biên bản sinh hoạt / họp BCH</h3>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => {
-                      exportHTMLToDoc(dkResults.bien_ban, `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}`);
+                    <button onClick={async () => {
+const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
+                      const nextYearStr = dkMonth === '12' ? (parseInt(dkYear, 10) + 1).toString() : dkYear;
+                      const config = getBranchConfig(currentUser?.username);
+                      const blob = await generateDinhKyDocx('bien_ban', {
+                        branchName: config.title, dkDocNo, dkDate, dkMonth, dkYear,
+                        results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
+                        nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
+                      });
+                      exportDocxBlob(blob, `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}`);
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
                       <Download size={14} /> Tải Word (.docx)
                     </button>
@@ -645,8 +683,16 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-green-700">📜 Nghị quyết Ban Chấp hành</h3>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => {
-                      exportHTMLToDoc(dkResults.nghi_quyet, `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}`);
+                    <button onClick={async () => {
+const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
+                      const nextYearStr = dkMonth === '12' ? (parseInt(dkYear, 10) + 1).toString() : dkYear;
+                      const config = getBranchConfig(currentUser?.username);
+                      const blob = await generateDinhKyDocx('nghi_quyet', {
+                        branchName: config.title, dkDocNo, dkDate, dkMonth, dkYear,
+                        results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
+                        nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
+                      });
+                      exportDocxBlob(blob, `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}`);
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
                       <Download size={14} /> Tải Word (.docx)
                     </button>
