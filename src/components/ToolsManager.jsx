@@ -204,7 +204,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
             endDate: `${dkYear}-${dkMonth}-${dkDate}`,
             status: 'Hoàn thành',
             responsible: dkSecretary || 'BCH Chi đoàn',
-            description: `Văn bản tạo tự động từ Mô-đun Công cụ`,
+            description: type === 'bao_cao' ? dkResultInput : `Văn bản tạo tự động từ Mô-đun Công cụ`,
             attachment: { name: `${filename}.docx`, fileId: fileId, viewUrl: url }
           };
           setPlans(prev => [newPlan, ...prev]);
@@ -670,7 +670,48 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
       {/* CONTENT: TỔNG HỢP */}
       {activeTab === 'tonghop' && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Soạn Báo cáo Tổng kết Định kỳ (Quý/6 tháng/Năm)</h2>
+          <div className="flex justify-between items-center mb-4 border-b pb-2">
+            <h2 className="text-lg font-bold text-gray-800">Soạn Báo cáo Tổng kết Định kỳ (Quý/6 tháng/Năm)</h2>
+            <button 
+              onClick={() => {
+                let targetMonths = [];
+                if (thPeriod === 'Quý I') targetMonths = [1, 2, 3];
+                else if (thPeriod === 'Quý II') targetMonths = [4, 5, 6];
+                else if (thPeriod === 'Quý III') targetMonths = [7, 8, 9];
+                else if (thPeriod === 'Quý IV') targetMonths = [10, 11, 12];
+                else if (thPeriod === '6 tháng đầu năm') targetMonths = [1, 2, 3, 4, 5, 6];
+                else if (thPeriod === '6 tháng cuối năm') targetMonths = [7, 8, 9, 10, 11, 12];
+                else if (thPeriod === 'Cả năm') targetMonths = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+
+                const reports = (plans || []).filter(p => {
+                  const isReport = p.title.toLowerCase().includes('bao cao') && !p.title.toLowerCase().includes('tong hop');
+                  const d = new Date(p.startDate);
+                  const m = d.getMonth() + 1;
+                  const y = d.getFullYear().toString();
+                  return isReport && y === thYear && targetMonths.includes(m);
+                });
+
+                if (reports.length === 0) {
+                  alert(`Không tìm thấy Báo cáo tháng nào trong ${thPeriod} năm ${thYear}!`);
+                  return;
+                }
+
+                reports.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+                const combined = reports.map(r => {
+                  const monthStr = new Date(r.startDate).getMonth() + 1;
+                  let desc = r.description || '';
+                  if (desc === 'Văn bản tạo tự động từ Mô-đun Công cụ') desc = '(Không có dữ liệu văn bản chi tiết)';
+                  return `* Kết quả tháng ${monthStr}:\n${desc}`;
+                }).join('\n\n');
+
+                setThResultInput(combined);
+                showToast(`Đã gộp thành công ${reports.length} báo cáo tháng vào Kết quả nổi bật!`);
+              }}
+              className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-bold rounded-lg transition flex items-center gap-1"
+            >
+              <Activity size={14} /> Tự động lấy dữ liệu từ Báo cáo cũ
+            </button>
+          </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div className="space-y-4">
