@@ -186,10 +186,10 @@ function DoanPhiGrid({ members, doanPhi, setDoanPhi, isAdmin }) {
     displayMembers.forEach((m, idx) => {
       const months = MONTHS.map((_, i) => {
         if (isMonthDisabled(m, i + 1)) return '-';
-        return getPaid(m.id, i + 1) ? '✔' : '';
+        return getPaid(m.id, i + 1) ? '5.000đ' : '';
       });
       const validCount = MONTHS.filter((_, i) => !isMonthDisabled(m, i + 1)).length;
-      const paid = months.filter(v => v === '✔').length;
+      const paid = months.filter(v => v === '5.000đ').length;
       const pct = validCount > 0 ? Math.round(paid / validCount * 100) : 0;
       wsData.push([idx + 1, m.hoTen, m.toDoan || '', ...months, `${paid}/${validCount}`, `${pct}%`]);
     });
