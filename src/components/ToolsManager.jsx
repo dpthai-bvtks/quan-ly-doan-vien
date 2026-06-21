@@ -268,7 +268,12 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
         nextYear++;
       }
       const nextMonthStr = nextMonth.toString().padStart(2, '0');
-      const branchSuffix = currentUser?.username === 'bvtks-cs1' ? 'BCHCS1' : 'BCHCS2';
+      const isCS1 = currentUser?.username === 'bvtks-cs1';
+      const branchSuffix = isCS1 ? 'BCHCS1' : 'BCHCS2';
+      const bchTitleHtml = isCS1 
+        ? `<strong>BCH CHI ĐOÀN CƠ QUAN</strong><br/>` 
+        : `<strong>BCH CHI ĐOÀN BỆNH VIỆN</strong><br/>\n        <strong>THAN - KHOÁNG SẢN CS2</strong><br/>`;
+      const docSuffix = isCS1 ? 'ĐTNCQ' : 'ĐTNCS2';
 
       const formatHtmlList = (input) => {
         return input.split('\n').filter(line => line.trim()).map(line => {
@@ -290,10 +295,9 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
     <tr>
       <td width="50%" align="center" valign="top">
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
-        <strong>BCH CHI ĐOÀN BỆNH VIỆN</strong><br/>
-        <strong>THAN - KHOÁNG SẢN CS2</strong><br/>
+        ${bchTitleHtml}
         <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
-        Số: ${dkDocNo}/${dkYear}-BC/ĐTNCS2
+        Số: ${dkDocNo}/${dkYear}-BC/${docSuffix}
       </td>
       <td width="50%" align="center" valign="top">
         <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
@@ -347,10 +351,9 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
     <tr>
       <td width="50%" align="center" valign="top">
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
-        <strong>BCH CHI ĐOÀN BỆNH VIỆN</strong><br/>
-        <strong>THAN - KHOÁNG SẢN CS2</strong><br/>
+        ${bchTitleHtml}
         <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
-        Số: ${dkDocNo}/${dkYear}-BB/ĐTNCS2
+        Số: ${dkDocNo}/${dkYear}-BB/${docSuffix}
       </td>
       <td width="50%" align="center" valign="top">
         <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
@@ -420,10 +423,9 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
     <tr>
       <td width="50%" align="center" valign="top">
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
-        <strong>BCH CHI ĐOÀN BỆNH VIỆN</strong><br/>
-        <strong>THAN - KHOÁNG SẢN CS2</strong><br/>
+        ${bchTitleHtml}
         <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
-        Số: ${dkDocNo}/${dkYear}-NQ/ĐTNCS2
+        Số: ${dkDocNo}/${dkYear}-NQ/${docSuffix}
       </td>
       <td width="50%" align="center" valign="top">
         <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
@@ -619,6 +621,7 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                       const nextYearStr = dkMonth === '12' ? (parseInt(dkYear, 10) + 1).toString() : dkYear;
                       const config = getBranchConfig(currentUser?.username);
                       const blob = await generateDinhKyDocx('bao_cao', {
+                        isCS1: currentUser?.username === 'bvtks-cs1',
                         branchName: config.title, dkDocNo, dkDate, dkMonth, dkYear,
                         results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
                         nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
@@ -643,6 +646,7 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                       const nextYearStr = dkMonth === '12' ? (parseInt(dkYear, 10) + 1).toString() : dkYear;
                       const config = getBranchConfig(currentUser?.username);
                       const blob = await generateDinhKyDocx('bien_ban', {
+                        isCS1: currentUser?.username === 'bvtks-cs1',
                         branchName: config.title, dkDocNo, dkDate, dkMonth, dkYear,
                         results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
                         nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
@@ -667,6 +671,7 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                       const nextYearStr = dkMonth === '12' ? (parseInt(dkYear, 10) + 1).toString() : dkYear;
                       const config = getBranchConfig(currentUser?.username);
                       const blob = await generateDinhKyDocx('nghi_quyet', {
+                        isCS1: currentUser?.username === 'bvtks-cs1',
                         branchName: config.title, dkDocNo, dkDate, dkMonth, dkYear,
                         results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
                         nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
@@ -760,6 +765,7 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
               onClick={async () => {
                 const config = getBranchConfig(currentUser?.username);
                 const docxBlob = await generateTongHopDocx({
+                  isCS1: currentUser?.username === 'bvtks-cs1',
                   branchName: config.title, thDocNo, thDate, thMonth, thYear,
                   results: thResultInput, nextPlan: thNextInput, secretary: thSecretary,
                   thPeriod, nextPeriodStr: thNextPeriod

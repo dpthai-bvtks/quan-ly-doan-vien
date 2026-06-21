@@ -1,6 +1,23 @@
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell, WidthType, AlignmentType, BorderStyle, HeadingLevel } from 'docx';
 
-const createHeaderTable = (branchName, dkDocNo, dkYear, dkDate, dkMonth, docType) => {
+const createHeaderTable = (isCS1, dkDocNo, dkYear, dkDate, dkMonth, docType) => {
+  const docSuffix = isCS1 ? 'ĐTNCQ' : 'ĐTNCS2';
+  const bchLines = isCS1 ? [
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: "BCH CHI ĐOÀN CƠ QUAN", font: "Times New Roman", size: 26, bold: true })]
+    })
+  ] : [
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: "BCH CHI ĐOÀN BỆNH VIỆN", font: "Times New Roman", size: 26, bold: true })]
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: "THAN - KHOÁNG SẢN CS2", font: "Times New Roman", size: 26, bold: true })]
+    })
+  ];
+
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
     borders: {
@@ -21,21 +38,14 @@ const createHeaderTable = (branchName, dkDocNo, dkYear, dkDate, dkMonth, docType
                 alignment: AlignmentType.CENTER,
                 children: [new TextRun({ text: "ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN", font: "Times New Roman", size: 24 })]
               }),
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: "BCH CHI ĐOÀN BỆNH VIỆN", font: "Times New Roman", size: 26, bold: true })]
-              }),
-              new Paragraph({
-                alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: "THAN - KHOÁNG SẢN CS2", font: "Times New Roman", size: 26, bold: true })]
-              }),
+              ...bchLines,
               new Paragraph({
                 alignment: AlignmentType.CENTER,
                 children: [new TextRun({ text: "─────────", font: "Times New Roman", size: 28 })]
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: `Số: ${dkDocNo}/${dkYear}-${docType}/ĐTNCS2`, font: "Times New Roman", size: 26 })]
+                children: [new TextRun({ text: `Số: ${dkDocNo}/${dkYear}-${docType}/${docSuffix}`, font: "Times New Roman", size: 26 })]
               }),
             ]
           }),
@@ -80,13 +90,13 @@ const createListParagraphs = (textBlock) => {
 };
 
 export const generateDinhKyDocx = async (type, data) => {
-  const { branchName, dkDocNo, dkDate, dkMonth, dkYear, results, nextPlan, secretary, nextMonthStr, nextYearStr } = data;
+  const { isCS1, branchName, dkDocNo, dkDate, dkMonth, dkYear, results, nextPlan, secretary, nextMonthStr, nextYearStr } = data;
   
   let children = [];
 
   if (type === 'bao_cao') {
     children = [
-      createHeaderTable(branchName, dkDocNo, dkYear, dkDate, dkMonth, "BC"),
+      createHeaderTable(isCS1, dkDocNo, dkYear, dkDate, dkMonth, "BC"),
       new Paragraph({ text: "" }),
       new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -153,7 +163,7 @@ export const generateDinhKyDocx = async (type, data) => {
     ];
   } else if (type === 'bien_ban') {
     children = [
-      createHeaderTable(branchName, dkDocNo, dkYear, dkDate, dkMonth, "BB"),
+      createHeaderTable(isCS1, dkDocNo, dkYear, dkDate, dkMonth, "BB"),
       new Paragraph({ text: "" }),
       new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -221,7 +231,7 @@ export const generateDinhKyDocx = async (type, data) => {
     ];
   } else if (type === 'nghi_quyet') {
     children = [
-      createHeaderTable(branchName, dkDocNo, dkYear, dkDate, dkMonth, "NQ"),
+      createHeaderTable(isCS1, dkDocNo, dkYear, dkDate, dkMonth, "NQ"),
       new Paragraph({ text: "" }),
       new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -296,10 +306,10 @@ export const generateDinhKyDocx = async (type, data) => {
 };
 
 export const generateTongHopDocx = async (data) => {
-  const { branchName, thDocNo, thDate, thMonth, thYear, results, nextPlan, secretary, thPeriod, nextPeriodStr } = data;
+  const { isCS1, branchName, thDocNo, thDate, thMonth, thYear, results, nextPlan, secretary, thPeriod, nextPeriodStr } = data;
   
   const children = [
-    createHeaderTable(branchName, thDocNo, thYear, thDate, thMonth, "BC"),
+    createHeaderTable(isCS1, thDocNo, thYear, thDate, thMonth, "BC"),
     new Paragraph({ text: "" }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
