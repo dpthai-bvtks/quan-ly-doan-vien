@@ -195,55 +195,58 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
       const nextMonthStr = nextMonth.toString().padStart(2, '0');
       const branchSuffix = currentUser?.username === 'bvtks-cs1' ? 'BCHCS1' : 'BCHCS2';
 
-      const resultsFormatted = dkResultInput.split('\n').filter(line => line.trim()).map(line => `<li style="margin-bottom: 5px;">${line.trim().replace(/^-/, '').trim()}</li>`).join('\n');
-      const nextFormatted = dkNextInput.split('\n').filter(line => line.trim()).map(line => `<li style="margin-bottom: 5px;">${line.trim().replace(/^-/, '').trim()}</li>`).join('\n');
+      const resultsFormatted = dkResultInput.split('\n').filter(line => line.trim()).map(line => `<li style="margin-bottom: 6px;">${line.trim().replace(/^-/, '').trim()}</li>`).join('\n');
+      const nextFormatted = dkNextInput.split('\n').filter(line => line.trim()).map(line => `<li style="margin-bottom: 6px;">${line.trim().replace(/^-/, '').trim()}</li>`).join('\n');
       const secName = dkSecretary.trim() || '.......................';
 
       // 1. Báo cáo
       const resBaoCao = `
-<div style="font-family: 'Times New Roman', serif; font-size: 14pt; line-height: 1.5;">
-  <table style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+<div style="font-family: 'Times New Roman', serif; font-size: 14pt;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-family: 'Times New Roman', serif; font-size: 14pt; margin-bottom: 20px;">
     <tr>
-      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+      <td width="50%" align="center" valign="top">
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
-        <strong>BCH CHI ĐOÀN<br/>${branchName.toUpperCase()}</strong><br/>
-        <hr style="width: 40%; margin-top: 5px; margin-bottom: 5px; border: 1px solid black;"/>
+        <strong>BCH CHI ĐOÀN</strong><br/>
+        <strong>${branchName.toUpperCase()}</strong><br/>
+        <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
         Số: ${dkDocNo}/${dkYear}-BC/ĐTN
       </td>
-      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
-        <strong><u>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</u></strong><br/><br/>
+      <td width="50%" align="center" valign="top">
+        <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
+        <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
+        <br/>
         <em>Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}</em>
       </td>
     </tr>
   </table>
 
-  <h2 style="text-align: center; font-weight: bold; font-size: 15pt; margin-top: 20px; font-family: 'Times New Roman', serif;">
+  <p align="center" style="font-weight: bold; font-size: 15pt; margin-top: 20px; font-family: 'Times New Roman', serif;">
     BÁO CÁO<br/>
     KẾT QUẢ HOẠT ĐỘNG CÔNG TÁC ĐOÀN VÀ PHONG TRÀO THANH NIÊN THÁNG ${dkMonth} VÀ PHƯƠNG HƯỚNG THÁNG ${nextMonthStr} NĂM ${nextYear}
-  </h2>
+  </p>
 
-  <p style="text-indent: 30px; text-align: justify; margin-bottom: 10px;">
+  <p align="justify" style="text-indent: 40px; margin-bottom: 10px; font-family: 'Times New Roman', serif;">
     Thực hiện Kế hoạch của BCH Đoàn thanh niên Bệnh viện Than - Khoáng sản về công tác đoàn năm ${dkYear}. Được sự quan tâm chỉ đạo trực tiếp của Chi bộ, từ tình hình hoạt động chung của toàn đơn vị. BCH ${branchName} báo cáo:
   </p>
 
-  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">I. Kết quả hoạt động trong tháng ${dkMonth}/${dkYear}</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">I. Kết quả hoạt động trong tháng ${dkMonth}/${dkYear}</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
     ${resultsFormatted}
   </ul>
 
-  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">II. Kế hoạch hoạt động ${nextMonthStr}/${nextYear}</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">II. Kế hoạch hoạt động ${nextMonthStr}/${nextYear}</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
     ${nextFormatted}
   </ul>
 
-  <p style="text-indent: 30px; text-align: justify; margin-bottom: 20px;">
+  <p align="justify" style="text-indent: 40px; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
     Trên đây là kết quả hoạt động công tác đoàn và phong trào TTN của ${branchName} trong tháng ${dkMonth}/${dkYear} và triển khai phương hướng nhiệm vụ trọng tâm trong tháng ${nextMonthStr}/${nextYear}.
   </p>
 
-  <table style="width: 100%; border: none; margin-top: 30px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-family: 'Times New Roman', serif; font-size: 14pt; margin-top: 30px;">
     <tr>
-      <td style="width: 50%; border: none;"></td>
-      <td style="width: 50%; text-align: center; vertical-align: top; border: none;">
+      <td width="50%"></td>
+      <td width="50%" align="center" valign="top">
         <strong>TM. BAN CHẤP HÀNH</strong><br/>
         <strong>Bí thư</strong><br/>
         <br/><br/><br/><br/>
@@ -255,65 +258,68 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
 
       // 2. Biên bản
       const resBienBan = `
-<div style="font-family: 'Times New Roman', serif; font-size: 14pt; line-height: 1.5;">
-  <table style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+<div style="font-family: 'Times New Roman', serif; font-size: 14pt;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-family: 'Times New Roman', serif; font-size: 14pt; margin-bottom: 20px;">
     <tr>
-      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+      <td width="50%" align="center" valign="top">
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
-        <strong>BCH CHI ĐOÀN<br/>${branchName.toUpperCase()}</strong><br/>
-        <hr style="width: 40%; margin-top: 5px; margin-bottom: 5px; border: 1px solid black;"/>
+        <strong>BCH CHI ĐOÀN</strong><br/>
+        <strong>${branchName.toUpperCase()}</strong><br/>
+        <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
         Số: ${dkDocNo}/${dkYear}-BB/ĐTN
       </td>
-      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
-        <strong><u>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</u></strong><br/><br/>
+      <td width="50%" align="center" valign="top">
+        <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
+        <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
+        <br/>
         <em>Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}</em>
       </td>
     </tr>
   </table>
 
-  <h2 style="text-align: center; font-weight: bold; font-size: 15pt; margin-top: 20px; font-family: 'Times New Roman', serif;">
+  <p align="center" style="font-weight: bold; font-size: 15pt; margin-top: 20px; font-family: 'Times New Roman', serif;">
     BIÊN BẢN<br/>
     HỘI NGHỊ BAN CHẤP HÀNH CHI ĐOÀN THÁNG ${dkMonth}/${dkYear}
-  </h2>
-
-  <p style="margin-bottom: 10px;">
-    Thời gian: 14h00 ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}<br/>
-    Địa điểm: Phòng họp Chi đoàn<br/>
-    Thành phần: Các đồng chí trong BCH Chi đoàn<br/>
-    Chủ trì: Đồng chí Đặng Phong Thái - Bí thư Chi đoàn<br/>
-    Thư ký: Đồng chí ${secName}
   </p>
 
-  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 10px; text-align: center;">NỘI DUNG HỘI NGHỊ:</p>
+  <p style="margin-bottom: 10px; font-family: 'Times New Roman', serif;">
+    - Thời gian: 14h00 ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}<br/>
+    - Địa điểm: Phòng họp Chi đoàn<br/>
+    - Thành phần: Các đồng chí trong BCH Chi đoàn<br/>
+    - Chủ trì: Đồng chí Đặng Phong Thái - Bí thư Chi đoàn<br/>
+    - Thư ký: Đồng chí ${secName}
+  </p>
+
+  <p align="center" style="font-weight: bold; font-size: 14pt; margin-bottom: 10px; font-family: 'Times New Roman', serif;">NỘI DUNG HỘI NGHỊ:</p>
   
-  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">1. Đồng chí Chủ trì đánh giá kết quả hoạt động tháng ${dkMonth}/${dkYear}:</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">1. Đồng chí Chủ trì đánh giá kết quả hoạt động tháng ${dkMonth}/${dkYear}:</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
     ${resultsFormatted}
   </ul>
 
-  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">2. Triển khai phương hướng hoạt động tháng ${nextMonthStr}/${nextYear}:</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">2. Triển khai phương hướng hoạt động tháng ${nextMonthStr}/${nextYear}:</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
     ${nextFormatted}
   </ul>
 
-  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">3. Thảo luận:</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
-    <li style="margin-bottom: 5px;">100% các đồng chí dự họp nhất trí với báo cáo kết quả hoạt động và phương hướng trên.</li>
-    <li style="margin-bottom: 5px;">BCH nhất trí phân công nhiệm vụ cụ thể cho từng phân đoàn để triển khai hiệu quả.</li>
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">3. Thảo luận:</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
+    <li style="margin-bottom: 6px;">100% các đồng chí dự họp nhất trí với báo cáo kết quả hoạt động và phương hướng trên.</li>
+    <li style="margin-bottom: 6px;">BCH nhất trí phân công nhiệm vụ cụ thể cho từng phân đoàn để triển khai hiệu quả.</li>
   </ul>
 
-  <p style="margin-top: 10px; margin-bottom: 20px;">
+  <p style="margin-top: 10px; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
     Hội nghị kết thúc vào 15h00 cùng ngày. Biên bản đã được thông qua tại hội nghị.
   </p>
 
-  <table style="width: 100%; border: none; margin-top: 30px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-family: 'Times New Roman', serif; font-size: 14pt; margin-top: 30px;">
     <tr>
-      <td style="width: 50%; text-align: center; vertical-align: top; border: none;">
+      <td width="50%" align="center" valign="top">
         <strong>THƯ KÝ</strong><br/>
         <br/><br/><br/><br/>
         <strong>${secName}</strong>
       </td>
-      <td style="width: 50%; text-align: center; vertical-align: top; border: none;">
+      <td width="50%" align="center" valign="top">
         <strong>CHỦ TRÌ</strong><br/>
         <strong>Bí thư</strong><br/>
         <br/><br/><br/><br/>
@@ -325,50 +331,53 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
 
       // 3. Nghị quyết
       const resNghiQuyet = `
-<div style="font-family: 'Times New Roman', serif; font-size: 14pt; line-height: 1.5;">
-  <table style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+<div style="font-family: 'Times New Roman', serif; font-size: 14pt;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-family: 'Times New Roman', serif; font-size: 14pt; margin-bottom: 20px;">
     <tr>
-      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+      <td width="50%" align="center" valign="top">
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
-        <strong>BCH CHI ĐOÀN<br/>${branchName.toUpperCase()}</strong><br/>
-        <hr style="width: 40%; margin-top: 5px; margin-bottom: 5px; border: 1px solid black;"/>
+        <strong>BCH CHI ĐOÀN</strong><br/>
+        <strong>${branchName.toUpperCase()}</strong><br/>
+        <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
         Số: ${dkDocNo}/${dkYear}-NQ/ĐTN
       </td>
-      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
-        <strong><u>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</u></strong><br/><br/>
+      <td width="50%" align="center" valign="top">
+        <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
+        <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
+        <br/>
         <em>Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}</em>
       </td>
     </tr>
   </table>
 
-  <h2 style="text-align: center; font-weight: bold; font-size: 15pt; margin-top: 20px; font-family: 'Times New Roman', serif;">
+  <p align="center" style="font-weight: bold; font-size: 15pt; margin-top: 20px; font-family: 'Times New Roman', serif;">
     NGHỊ QUYẾT<br/>
     HỘI NGHỊ BAN CHẤP HÀNH CHI ĐOÀN THÁNG ${dkMonth}/${dkYear}
-  </h2>
+  </p>
 
-  <p style="text-indent: 30px; text-align: justify; margin-bottom: 10px;">
+  <p align="justify" style="text-indent: 40px; margin-bottom: 10px; font-family: 'Times New Roman', serif;">
     Căn cứ vào kết quả Hội nghị Ban Chấp hành Chi đoàn ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}, Ban Chấp hành Chi đoàn quyết nghị:
   </p>
 
-  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">Điều 1. Nhất trí thông qua báo cáo kết quả hoạt động tháng ${dkMonth}/${dkYear} với các kết quả nổi bật:</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">Điều 1. Nhất trí thông qua báo cáo kết quả hoạt động tháng ${dkMonth}/${dkYear} với các kết quả nổi bật:</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
     ${resultsFormatted}
   </ul>
 
-  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">Điều 2. Nhất trí thông qua phương hướng, nhiệm vụ tháng ${nextMonthStr}/${nextYear} gồm các nhiệm vụ trọng tâm:</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">Điều 2. Nhất trí thông qua phương hướng, nhiệm vụ tháng ${nextMonthStr}/${nextYear} gồm các nhiệm vụ trọng tâm:</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
     ${nextFormatted}
   </ul>
 
-  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">Điều 3. Tổ chức thực hiện:</p>
-  <p style="text-indent: 30px; text-align: justify; margin-bottom: 20px;">
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">Điều 3. Tổ chức thực hiện:</p>
+  <p align="justify" style="text-indent: 40px; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
     Giao cho Bí thư Chi đoàn, các đồng chí ủy viên BCH và các phân đoàn chịu trách nhiệm thi hành Nghị quyết này.
   </p>
 
-  <table style="width: 100%; border: none; margin-top: 30px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0" style="font-family: 'Times New Roman', serif; font-size: 14pt; margin-top: 30px;">
     <tr>
-      <td style="width: 50%; border: none;"></td>
-      <td style="width: 50%; text-align: center; vertical-align: top; border: none;">
+      <td width="50%"></td>
+      <td width="50%" align="center" valign="top">
         <strong>TM. BAN CHẤP HÀNH</strong><br/>
         <strong>Bí thư</strong><br/>
         <br/><br/><br/><br/>
