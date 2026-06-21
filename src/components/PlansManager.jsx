@@ -66,11 +66,17 @@ export default function PlansManager({
   const getFilteredPlans = () => {
     return (plans || []).filter(p => {
       const t = (p.title || '').toLowerCase();
-      if (subTab === 'bao_cao') return t.includes('báo cáo') || t.includes('bao_cao');
-      if (subTab === 'bien_ban') return t.includes('biên bản') || t.includes('bien_ban');
-      if (subTab === 'nghi_quyet') return t.includes('nghị quyết') || t.includes('nghi_quyet');
+      
+      const isBaoCao = t.includes('báo cáo') || t.includes('bao_cao') || t.includes('bao cao');
+      const isBienBan = t.includes('biên bản') || t.includes('bien_ban') || t.includes('bien ban');
+      const isNghiQuyet = t.includes('nghị quyết') || t.includes('nghi_quyet') || t.includes('nghi quyet');
+
+      if (subTab === 'bao_cao') return isBaoCao;
+      if (subTab === 'bien_ban') return isBienBan;
+      if (subTab === 'nghi_quyet') return isNghiQuyet;
+      
       // ke_hoach is everything else
-      return !(t.includes('báo cáo') || t.includes('bao_cao') || t.includes('biên bản') || t.includes('bien_ban') || t.includes('nghị quyết') || t.includes('nghi_quyet'));
+      return !(isBaoCao || isBienBan || isNghiQuyet);
     });
   };
 
