@@ -24,6 +24,59 @@ export const exportHTMLToDoc = (htmlContent, filename) => {
   document.body.removeChild(fileDownload);
 };
 
+// Markdown to Word HTML Document generator
+const convertMarkdownToDocHTML = (markdownText) => {
+  const htmlBody = markdownText
+    .split('\n')
+    .map(line => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('###')) return `<h3 style="font-family: 'Times New Roman'; font-size: 13pt; font-weight: bold; margin-top: 10px; margin-bottom: 4px;">${trimmed.replace(/###/g, '').trim()}</h3>`;
+      if (trimmed.startsWith('##')) return `<h2 style="font-family: 'Times New Roman'; font-size: 14pt; font-weight: bold; margin-top: 14px; margin-bottom: 6px;">${trimmed.replace(/##/g, '').trim()}</h2>`;
+      if (trimmed.startsWith('#')) return `<h1 style="font-family: 'Times New Roman'; font-size: 15pt; font-weight: bold; text-align: center; margin-top: 18px; margin-bottom: 8px;">${trimmed.replace(/#/g, '').trim()}</h1>`;
+      if (trimmed.startsWith('-')) return `<li style="font-family: 'Times New Roman'; font-size: 12pt; margin-left: 20px; margin-bottom: 3px;">${trimmed.replace(/^-/g, '').trim()}</li>`;
+      if (trimmed.startsWith('*')) return `<li style="font-family: 'Times New Roman'; font-size: 12pt; margin-left: 20px; margin-bottom: 3px;">${trimmed.replace(/^\*/g, '').trim()}</li>`;
+      if (trimmed) return `<p style="font-family: 'Times New Roman'; font-size: 12pt; text-indent: 1.27cm; text-align: justify; line-height: 1.25; margin-bottom: 5px;">${trimmed}</p>`;
+      return '<br>';
+    })
+    .join('');
+
+  const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head><meta charset='utf-8'><title>Document</title></head><body>`;
+  const footer = "</body></html>";
+  return header + htmlBody + footer;
+};
+
+// API upload file to Drive
+async function uploadFileToDrive(file, folderId, apiUrl) {
+  if (!apiUrl) throw new Error("Chưa cấu hình Google Apps Script URL!");
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64 = reader.result.split(',')[1];
+        const res = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'upload_file',
+            folderId: folderId,
+            name: file.name,
+            mimeType: file.type || 'application/msword',
+            base64: base64
+          })
+        });
+        const data = await res.json();
+        if (data.status === 'success') resolve(data);
+        else reject(new Error(data.message || 'Lỗi không xác định'));
+      } catch (e) {
+        reject(e);
+      }
+    };
+    reader.onerror = () => reject(new Error("Lỗi đọc file"));
+    reader.readAsDataURL(file);
+  });
+}
+
 // API call helper using Gemini API but adapted for these tools
 async function callGeminiAPI(prompt, geminiApiKey) {
   const modelsRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${geminiApiKey}`);
@@ -73,11 +126,45 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
   const [activeTab, setActiveTab] = useState('dinhky'); // dinhky | tonghop | chiendich | kho
 
   const [loadingAI, setLoadingAI] = useState(false);
+  const [loadingDrive, setLoadingDrive] = useState({});
   const [toast, setToast] = useState('');
 
   const showToast = (msg) => {
     setToast(msg);
     setTimeout(() => setToast(''), 3000);
+  };
+
+  const handleSaveToDrive = async (content, type) => {
+    try {
+      const config = getBranchConfig(currentUser?.username);
+      let folderId = '';
+      let filename = '';
+      if (type === 'bao_cao') {
+        folderId = '1uPciReR36oYs_8bdvRke8PbjJf0YL9HY';
+        filename = `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}.doc`;
+      } else if (type === 'bien_ban') {
+        folderId = '1-1cfuEFcYXab-GUvnULl7dD5nN4i5LmV';
+        filename = `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}.doc`;
+      } else if (type === 'nghi_quyet') {
+        folderId = '1sbRu-eADECV4MN_uDQ7vwP0LjZ5lqeJu';
+        filename = `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}.doc`;
+      } else if (type === 'ke_hoach') {
+        folderId = '1g3Y-MgyR6kButQGiBrbuI9OFI5pAwTPn';
+        filename = `Ke_Hoach_Chuyen_De.doc`;
+      }
+
+      const htmlContent = convertMarkdownToDocHTML(content);
+      const blob = new Blob([htmlContent], { type: 'application/msword' });
+      const file = new File([blob], filename, { type: 'application/msword' });
+
+      setLoadingDrive(prev => ({ ...prev, [type]: true }));
+      await uploadFileToDrive(file, folderId, config.apiUrl);
+      showToast(`Đã lưu ${filename} lên Google Drive!`);
+    } catch (err) {
+      alert("Lỗi lưu Drive: " + err.message);
+    } finally {
+      setLoadingDrive(prev => ({ ...prev, [type]: false }));
+    }
   };
 
   // --- MÔ-ĐUN ĐỊNH KỲ ---
@@ -335,16 +422,31 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
 
           {(dkResults.bao_cao || dkResults.bien_ban || dkResults.nghi_quyet) && (
             <div className="mt-6 space-y-6">
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <h3 className="font-bold text-red-700 mb-2">📄 Báo cáo hoạt động</h3>
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold text-red-700">📄 Báo cáo hoạt động</h3>
+                  <button onClick={() => handleSaveToDrive(dkResults.bao_cao, 'bao_cao')} disabled={loadingDrive['bao_cao']} className="text-xs flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition font-bold">
+                    <Save size={14} /> {loadingDrive['bao_cao'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                  </button>
+                </div>
                 <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">{dkResults.bao_cao}</pre>
               </div>
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <h3 className="font-bold text-blue-700 mb-2">📝 Biên bản sinh hoạt / họp BCH</h3>
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold text-blue-700">📝 Biên bản sinh hoạt / họp BCH</h3>
+                  <button onClick={() => handleSaveToDrive(dkResults.bien_ban, 'bien_ban')} disabled={loadingDrive['bien_ban']} className="text-xs flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition font-bold">
+                    <Save size={14} /> {loadingDrive['bien_ban'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                  </button>
+                </div>
                 <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">{dkResults.bien_ban}</pre>
               </div>
-              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                <h3 className="font-bold text-green-700 mb-2">📜 Nghị quyết Ban Chấp hành</h3>
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-bold text-green-700">📜 Nghị quyết Ban Chấp hành</h3>
+                  <button onClick={() => handleSaveToDrive(dkResults.nghi_quyet, 'nghi_quyet')} disabled={loadingDrive['nghi_quyet']} className="text-xs flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition font-bold">
+                    <Save size={14} /> {loadingDrive['nghi_quyet'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                  </button>
+                </div>
                 <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">{dkResults.nghi_quyet}</pre>
               </div>
             </div>
@@ -392,8 +494,13 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
             </Btn>
           </div>
           {cdResult && (
-            <div className="mt-6 p-5 bg-green-50 rounded-xl border border-green-100">
-              <h3 className="font-bold text-green-800 mb-3 text-lg">Kế hoạch đã được rã chi tiết</h3>
+            <div className="mt-6 p-5 bg-green-50 rounded-xl border border-green-100 relative">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-bold text-green-800 text-lg">Kế hoạch đã được rã chi tiết</h3>
+                <button onClick={() => handleSaveToDrive(cdResult, 'ke_hoach')} disabled={loadingDrive['ke_hoach']} className="text-xs flex items-center gap-1 bg-green-200 text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-300 transition font-bold">
+                  <Save size={14} /> {loadingDrive['ke_hoach'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                </button>
+              </div>
               <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans">{cdResult}</pre>
             </div>
           )}
