@@ -3,25 +3,16 @@ import { Modal, FI, FS, FT, Btn } from './UI';
 import { Sparkles, Calendar, FileText, Download, Briefcase, Activity, Check, Edit3, Save } from 'lucide-react';
 import { getBranchConfig } from '../data/constants';
 
-// Utility to export HTML to a .doc file
+import { saveAs } from 'file-saver';
+import htmlDocx from 'html-docx-js/dist/html-docx';
+
+// Utility to export HTML to a .docx file
 export const exportHTMLToDoc = (htmlContent, filename) => {
-  const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-  <head><meta charset='utf-8'><title>Export HTML to Word</title>
-  <style>
-    body { font-family: 'Times New Roman', serif; font-size: 14pt; }
-    h1, h2, h3, h4, h5, h6 { font-family: 'Times New Roman', serif; }
-  </style>
-  </head><body>`;
+  const header = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Document</title></head><body>`;
   const footer = "</body></html>";
   const sourceHTML = header + htmlContent + footer;
-
-  const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
-  const fileDownload = document.createElement("a");
-  document.body.appendChild(fileDownload);
-  fileDownload.href = source;
-  fileDownload.download = `${filename}.doc`;
-  fileDownload.click();
-  document.body.removeChild(fileDownload);
+  const converted = htmlDocx.asBlob(sourceHTML);
+  saveAs(converted, `${filename}.docx`);
 };
 
 // Markdown to Word HTML Document generator
@@ -153,9 +144,14 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
         filename = `Ke_Hoach_Chuyen_De.doc`;
       }
 
-      const htmlContent = convertMarkdownToDocHTML(content);
-      const blob = new Blob([htmlContent], { type: 'application/msword' });
-      const file = new File([blob], filename, { type: 'application/msword' });
+      // If content already contains HTML tags (like from Dinh Ky), do not convert
+      const finalHTML = content.includes('<table') ? content : convertMarkdownToDocHTML(content);
+      
+      const header = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Document</title></head><body>`;
+      const sourceHTML = header + finalHTML + "</body></html>";
+      
+      const blob = htmlDocx.asBlob(sourceHTML);
+      const file = new File([blob], filename, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 
       setLoadingDrive(prev => ({ ...prev, [type]: true }));
       await uploadFileToDrive(file, folderId, config.apiUrl);
@@ -199,100 +195,188 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
       const nextMonthStr = nextMonth.toString().padStart(2, '0');
       const branchSuffix = currentUser?.username === 'bvtks-cs1' ? 'BCHCS1' : 'BCHCS2';
 
-      const resultsFormatted = dkResultInput.split('\n').filter(line => line.trim()).map(line => `- ${line.trim().replace(/^-/, '').trim()}`).join('\n');
-      const nextFormatted = dkNextInput.split('\n').filter(line => line.trim()).map(line => `- ${line.trim().replace(/^-/, '').trim()}`).join('\n');
+      const resultsFormatted = dkResultInput.split('\n').filter(line => line.trim()).map(line => `<li style="margin-bottom: 5px;">${line.trim().replace(/^-/, '').trim()}</li>`).join('\n');
+      const nextFormatted = dkNextInput.split('\n').filter(line => line.trim()).map(line => `<li style="margin-bottom: 5px;">${line.trim().replace(/^-/, '').trim()}</li>`).join('\n');
       const secName = dkSecretary.trim() || '.......................';
 
       // 1. Báo cáo
-      const resBaoCao = `ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN
-BCH ${branchName.toUpperCase()}
-***
-Số: ${dkDocNo}/${dkYear}-BC/ĐTN
+      const resBaoCao = `
+<div style="font-family: 'Times New Roman', serif; font-size: 14pt; line-height: 1.5;">
+  <table style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+    <tr>
+      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+        <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
+        <strong>BCH CHI ĐOÀN<br/>${branchName.toUpperCase()}</strong><br/>
+        <hr style="width: 40%; margin-top: 5px; margin-bottom: 5px; border: 1px solid black;"/>
+        Số: ${dkDocNo}/${dkYear}-BC/ĐTN
+      </td>
+      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+        <strong><u>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</u></strong><br/><br/>
+        <em>Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}</em>
+      </td>
+    </tr>
+  </table>
 
-ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
-Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}
+  <h2 style="text-align: center; font-weight: bold; font-size: 15pt; margin-top: 20px; font-family: 'Times New Roman', serif;">
+    BÁO CÁO<br/>
+    KẾT QUẢ HOẠT ĐỘNG CÔNG TÁC ĐOÀN VÀ PHONG TRÀO THANH NIÊN THÁNG ${dkMonth} VÀ PHƯƠNG HƯỚNG THÁNG ${nextMonthStr} NĂM ${nextYear}
+  </h2>
 
-# BÁO CÁO
-## KẾT QUẢ HOẠT ĐỘNG CÔNG TÁC ĐOÀN VÀ PHONG TRÀO THANH NIÊN THÁNG ${dkMonth} VÀ PHƯƠNG HƯỚNG THÁNG ${nextMonthStr} NĂM ${nextYear}
+  <p style="text-indent: 30px; text-align: justify; margin-bottom: 10px;">
+    Thực hiện Kế hoạch của BCH Đoàn thanh niên Bệnh viện Than - Khoáng sản về công tác đoàn năm ${dkYear}. Được sự quan tâm chỉ đạo trực tiếp của Chi bộ, từ tình hình hoạt động chung của toàn đơn vị. BCH ${branchName} báo cáo:
+  </p>
 
-Thực hiện Kế hoạch của BCH Đoàn thanh niên Bệnh viện Than - Khoáng sản về công tác đoàn năm ${dkYear}. Được sự quan tâm chỉ đạo trực tiếp của Chi bộ, từ tình hình hoạt động chung của toàn đơn vị. BCH ${branchName} báo cáo:
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">I. Kết quả hoạt động trong tháng ${dkMonth}/${dkYear}</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+    ${resultsFormatted}
+  </ul>
 
-### I. Kết quả hoạt động trong tháng ${dkMonth}/${dkYear}
-${resultsFormatted}
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">II. Kế hoạch hoạt động ${nextMonthStr}/${nextYear}</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+    ${nextFormatted}
+  </ul>
 
-### II. Kế hoạch hoạt động ${nextMonthStr}/${nextYear}
-${nextFormatted}
+  <p style="text-indent: 30px; text-align: justify; margin-bottom: 20px;">
+    Trên đây là kết quả hoạt động công tác đoàn và phong trào TTN của ${branchName} trong tháng ${dkMonth}/${dkYear} và triển khai phương hướng nhiệm vụ trọng tâm trong tháng ${nextMonthStr}/${nextYear}.
+  </p>
 
-Trên đây là kết quả hoạt động công tác đoàn và phong trào TTN của ${branchName} trong tháng ${dkMonth}/${dkYear} và triển khai phương hướng nhiệm vụ trọng tâm trong tháng ${nextMonthStr}/${nextYear}.
-
-TM. BAN CHẤP HÀNH
-(Bí thư)
-
-Đặng Phong Thái`;
+  <table style="width: 100%; border: none; margin-top: 30px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+    <tr>
+      <td style="width: 50%; border: none;"></td>
+      <td style="width: 50%; text-align: center; vertical-align: top; border: none;">
+        <strong>TM. BAN CHẤP HÀNH</strong><br/>
+        <strong>Bí thư</strong><br/>
+        <br/><br/><br/><br/>
+        <strong>Đặng Phong Thái</strong>
+      </td>
+    </tr>
+  </table>
+</div>`;
 
       // 2. Biên bản
-      const resBienBan = `ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN
-BCH ${branchName.toUpperCase()}
-***
-Số: ${dkDocNo}/${dkYear}-BB/ĐTN
+      const resBienBan = `
+<div style="font-family: 'Times New Roman', serif; font-size: 14pt; line-height: 1.5;">
+  <table style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+    <tr>
+      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+        <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
+        <strong>BCH CHI ĐOÀN<br/>${branchName.toUpperCase()}</strong><br/>
+        <hr style="width: 40%; margin-top: 5px; margin-bottom: 5px; border: 1px solid black;"/>
+        Số: ${dkDocNo}/${dkYear}-BB/ĐTN
+      </td>
+      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+        <strong><u>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</u></strong><br/><br/>
+        <em>Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}</em>
+      </td>
+    </tr>
+  </table>
 
-ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
-Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}
+  <h2 style="text-align: center; font-weight: bold; font-size: 15pt; margin-top: 20px; font-family: 'Times New Roman', serif;">
+    BIÊN BẢN<br/>
+    HỘI NGHỊ BAN CHẤP HÀNH CHI ĐOÀN THÁNG ${dkMonth}/${dkYear}
+  </h2>
 
-# BIÊN BẢN
-## HỘI NGHỊ BAN CHẤP HÀNH CHI ĐOÀN THÁNG ${dkMonth}/${dkYear}
+  <p style="margin-bottom: 10px;">
+    Thời gian: 14h00 ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}<br/>
+    Địa điểm: Phòng họp Chi đoàn<br/>
+    Thành phần: Các đồng chí trong BCH Chi đoàn<br/>
+    Chủ trì: Đồng chí Đặng Phong Thái - Bí thư Chi đoàn<br/>
+    Thư ký: Đồng chí ${secName}
+  </p>
 
-Thời gian: 14h00 ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}
-Địa điểm: Phòng họp Chi đoàn
-Thành phần: Các đồng chí trong BCH Chi đoàn
-Chủ trì: Đồng chí Đặng Phong Thái - Bí thư Chi đoàn
-Thư ký: Đồng chí ${secName}
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 10px; text-align: center;">NỘI DUNG HỘI NGHỊ:</p>
+  
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">1. Đồng chí Chủ trì đánh giá kết quả hoạt động tháng ${dkMonth}/${dkYear}:</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+    ${resultsFormatted}
+  </ul>
 
-### NỘI DUNG HỘI NGHỊ:
-### 1. Đồng chí Chủ trì đánh giá kết quả hoạt động tháng ${dkMonth}/${dkYear}:
-${resultsFormatted}
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">2. Triển khai phương hướng hoạt động tháng ${nextMonthStr}/${nextYear}:</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+    ${nextFormatted}
+  </ul>
 
-### 2. Triển khai phương hướng hoạt động tháng ${nextMonthStr}/${nextYear}:
-${nextFormatted}
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">3. Thảo luận:</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+    <li style="margin-bottom: 5px;">100% các đồng chí dự họp nhất trí với báo cáo kết quả hoạt động và phương hướng trên.</li>
+    <li style="margin-bottom: 5px;">BCH nhất trí phân công nhiệm vụ cụ thể cho từng phân đoàn để triển khai hiệu quả.</li>
+  </ul>
 
-### 3. Thảo luận:
-- 100% các đồng chí dự họp nhất trí với báo cáo kết quả hoạt động và phương hướng trên.
-- BCH nhất trí phân công nhiệm vụ cụ thể cho từng phân đoàn để triển khai hiệu quả.
+  <p style="margin-top: 10px; margin-bottom: 20px;">
+    Hội nghị kết thúc vào 15h00 cùng ngày. Biên bản đã được thông qua tại hội nghị.
+  </p>
 
-Hội nghị kết thúc vào 15h00 cùng ngày. Biên bản đã được thông qua tại hội nghị.
-
-CHỦ TRÌ
-(Bí thư)
-
-Đặng Phong Thái`;
+  <table style="width: 100%; border: none; margin-top: 30px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+    <tr>
+      <td style="width: 50%; text-align: center; vertical-align: top; border: none;">
+        <strong>THƯ KÝ</strong><br/>
+        <br/><br/><br/><br/>
+        <strong>${secName}</strong>
+      </td>
+      <td style="width: 50%; text-align: center; vertical-align: top; border: none;">
+        <strong>CHỦ TRÌ</strong><br/>
+        <strong>Bí thư</strong><br/>
+        <br/><br/><br/><br/>
+        <strong>Đặng Phong Thái</strong>
+      </td>
+    </tr>
+  </table>
+</div>`;
 
       // 3. Nghị quyết
-      const resNghiQuyet = `ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN
-BCH ${branchName.toUpperCase()}
-***
-Số: ${dkDocNo}/${dkYear}-NQ/ĐTN
+      const resNghiQuyet = `
+<div style="font-family: 'Times New Roman', serif; font-size: 14pt; line-height: 1.5;">
+  <table style="width: 100%; border: none; margin-bottom: 20px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+    <tr>
+      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+        <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
+        <strong>BCH CHI ĐOÀN<br/>${branchName.toUpperCase()}</strong><br/>
+        <hr style="width: 40%; margin-top: 5px; margin-bottom: 5px; border: 1px solid black;"/>
+        Số: ${dkDocNo}/${dkYear}-NQ/ĐTN
+      </td>
+      <td style="width: 50%; text-align: center; vertical-align: top; border: none; padding: 0;">
+        <strong><u>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</u></strong><br/><br/>
+        <em>Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}</em>
+      </td>
+    </tr>
+  </table>
 
-ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
-Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}
+  <h2 style="text-align: center; font-weight: bold; font-size: 15pt; margin-top: 20px; font-family: 'Times New Roman', serif;">
+    NGHỊ QUYẾT<br/>
+    HỘI NGHỊ BAN CHẤP HÀNH CHI ĐOÀN THÁNG ${dkMonth}/${dkYear}
+  </h2>
 
-# NGHỊ QUYẾT
-## HỘI NGHỊ BAN CHẤP HÀNH CHI ĐOÀN THÁNG ${dkMonth}/${dkYear}
+  <p style="text-indent: 30px; text-align: justify; margin-bottom: 10px;">
+    Căn cứ vào kết quả Hội nghị Ban Chấp hành Chi đoàn ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}, Ban Chấp hành Chi đoàn quyết nghị:
+  </p>
 
-Căn cứ vào kết quả Hội nghị Ban Chấp hành Chi đoàn ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}, Ban Chấp hành Chi đoàn quyết nghị:
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">Điều 1. Nhất trí thông qua báo cáo kết quả hoạt động tháng ${dkMonth}/${dkYear} với các kết quả nổi bật:</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+    ${resultsFormatted}
+  </ul>
 
-### Điều 1. Nhất trí thông qua báo cáo kết quả hoạt động tháng ${dkMonth}/${dkYear} với các kết quả nổi bật:
-${resultsFormatted}
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">Điều 2. Nhất trí thông qua phương hướng, nhiệm vụ tháng ${nextMonthStr}/${nextYear} gồm các nhiệm vụ trọng tâm:</p>
+  <ul style="margin-top: 0; padding-left: 40px; text-align: justify;">
+    ${nextFormatted}
+  </ul>
 
-### Điều 2. Nhất trí thông qua phương hướng, nhiệm vụ tháng ${nextMonthStr}/${nextYear} gồm các nhiệm vụ trọng tâm:
-${nextFormatted}
+  <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px;">Điều 3. Tổ chức thực hiện:</p>
+  <p style="text-indent: 30px; text-align: justify; margin-bottom: 20px;">
+    Giao cho Bí thư Chi đoàn, các đồng chí ủy viên BCH và các phân đoàn chịu trách nhiệm thi hành Nghị quyết này.
+  </p>
 
-### Điều 3. Tổ chức thực hiện:
-Giao cho Bí thư Chi đoàn, các đồng chí ủy viên BCH và các phân đoàn chịu trách nhiệm thi hành Nghị quyết này.
-
-TM. BAN CHẤP HÀNH
-(Bí thư)
-
-Đặng Phong Thái`;
+  <table style="width: 100%; border: none; margin-top: 30px; font-family: 'Times New Roman', serif; font-size: 14pt;">
+    <tr>
+      <td style="width: 50%; border: none;"></td>
+      <td style="width: 50%; text-align: center; vertical-align: top; border: none;">
+        <strong>TM. BAN CHẤP HÀNH</strong><br/>
+        <strong>Bí thư</strong><br/>
+        <br/><br/><br/><br/>
+        <strong>Đặng Phong Thái</strong>
+      </td>
+    </tr>
+  </table>
+</div>`;
 
       setDkResults({ bao_cao: resBaoCao, bien_ban: resBienBan, nghi_quyet: resNghiQuyet });
       showToast("Đã tạo xong Bộ ba văn bản tháng (Tạo tự động, không dùng AI)!");
@@ -521,51 +605,48 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
                   <h3 className="font-bold text-red-700">📄 Báo cáo hoạt động</h3>
                   <div className="flex items-center gap-2">
                     <button onClick={() => {
-                      const htmlContent = convertMarkdownToDocHTML(dkResults.bao_cao);
-                      exportHTMLToDoc(htmlContent, `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}`);
+                      exportHTMLToDoc(dkResults.bao_cao, `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}`);
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
-                      <Download size={14} /> Tải Word
+                      <Download size={14} /> Tải Word (.docx)
                     </button>
                     <button onClick={() => handleSaveToDrive(dkResults.bao_cao, 'bao_cao')} disabled={loadingDrive['bao_cao']} className="text-xs flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition font-bold">
                       <Save size={14} /> {loadingDrive['bao_cao'] ? 'Đang lưu...' : 'Lưu lên Drive'}
                     </button>
                   </div>
                 </div>
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">{dkResults.bao_cao}</pre>
+                <div className="p-4 bg-white border border-gray-300 rounded overflow-auto max-h-[500px]" dangerouslySetInnerHTML={{ __html: dkResults.bao_cao }} />
               </div>
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-blue-700">📝 Biên bản sinh hoạt / họp BCH</h3>
                   <div className="flex items-center gap-2">
                     <button onClick={() => {
-                      const htmlContent = convertMarkdownToDocHTML(dkResults.bien_ban);
-                      exportHTMLToDoc(htmlContent, `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}`);
+                      exportHTMLToDoc(dkResults.bien_ban, `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}`);
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
-                      <Download size={14} /> Tải Word
+                      <Download size={14} /> Tải Word (.docx)
                     </button>
                     <button onClick={() => handleSaveToDrive(dkResults.bien_ban, 'bien_ban')} disabled={loadingDrive['bien_ban']} className="text-xs flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition font-bold">
                       <Save size={14} /> {loadingDrive['bien_ban'] ? 'Đang lưu...' : 'Lưu lên Drive'}
                     </button>
                   </div>
                 </div>
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">{dkResults.bien_ban}</pre>
+                <div className="p-4 bg-white border border-gray-300 rounded overflow-auto max-h-[500px]" dangerouslySetInnerHTML={{ __html: dkResults.bien_ban }} />
               </div>
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-green-700">📜 Nghị quyết Ban Chấp hành</h3>
                   <div className="flex items-center gap-2">
                     <button onClick={() => {
-                      const htmlContent = convertMarkdownToDocHTML(dkResults.nghi_quyet);
-                      exportHTMLToDoc(htmlContent, `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}`);
+                      exportHTMLToDoc(dkResults.nghi_quyet, `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}`);
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
-                      <Download size={14} /> Tải Word
+                      <Download size={14} /> Tải Word (.docx)
                     </button>
                     <button onClick={() => handleSaveToDrive(dkResults.nghi_quyet, 'nghi_quyet')} disabled={loadingDrive['nghi_quyet']} className="text-xs flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition font-bold">
                       <Save size={14} /> {loadingDrive['nghi_quyet'] ? 'Đang lưu...' : 'Lưu lên Drive'}
                     </button>
                   </div>
                 </div>
-                <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">{dkResults.nghi_quyet}</pre>
+                <div className="p-4 bg-white border border-gray-300 rounded overflow-auto max-h-[500px]" dangerouslySetInnerHTML={{ __html: dkResults.nghi_quyet }} />
               </div>
             </div>
           )}
@@ -620,7 +701,7 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
                     const htmlContent = convertMarkdownToDocHTML(cdResult);
                     exportHTMLToDoc(htmlContent, `Ke_Hoach_Chuyen_De`);
                   }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
-                    <Download size={14} /> Tải Word
+                    <Download size={14} /> Tải Word (.docx)
                   </button>
                   <button onClick={() => handleSaveToDrive(cdResult, 'ke_hoach')} disabled={loadingDrive['ke_hoach']} className="text-xs flex items-center gap-1 bg-green-200 text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-300 transition font-bold">
                     <Save size={14} /> {loadingDrive['ke_hoach'] ? 'Đang lưu...' : 'Lưu lên Drive'}
