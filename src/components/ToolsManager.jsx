@@ -184,28 +184,117 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
     setDkResults({ bao_cao: '', bien_ban: '', nghi_quyet: '' });
 
     try {
-      const context = `Chi đoàn ${getBranchConfig(currentUser?.username).title.replace(/\n/g, ' ')}`;
+      const config = getBranchConfig(currentUser?.username);
+      const branchName = config.title;
+      const tMonth = parseInt(dkMonth, 10);
+      const tYear = parseInt(dkYear, 10);
+      let nextMonth = tMonth + 1;
+      let nextYear = tYear;
+      if (nextMonth > 12) {
+        nextMonth = 1;
+        nextYear++;
+      }
+      const nextMonthStr = nextMonth.toString().padStart(2, '0');
       const branchSuffix = currentUser?.username === 'bvtks-cs1' ? 'BCHCS1' : 'BCHCS2';
-      
-      const basePrompt = `Đơn vị: ${context}\nTháng: ${dkMonth}/${dkYear}
-1. KẾT QUẢ ĐẠT ĐƯỢC: \n${dkResultInput}
-2. PHƯƠNG HƯỚNG KỲ TỚI: \n${dkNextInput}\n`;
 
-      const pBaoCao = `${basePrompt}Bạn là Bí thư Chi đoàn. Hãy viết BÁO CÁO HOẠT ĐỘNG THÁNG phong cách tổng kết, chi tiết, trang trọng, văn phong chuẩn Đoàn. Định dạng Markdown. Góc trên cùng văn bản phải ghi rõ: Số: ${dkDocNo}-${dkMonth}-${dkYear}-BC/${branchSuffix}.`;
-      const pBienBan = `${basePrompt}Bạn là Thư ký Hội nghị Ban Chấp hành Chi đoàn. Hãy lập "Biên bản Hội nghị" tháng này. Ghi nhận trung thực diễn biến, có phần thảo luận, đóng góp ý kiến của các ủy viên và kết luận của chủ tọa. Định dạng chuẩn hành chính gồm: Thời gian, địa điểm, thành phần, nội dung chi tiết. Định dạng Markdown. Góc trên cùng văn bản phải ghi rõ: Số: ${dkDocNo}-${dkMonth}-${dkYear}-BB/${branchSuffix}.`;
-      const pNghiQuyet = `${basePrompt}Bạn là Bí thư Chi đoàn. Hãy viết NGHỊ QUYẾT BAN CHẤP HÀNH THÁNG phong cách chỉ đạo, quyết nghị, giao việc cụ thể. Định dạng Markdown. Góc trên cùng văn bản phải ghi rõ: Số: ${dkDocNo}-${dkMonth}-${dkYear}-NQ/${branchSuffix}.`;
+      const resultsFormatted = dkResultInput.split('\n').filter(line => line.trim()).map(line => `- ${line.trim().replace(/^-/, '').trim()}`).join('\n');
+      const nextFormatted = dkNextInput.split('\n').filter(line => line.trim()).map(line => `- ${line.trim().replace(/^-/, '').trim()}`).join('\n');
 
-      // Parallel calls
-      const [resBaoCao, resBienBan, resNghiQuyet] = await Promise.all([
-        callGeminiAPI(pBaoCao, geminiApiKey),
-        callGeminiAPI(pBienBan, geminiApiKey),
-        callGeminiAPI(pNghiQuyet, geminiApiKey)
-      ]);
+      // 1. Báo cáo
+      const resBaoCao = `ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN
+BCH ${branchName.toUpperCase()}
+***
+Số: ${dkDocNo}/${dkYear}-BC/ĐTN
+
+ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
+Mạo Khê, ngày ... tháng ${dkMonth} năm ${dkYear}
+
+# BÁO CÁO
+## KẾT QUẢ HOẠT ĐỘNG CÔNG TÁC ĐOÀN VÀ PHONG TRÀO THANH NIÊN THÁNG ${dkMonth} VÀ PHƯƠNG HƯỚNG THÁNG ${nextMonthStr} NĂM ${nextYear}
+
+Thực hiện Kế hoạch của BCH Đoàn thanh niên Bệnh viện Than - Khoáng sản về công tác đoàn năm ${dkYear}. Được sự quan tâm chỉ đạo trực tiếp của Chi bộ, từ tình hình hoạt động chung của toàn đơn vị. BCH ${branchName} báo cáo:
+
+### I. Kết quả hoạt động trong tháng ${dkMonth}/${dkYear}
+${resultsFormatted}
+
+### II. Kế hoạch hoạt động ${nextMonthStr}/${nextYear}
+${nextFormatted}
+
+Trên đây là kết quả hoạt động công tác đoàn và phong trào TTN của ${branchName} trong tháng ${dkMonth}/${dkYear} và triển khai phương hướng nhiệm vụ trọng tâm trong tháng ${nextMonthStr}/${nextYear}.
+
+TM. BAN CHẤP HÀNH
+(Bí thư)
+
+Đặng Phong Thái`;
+
+      // 2. Biên bản
+      const resBienBan = `ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN
+BCH ${branchName.toUpperCase()}
+***
+Số: ${dkDocNo}/${dkYear}-BB/ĐTN
+
+ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
+Mạo Khê, ngày ... tháng ${dkMonth} năm ${dkYear}
+
+# BIÊN BẢN
+## HỘI NGHỊ BAN CHẤP HÀNH CHI ĐOÀN THÁNG ${dkMonth}/${dkYear}
+
+Thời gian: 14h00 ngày ... tháng ${dkMonth} năm ${dkYear}
+Địa điểm: Phòng họp Chi đoàn
+Thành phần: Các đồng chí trong BCH Chi đoàn
+Chủ trì: Đồng chí Đặng Phong Thái - Bí thư Chi đoàn
+Thư ký: [Điền tên thư ký]
+
+### NỘI DUNG HỘI NGHỊ:
+### 1. Đồng chí Chủ trì đánh giá kết quả hoạt động tháng ${dkMonth}/${dkYear}:
+${resultsFormatted}
+
+### 2. Triển khai phương hướng hoạt động tháng ${nextMonthStr}/${nextYear}:
+${nextFormatted}
+
+### 3. Thảo luận:
+- 100% các đồng chí dự họp nhất trí với báo cáo kết quả hoạt động và phương hướng trên.
+- BCH nhất trí phân công nhiệm vụ cụ thể cho từng phân đoàn để triển khai hiệu quả.
+
+Hội nghị kết thúc vào 16h00 cùng ngày. Biên bản đã được thông qua tại hội nghị.
+
+CHỦ TRÌ
+(Bí thư)
+
+Đặng Phong Thái`;
+
+      // 3. Nghị quyết
+      const resNghiQuyet = `ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN
+BCH ${branchName.toUpperCase()}
+***
+Số: ${dkDocNo}/${dkYear}-NQ/ĐTN
+
+ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
+Mạo Khê, ngày ... tháng ${dkMonth} năm ${dkYear}
+
+# NGHỊ QUYẾT
+## HỘI NGHỊ BAN CHẤP HÀNH CHI ĐOÀN THÁNG ${dkMonth}/${dkYear}
+
+Căn cứ vào kết quả Hội nghị Ban Chấp hành Chi đoàn ngày ... tháng ${dkMonth} năm ${dkYear}, Ban Chấp hành Chi đoàn quyết nghị:
+
+### Điều 1. Nhất trí thông qua báo cáo kết quả hoạt động tháng ${dkMonth}/${dkYear} với các kết quả nổi bật:
+${resultsFormatted}
+
+### Điều 2. Nhất trí thông qua phương hướng, nhiệm vụ tháng ${nextMonthStr}/${nextYear} gồm các nhiệm vụ trọng tâm:
+${nextFormatted}
+
+### Điều 3. Tổ chức thực hiện:
+Giao cho Bí thư Chi đoàn, các đồng chí ủy viên BCH và các phân đoàn chịu trách nhiệm thi hành Nghị quyết này.
+
+TM. BAN CHẤP HÀNH
+(Bí thư)
+
+Đặng Phong Thái`;
 
       setDkResults({ bao_cao: resBaoCao, bien_ban: resBienBan, nghi_quyet: resNghiQuyet });
-      showToast("Đã tạo xong Bộ ba văn bản tháng!");
+      showToast("Đã tạo xong Bộ ba văn bản tháng (Tạo tự động, không dùng AI)!");
     } catch (err) {
-      alert("Lỗi AI: " + err.message);
+      alert("Lỗi tạo văn bản: " + err.message);
     } finally {
       setLoadingAI(false);
     }
@@ -416,7 +505,7 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
           </div>
           <div className="mt-4 flex justify-end">
             <Btn onClick={handleGenerateDk} disabled={loadingAI}>
-              {loadingAI ? '⏳ Đang xử lý bởi AI...' : '🪄 Tạo Bộ 3 Văn Bản'}
+              {loadingAI ? '⏳ Đang xử lý...' : '🪄 Tạo Bộ 3 Văn Bản (Mẫu Chuẩn)'}
             </Btn>
           </div>
 
