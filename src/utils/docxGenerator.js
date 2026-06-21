@@ -291,6 +291,86 @@ export const generateDinhKyDocx = async (type, data) => {
   return await Packer.toBlob(doc);
 };
 
+export const generateTongHopDocx = async (data) => {
+  const { branchName, thDocNo, thDate, thMonth, thYear, results, nextPlan, secretary, thPeriod, nextPeriodStr } = data;
+  
+  const children = [
+    createHeaderTable(branchName, thDocNo, thYear, thDate, thMonth, "BC"),
+    new Paragraph({ text: "" }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [
+        new TextRun({ text: "BÁO CÁO", font: "Times New Roman", size: 30, bold: true })
+      ]
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [
+        new TextRun({ text: `KẾT QUẢ HOẠT ĐỘNG CÔNG TÁC ĐOÀN VÀ PHONG TRÀO THANH NIÊN ${thPeriod.toUpperCase()} VÀ PHƯƠNG HƯỚNG ${nextPeriodStr.toUpperCase()}`, font: "Times New Roman", size: 28, bold: true })
+      ]
+    }),
+    new Paragraph({ text: "" }),
+    new Paragraph({
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { firstLine: 720 },
+      children: [
+        new TextRun({ text: `Thực hiện Kế hoạch của BCH Đoàn thanh niên Bệnh viện Than - Khoáng sản về công tác đoàn năm ${thYear}. Được sự quan tâm chỉ đạo trực tiếp của Chi bộ, từ tình hình hoạt động chung của toàn đơn vị. BCH ${branchName} báo cáo:`, font: "Times New Roman", size: 28 })
+      ]
+    }),
+    new Paragraph({ text: "" }),
+    new Paragraph({
+      children: [new TextRun({ text: `I. Kết quả hoạt động trong ${thPeriod}`, font: "Times New Roman", size: 28, bold: true })]
+    }),
+    ...createListParagraphs(results),
+    new Paragraph({ text: "" }),
+    new Paragraph({
+      children: [new TextRun({ text: `II. Phương hướng, nhiệm vụ ${nextPeriodStr}`, font: "Times New Roman", size: 28, bold: true })]
+    }),
+    ...createListParagraphs(nextPlan),
+    new Paragraph({ text: "" }),
+    new Paragraph({
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { firstLine: 720 },
+      children: [
+        new TextRun({ text: `Trên đây là kết quả hoạt động công tác đoàn và phong trào TTN của ${branchName} trong ${thPeriod} và triển khai phương hướng nhiệm vụ trọng tâm trong ${nextPeriodStr}.`, font: "Times New Roman", size: 28 })
+      ]
+    }),
+    new Paragraph({ text: "" }),
+    new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      borders: {
+        top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE },
+        insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE },
+      },
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, children: [] }),
+            new TableCell({
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "TM. BAN CHẤP HÀNH", font: "Times New Roman", size: 28, bold: true })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bí thư", font: "Times New Roman", size: 28, bold: true })] }),
+                new Paragraph({ text: "" }), new Paragraph({ text: "" }), new Paragraph({ text: "" }),
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Đặng Phong Thái", font: "Times New Roman", size: 28, bold: true })] }),
+              ]
+            })
+          ]
+        })
+      ]
+    })
+  ];
+
+  const doc = new Document({
+    sections: [{
+      properties: {},
+      children: children
+    }]
+  });
+
+  return await Packer.toBlob(doc);
+};
+
 export const exportDocxBlob = (blob, filename) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
