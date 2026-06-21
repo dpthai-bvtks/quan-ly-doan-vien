@@ -169,8 +169,10 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
 
   // --- MÔ-ĐUN ĐỊNH KỲ ---
   const [dkDocNo, setDkDocNo] = useState('01');
+  const [dkDate, setDkDate] = useState(new Date().getDate().toString().padStart(2, '0'));
   const [dkMonth, setDkMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
   const [dkYear, setDkYear] = useState(new Date().getFullYear().toString());
+  const [dkSecretary, setDkSecretary] = useState('');
   const [dkResultInput, setDkResultInput] = useState('');
   const [dkNextInput, setDkNextInput] = useState('');
   const [dkResults, setDkResults] = useState({ bao_cao: '', bien_ban: '', nghi_quyet: '' });
@@ -199,6 +201,7 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
 
       const resultsFormatted = dkResultInput.split('\n').filter(line => line.trim()).map(line => `- ${line.trim().replace(/^-/, '').trim()}`).join('\n');
       const nextFormatted = dkNextInput.split('\n').filter(line => line.trim()).map(line => `- ${line.trim().replace(/^-/, '').trim()}`).join('\n');
+      const secName = dkSecretary.trim() || '.......................';
 
       // 1. Báo cáo
       const resBaoCao = `ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN
@@ -207,7 +210,7 @@ BCH ${branchName.toUpperCase()}
 Số: ${dkDocNo}/${dkYear}-BC/ĐTN
 
 ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
-Mạo Khê, ngày ... tháng ${dkMonth} năm ${dkYear}
+Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}
 
 # BÁO CÁO
 ## KẾT QUẢ HOẠT ĐỘNG CÔNG TÁC ĐOÀN VÀ PHONG TRÀO THANH NIÊN THÁNG ${dkMonth} VÀ PHƯƠNG HƯỚNG THÁNG ${nextMonthStr} NĂM ${nextYear}
@@ -234,16 +237,16 @@ BCH ${branchName.toUpperCase()}
 Số: ${dkDocNo}/${dkYear}-BB/ĐTN
 
 ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
-Mạo Khê, ngày ... tháng ${dkMonth} năm ${dkYear}
+Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}
 
 # BIÊN BẢN
 ## HỘI NGHỊ BAN CHẤP HÀNH CHI ĐOÀN THÁNG ${dkMonth}/${dkYear}
 
-Thời gian: 14h00 ngày ... tháng ${dkMonth} năm ${dkYear}
+Thời gian: 14h00 ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}
 Địa điểm: Phòng họp Chi đoàn
 Thành phần: Các đồng chí trong BCH Chi đoàn
 Chủ trì: Đồng chí Đặng Phong Thái - Bí thư Chi đoàn
-Thư ký: [Điền tên thư ký]
+Thư ký: Đồng chí ${secName}
 
 ### NỘI DUNG HỘI NGHỊ:
 ### 1. Đồng chí Chủ trì đánh giá kết quả hoạt động tháng ${dkMonth}/${dkYear}:
@@ -256,7 +259,7 @@ ${nextFormatted}
 - 100% các đồng chí dự họp nhất trí với báo cáo kết quả hoạt động và phương hướng trên.
 - BCH nhất trí phân công nhiệm vụ cụ thể cho từng phân đoàn để triển khai hiệu quả.
 
-Hội nghị kết thúc vào 16h00 cùng ngày. Biên bản đã được thông qua tại hội nghị.
+Hội nghị kết thúc vào 15h00 cùng ngày. Biên bản đã được thông qua tại hội nghị.
 
 CHỦ TRÌ
 (Bí thư)
@@ -270,12 +273,12 @@ BCH ${branchName.toUpperCase()}
 Số: ${dkDocNo}/${dkYear}-NQ/ĐTN
 
 ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH
-Mạo Khê, ngày ... tháng ${dkMonth} năm ${dkYear}
+Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}
 
 # NGHỊ QUYẾT
 ## HỘI NGHỊ BAN CHẤP HÀNH CHI ĐOÀN THÁNG ${dkMonth}/${dkYear}
 
-Căn cứ vào kết quả Hội nghị Ban Chấp hành Chi đoàn ngày ... tháng ${dkMonth} năm ${dkYear}, Ban Chấp hành Chi đoàn quyết nghị:
+Căn cứ vào kết quả Hội nghị Ban Chấp hành Chi đoàn ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}, Ban Chấp hành Chi đoàn quyết nghị:
 
 ### Điều 1. Nhất trí thông qua báo cáo kết quả hoạt động tháng ${dkMonth}/${dkYear} với các kết quả nổi bật:
 ${resultsFormatted}
@@ -484,10 +487,12 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
       {activeTab === 'dinhky' && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Bộ ba văn bản tháng (Biên bản - Nghị quyết - Báo cáo)</h2>
-          <div className="grid grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
             <FI label="Số văn bản" value={dkDocNo} onChange={e => setDkDocNo(e.target.value)} placeholder="01" />
+            <FI label="Ngày" type="number" value={dkDate} onChange={e => setDkDate(e.target.value)} />
             <FI label="Tháng" type="number" value={dkMonth} onChange={e => setDkMonth(e.target.value)} />
             <FI label="Năm" type="number" value={dkYear} onChange={e => setDkYear(e.target.value)} />
+            <FI label="Thư ký" value={dkSecretary} onChange={e => setDkSecretary(e.target.value)} placeholder="Tên thư ký..." />
           </div>
           <div className="space-y-4">
             <FT 
@@ -514,27 +519,51 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-red-700">📄 Báo cáo hoạt động</h3>
-                  <button onClick={() => handleSaveToDrive(dkResults.bao_cao, 'bao_cao')} disabled={loadingDrive['bao_cao']} className="text-xs flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition font-bold">
-                    <Save size={14} /> {loadingDrive['bao_cao'] ? 'Đang lưu...' : 'Lưu lên Drive'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => {
+                      const htmlContent = convertMarkdownToDocHTML(dkResults.bao_cao);
+                      exportHTMLToDoc(htmlContent, `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}`);
+                    }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
+                      <Download size={14} /> Tải Word
+                    </button>
+                    <button onClick={() => handleSaveToDrive(dkResults.bao_cao, 'bao_cao')} disabled={loadingDrive['bao_cao']} className="text-xs flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition font-bold">
+                      <Save size={14} /> {loadingDrive['bao_cao'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                    </button>
+                  </div>
                 </div>
                 <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">{dkResults.bao_cao}</pre>
               </div>
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-blue-700">📝 Biên bản sinh hoạt / họp BCH</h3>
-                  <button onClick={() => handleSaveToDrive(dkResults.bien_ban, 'bien_ban')} disabled={loadingDrive['bien_ban']} className="text-xs flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition font-bold">
-                    <Save size={14} /> {loadingDrive['bien_ban'] ? 'Đang lưu...' : 'Lưu lên Drive'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => {
+                      const htmlContent = convertMarkdownToDocHTML(dkResults.bien_ban);
+                      exportHTMLToDoc(htmlContent, `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}`);
+                    }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
+                      <Download size={14} /> Tải Word
+                    </button>
+                    <button onClick={() => handleSaveToDrive(dkResults.bien_ban, 'bien_ban')} disabled={loadingDrive['bien_ban']} className="text-xs flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition font-bold">
+                      <Save size={14} /> {loadingDrive['bien_ban'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                    </button>
+                  </div>
                 </div>
                 <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">{dkResults.bien_ban}</pre>
               </div>
               <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 relative">
                 <div className="flex justify-between items-center mb-2">
                   <h3 className="font-bold text-green-700">📜 Nghị quyết Ban Chấp hành</h3>
-                  <button onClick={() => handleSaveToDrive(dkResults.nghi_quyet, 'nghi_quyet')} disabled={loadingDrive['nghi_quyet']} className="text-xs flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition font-bold">
-                    <Save size={14} /> {loadingDrive['nghi_quyet'] ? 'Đang lưu...' : 'Lưu lên Drive'}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => {
+                      const htmlContent = convertMarkdownToDocHTML(dkResults.nghi_quyet);
+                      exportHTMLToDoc(htmlContent, `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}`);
+                    }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
+                      <Download size={14} /> Tải Word
+                    </button>
+                    <button onClick={() => handleSaveToDrive(dkResults.nghi_quyet, 'nghi_quyet')} disabled={loadingDrive['nghi_quyet']} className="text-xs flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition font-bold">
+                      <Save size={14} /> {loadingDrive['nghi_quyet'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                    </button>
+                  </div>
                 </div>
                 <pre className="whitespace-pre-wrap text-sm text-gray-700 font-sans">{dkResults.nghi_quyet}</pre>
               </div>
@@ -586,9 +615,17 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
             <div className="mt-6 p-5 bg-green-50 rounded-xl border border-green-100 relative">
               <div className="flex justify-between items-center mb-3">
                 <h3 className="font-bold text-green-800 text-lg">Kế hoạch đã được rã chi tiết</h3>
-                <button onClick={() => handleSaveToDrive(cdResult, 'ke_hoach')} disabled={loadingDrive['ke_hoach']} className="text-xs flex items-center gap-1 bg-green-200 text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-300 transition font-bold">
-                  <Save size={14} /> {loadingDrive['ke_hoach'] ? 'Đang lưu...' : 'Lưu lên Drive'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => {
+                    const htmlContent = convertMarkdownToDocHTML(cdResult);
+                    exportHTMLToDoc(htmlContent, `Ke_Hoach_Chuyen_De`);
+                  }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
+                    <Download size={14} /> Tải Word
+                  </button>
+                  <button onClick={() => handleSaveToDrive(cdResult, 'ke_hoach')} disabled={loadingDrive['ke_hoach']} className="text-xs flex items-center gap-1 bg-green-200 text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-300 transition font-bold">
+                    <Save size={14} /> {loadingDrive['ke_hoach'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                  </button>
+                </div>
               </div>
               <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans">{cdResult}</pre>
             </div>
