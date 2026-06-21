@@ -126,6 +126,15 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
   const [thResultInput, setThResultInput] = useState('');
   const [thNextInput, setThNextInput] = useState('');
 
+  const [dkDocNo, setDkDocNo] = useState('01');
+  const [dkDate, setDkDate] = useState(new Date().getDate().toString().padStart(2, '0'));
+  const [dkMonth, setDkMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
+  const [dkYear, setDkYear] = useState(new Date().getFullYear().toString());
+  const [dkSecretary, setDkSecretary] = useState('');
+  const [dkResultInput, setDkResultInput] = useState('');
+  const [dkNextInput, setDkNextInput] = useState('');
+  const [dkResults, setDkResults] = useState({ bao_cao: '', bien_ban: '', nghi_quyet: '' });
+
   const [loadingAI, setLoadingAI] = useState(false);
   const [loadingDrive, setLoadingDrive] = useState({});
   const [toast, setToast] = useState('');
@@ -228,14 +237,6 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
   };
 
   // --- MÔ-ĐUN ĐỊNH KỲ ---
-  const [dkDocNo, setDkDocNo] = useState('01');
-  const [dkDate, setDkDate] = useState(new Date().getDate().toString().padStart(2, '0'));
-  const [dkMonth, setDkMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
-  const [dkYear, setDkYear] = useState(new Date().getFullYear().toString());
-  const [dkSecretary, setDkSecretary] = useState('');
-  const [dkResultInput, setDkResultInput] = useState('');
-  const [dkNextInput, setDkNextInput] = useState('');
-  const [dkResults, setDkResults] = useState({ bao_cao: '', bien_ban: '', nghi_quyet: '' });
 
   const handleGenerateDk = async () => {
     if (!isAdmin) return alert("Bạn không có quyền thực hiện chức năng này!");
@@ -548,12 +549,6 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
           className={`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'tonghop' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
           <Activity size={18} /> Mô-đun Tổng hợp
-        </button>
-        <button
-          onClick={() => setActiveTab('chiendich')}
-          className={`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'chiendich' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-        >
-          <Sparkles size={18} /> Mô-đun Chiến dịch
         </button>
         <button
           onClick={() => setActiveTab('kho')}

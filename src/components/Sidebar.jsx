@@ -8,7 +8,6 @@ const ALL_NAV_ITEMS = [
   { id: 'members', label: 'Danh sách đoàn viên', icon: Users, adminOnly: false },
   { id: 'plans', label: 'Kế hoạch & Báo cáo', icon: Calendar, adminOnly: false },
   { id: 'documents', label: 'Quản lý văn bản đi/đến', icon: FolderOpen, adminOnly: false },
-  { id: 'minutes', label: 'Biên bản BCH', icon: FileText, adminOnly: false },
   { id: 'attendance', label: 'Điểm danh & Đánh giá', icon: CheckCircle, adminOnly: false },
   { id: 'funds', label: 'Quản lý Thu/Chi', icon: Wallet, adminOnly: false },
   { id: 'tools', label: 'Công cụ hỗ trợ', icon: PenTool, adminOnly: true },
