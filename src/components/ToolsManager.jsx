@@ -148,22 +148,23 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
   const handleSaveToDrive = async (content, type) => {
     try {
       const config = getBranchConfig(currentUser?.username);
+      const isCS1 = currentUser?.username === 'bvtks-cs1';
       let folderId = '';
       let filename = '';
       if (type === 'bao_cao') {
-        folderId = '1uPciReR36oYs_8bdvRke8PbjJf0YL9HY';
+        folderId = isCS1 ? '1YQrHutAFAcU24-Y8X--k2y_wCmNRWxwZ' : '1uPciReR36oYs_8bdvRke8PbjJf0YL9HY';
         filename = `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}`;
       } else if (type === 'bien_ban') {
-        folderId = '1-1cfuEFcYXab-GUvnULl7dD5nN4i5LmV';
+        folderId = isCS1 ? '1BRfEJwq4dFUXHC60oB6UAaAA9iN3hhmp' : '1-1cfuEFcYXab-GUvnULl7dD5nN4i5LmV';
         filename = `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}`;
       } else if (type === 'nghi_quyet') {
-        folderId = '1sbRu-eADECV4MN_uDQ7vwP0LjZ5lqeJu';
+        folderId = isCS1 ? '1IvfaxI8UvMbGrlIMVQq4epW-kGz7ORHQ' : '1sbRu-eADECV4MN_uDQ7vwP0LjZ5lqeJu';
         filename = `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}`;
       } else if (type === 'ke_hoach') {
-        folderId = '1g3Y-MgyR6kButQGiBrbuI9OFI5pAwTPn';
+        folderId = isCS1 ? '17nCNXjMoYnGwmsySH-HD6XMM1GQHUx8Q' : '1g3Y-MgyR6kButQGiBrbuI9OFI5pAwTPn';
         filename = `Ke_Hoach_Chuyen_De`;
       } else if (type === 'tong_hop') {
-        folderId = '1uPciReR36oYs_8bdvRke8PbjJf0YL9HY';
+        folderId = isCS1 ? '1YQrHutAFAcU24-Y8X--k2y_wCmNRWxwZ' : '1uPciReR36oYs_8bdvRke8PbjJf0YL9HY';
         filename = `Bao_Cao_Tong_Hop_${thPeriod.replace(/ /g, '_')}_${thYear}`;
       }
 
