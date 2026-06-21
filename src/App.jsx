@@ -19,6 +19,16 @@ import { RAW_MEMBERS, INIT_PLANS, INIT_QUESTIONS, getBranchConfig } from './data
 
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
 
+const cleanPlans = (plans) => {
+  if (!Array.isArray(plans)) return plans;
+  return plans.map(p => {
+    if (p.description === 'Văn bản tạo tự động từ Mô-đun Công cụ') {
+      return { ...p, description: '' };
+    }
+    return p;
+  });
+};
+
 export function ToastNotification({ message, type }) {
   if (!message) return null;
   const isSuccess = type === 'success';
@@ -87,7 +97,7 @@ function AppContent({ currentUser, handleAppLogout }) {
   });
   const [cs1Plans, setCs1Plans] = useState(() => {
     const saved = localStorage.getItem('db_plans_bvtks-cs1');
-    return saved ? JSON.parse(saved) : INIT_PLANS;
+    return saved ? cleanPlans(JSON.parse(saved)) : INIT_PLANS;
   });
   const [cs1Questions, setCs1Questions] = useState(() => {
     const saved = localStorage.getItem('db_questions_bvtks-cs1');
@@ -113,7 +123,7 @@ function AppContent({ currentUser, handleAppLogout }) {
   });
   const [cs2Plans, setCs2Plans] = useState(() => {
     const saved = localStorage.getItem('db_plans_bvtks-cs2');
-    return saved ? JSON.parse(saved) : INIT_PLANS;
+    return saved ? cleanPlans(JSON.parse(saved)) : INIT_PLANS;
   });
   const [cs2Questions, setCs2Questions] = useState(() => {
     const saved = localStorage.getItem('db_questions_bvtks-cs2');
@@ -141,7 +151,7 @@ function AppContent({ currentUser, handleAppLogout }) {
   const [normalPlans, setNormalPlans] = useState(() => {
     if (isSuperAdmin) return [];
     const saved = localStorage.getItem(`db_plans_${currentUser?.username}`);
-    return saved ? JSON.parse(saved) : INIT_PLANS;
+    return saved ? cleanPlans(JSON.parse(saved)) : INIT_PLANS;
   });
   const [normalQuestions, setNormalQuestions] = useState(() => {
     if (isSuperAdmin) return [];
@@ -255,7 +265,7 @@ function AppContent({ currentUser, handleAppLogout }) {
             const res1 = await fetch(`${config1.apiUrl}?branch=cs1`);
             const data1 = await res1.json();
             if (data1.members) cs1.members = data1.members;
-            if (data1.plans) cs1.plans = data1.plans;
+            if (data1.plans) cs1.plans = cleanPlans(data1.plans);
             if (data1.questions) cs1.questions = data1.questions;
             if (data1.funds) cs1.funds = data1.funds;
             if (data1.doanPhi) cs1.doanPhi = data1.doanPhi;
@@ -270,7 +280,7 @@ function AppContent({ currentUser, handleAppLogout }) {
             const res2 = await fetch(`${config2.apiUrl}?branch=cs2`);
             const data2 = await res2.json();
             if (data2.members) cs2.members = data2.members;
-            if (data2.plans) cs2.plans = data2.plans;
+            if (data2.plans) cs2.plans = cleanPlans(data2.plans);
             if (data2.questions) cs2.questions = data2.questions;
             if (data2.funds) cs2.funds = data2.funds;
             if (data2.doanPhi) cs2.doanPhi = data2.doanPhi;
@@ -331,7 +341,7 @@ function AppContent({ currentUser, handleAppLogout }) {
       const res = await fetch(`${config.apiUrl}?branch=${branch}`);
       const dbData = await res.json();
       if (dbData.members) setMembers(dbData.members);
-      if (dbData.plans) setPlans(dbData.plans);
+      if (dbData.plans) setPlans(cleanPlans(dbData.plans));
       if (dbData.questions) setQuestions(dbData.questions);
       if (dbData.funds) setFunds(dbData.funds);
       if (dbData.doanPhi) setDoanPhi(dbData.doanPhi);
