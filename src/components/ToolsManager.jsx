@@ -113,7 +113,7 @@ async function callGeminiAPI(prompt, geminiApiKey) {
   throw lastError || new Error("Tất cả các AI models đều bị lỗi!");
 }
 
-export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey }) {
+export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, geminiApiKey }) {
   const [activeTab, setActiveTab] = useState('dinhky'); // dinhky | tonghop | chiendich | kho
 
   const [loadingAI, setLoadingAI] = useState(false);
@@ -158,9 +158,29 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
           nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
         });
 
+        
         const file = new File([docxBlob], `${filename}.docx`, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-        await uploadFileToDrive(file, folderId, config.apiUrl);
-        showToast(`Đã lưu ${filename}.docx lên Google Drive thành công!`);
+        const uploadRes = await uploadFileToDrive(file, folderId, config.apiUrl);
+        
+        if (setPlans) {
+          const fileId = uploadRes.fileId || uploadRes.id;
+          const url = uploadRes.url || uploadRes.webViewLink;
+          const newPlan = {
+            id: Date.now(),
+            title: filename.replace(/_/g, ' '),
+            category: type === 'ke_hoach' ? 'Khởi nghiệp' : 'Sinh hoạt',
+            startDate: `${dkYear}-${dkMonth}-${dkDate}`,
+            endDate: `${dkYear}-${dkMonth}-${dkDate}`,
+            status: 'Hoàn thành',
+            responsible: dkSecretary || 'BCH Chi đoàn',
+            description: `Văn bản tạo tự động từ Mô-đun Công cụ`,
+            attachment: { name: `${filename}.docx`, fileId: fileId, viewUrl: url }
+          };
+          setPlans(prev => [newPlan, ...prev]);
+        }
+        
+        showToast(`Đã lưu ${filename}.docx lên Google Drive và thêm vào Danh sách Kế hoạch!`);
+
         setLoadingDrive(prev => ({ ...prev, [type]: false }));
         return;
       }
@@ -758,8 +778,8 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                   }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
                     <Download size={14} /> Tải Word (.docx)
                   </button>
-                  <button onClick={() => handleSaveToDrive(cdResult, 'ke_hoach')} disabled={loadingDrive['ke_hoach']} className="text-xs flex items-center gap-1 bg-green-200 text-green-800 px-3 py-1.5 rounded-lg hover:bg-green-300 transition font-bold">
-                    <Save size={14} /> {loadingDrive['ke_hoach'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                  <button onClick={() => setShowCdForm(true)} className="text-xs flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition font-bold">
+                    <Check size={14} /> Thêm vào Kế hoạch
                   </button>
                 </div>
               </div>
@@ -767,6 +787,35 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
             </div>
           )}
         </div>
+      )}
+
+      
+      {showCdForm && (
+        <Modal title="Thêm kế hoạch mới" onClose={() => { setShowCdForm(false); resetCdForm(); }}>
+          <FI label="Tên hoạt động *" value={cdForm.title} onChange={e => setCdForm({ ...cdForm, title: e.target.value })} placeholder="Nhập tên hoạt động..." />
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <FI label="Ngày bắt đầu" type="date" value={cdForm.startDate} onChange={e => setCdForm({ ...cdForm, startDate: e.target.value })} />
+            <FI label="Ngày kết thúc" type="date" value={cdForm.endDate} onChange={e => setCdForm({ ...cdForm, endDate: e.target.value })} />
+          </div>
+          <FS label="Trạng thái" opts={['Kế hoạch', 'Đang thực hiện', 'Hoàn thành']} value={cdForm.status} onChange={e => setCdForm({ ...cdForm, status: e.target.value })} />
+          <FI label="Người phụ trách" value={cdForm.responsible} onChange={e => setCdForm({ ...cdForm, responsible: e.target.value })} />
+          <FT label="Mô tả" value={cdForm.description} onChange={e => setCdForm({ ...cdForm, description: e.target.value })} />
+          <div style={{ marginBottom: 11 }}>
+            <label style={{ display: 'block', marginBottom: 6, fontSize: 11, fontWeight: 700, color: '#666', textTransform: 'uppercase', letterSpacing: 0.4 }}>Đính kèm tệp tin (Google Drive)</label>
+            <div style={{ border: '1.5px dashed #ccc', borderRadius: 8, background: '#fafafa', padding: '10px 14px' }}>
+              <input type="file" onChange={e => setCdPendingFile(e.target.files[0] || null)} style={{ fontSize: 13, width: '100%' }} />
+              {cdPendingFile ? (
+                <div style={{ marginTop: 6, fontSize: 12, color: '#34A853', fontWeight: 600 }}>✅ Đã chọn: {cdPendingFile.name}</div>
+              ) : (
+                <div style={{ marginTop: 6, fontSize: 12, color: '#666' }}>💡 Bỏ trống để AI tự động đính kèm file Word vừa tạo</div>
+              )}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 14, paddingTop: 10, borderTop: '1px solid #eee' }}>
+            <Btn v="s" onClick={() => { setShowCdForm(false); resetCdForm(); }}>Hủy</Btn>
+            <Btn onClick={handleSaveCdPlan} disabled={uploadingCd}>{uploadingCd ? '⏳ Đang lưu...' : '💾 Lưu kế hoạch'}</Btn>
+          </div>
+        </Modal>
       )}
 
       {/* CONTENT: KHO BIỂU MẪU */}

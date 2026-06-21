@@ -424,6 +424,7 @@ function AppContent({ currentUser, handleAppLogout }) {
         return isAdmin
           ? <ToolsManager
               plans={plans}
+              setPlans={setPlans}
               isAdmin={effectiveIsAdmin}
               currentUser={currentUser}
               geminiApiKey={geminiApiKey}
