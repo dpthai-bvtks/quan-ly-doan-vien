@@ -205,7 +205,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
             endDate: `${dkYear}-${dkMonth}-${dkDate}`,
             status: 'Hoàn thành',
             responsible: dkSecretary || 'BCH Chi đoàn',
-            description: type === 'bao_cao' ? dkResultInput : `Văn bản tạo tự động từ Mô-đun Công cụ`,
+            description: type === 'bao_cao' ? dkResultInput : (type === 'tong_hop' ? thResultInput : ''),
             attachment: { name: `${filename}.docx`, fileId: fileId, viewUrl: url }
           };
           setPlans(prev => [newPlan, ...prev]);
@@ -703,7 +703,7 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                 const combined = reports.map(r => {
                   const monthStr = new Date(r.startDate).getMonth() + 1;
                   let desc = r.description || '';
-                  if (desc === 'Văn bản tạo tự động từ Mô-đun Công cụ') desc = '(Không có dữ liệu văn bản chi tiết)';
+                  if (!desc || desc === 'Văn bản tạo tự động từ Mô-đun Công cụ') desc = '(Không có dữ liệu văn bản chi tiết)';
                   return `* Kết quả tháng ${monthStr}:\n${desc}`;
                 }).join('\n\n');
 
