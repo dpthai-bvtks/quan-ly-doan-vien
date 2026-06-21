@@ -19,15 +19,15 @@ const createHeaderTable = (branchName, dkDocNo, dkYear, dkDate, dkMonth, docType
             children: [
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: "ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN", font: "Times New Roman", size: 26 })]
+                children: [new TextRun({ text: "ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN", font: "Times New Roman", size: 24 })]
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: "BCH CHI ĐOÀN BỆNH VIỆN", font: "Times New Roman", size: 28, bold: true })]
+                children: [new TextRun({ text: "BCH CHI ĐOÀN BỆNH VIỆN", font: "Times New Roman", size: 26, bold: true })]
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: "THAN - KHOÁNG SẢN CS2", font: "Times New Roman", size: 28, bold: true })]
+                children: [new TextRun({ text: "THAN - KHOÁNG SẢN CS2", font: "Times New Roman", size: 26, bold: true })]
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
@@ -35,7 +35,7 @@ const createHeaderTable = (branchName, dkDocNo, dkYear, dkDate, dkMonth, docType
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: `Số: ${dkDocNo}/${dkYear}-${docType}/ĐTNCS2`, font: "Times New Roman", size: 28 })]
+                children: [new TextRun({ text: `Số: ${dkDocNo}/${dkYear}-${docType}/ĐTNCS2`, font: "Times New Roman", size: 26 })]
               }),
             ]
           }),
@@ -44,7 +44,7 @@ const createHeaderTable = (branchName, dkDocNo, dkYear, dkDate, dkMonth, docType
             children: [
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: "ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH", font: "Times New Roman", size: 28, bold: true })]
+                children: [new TextRun({ text: "ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH", font: "Times New Roman", size: 24, bold: true })]
               }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
@@ -53,7 +53,7 @@ const createHeaderTable = (branchName, dkDocNo, dkYear, dkDate, dkMonth, docType
               new Paragraph({ text: "" }),
               new Paragraph({
                 alignment: AlignmentType.CENTER,
-                children: [new TextRun({ text: `Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}`, font: "Times New Roman", size: 28, italics: true })]
+                children: [new TextRun({ text: `Mạo Khê, ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}`, font: "Times New Roman", size: 26, italics: true })]
               }),
             ]
           })
@@ -70,11 +70,11 @@ const createListParagraphs = (textBlock) => {
       text = '- ' + text;
     }
     return new Paragraph({
-      text: text,
-      font: "Times New Roman",
-      size: 28,
       alignment: AlignmentType.JUSTIFIED,
-      indent: { left: 720, hanging: 360 }
+      indent: { left: 720, hanging: 360 },
+      children: [
+        new TextRun({ text: text, font: "Times New Roman", size: 28 })
+      ]
     });
   });
 };

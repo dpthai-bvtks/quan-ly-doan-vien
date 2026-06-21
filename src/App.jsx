@@ -22,10 +22,18 @@ const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_CLIENT_ID_HERE'
 const cleanPlans = (plans) => {
   if (!Array.isArray(plans)) return plans;
   return plans.map(p => {
-    if (p.description === 'Văn bản tạo tự động từ Mô-đun Công cụ') {
-      return { ...p, description: '' };
+    let desc = p.description || '';
+    if (desc === 'Văn bản tạo tự động từ Mô-đun Công cụ') {
+      desc = '';
+    } else {
+      desc = desc.split('\n').map(line => {
+        if (/^[\s\-]+/.test(line)) {
+          return line.replace(/^[\s\-]+/, '- ');
+        }
+        return line;
+      }).join('\n');
     }
-    return p;
+    return { ...p, description: desc };
   });
 };
 
