@@ -137,6 +137,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
 
   const [loadingAI, setLoadingAI] = useState(false);
   const [loadingDrive, setLoadingDrive] = useState({});
+  const [savedDrive, setSavedDrive] = useState({});
   const [toast, setToast] = useState('');
 
   const showToast = (msg) => {
@@ -213,6 +214,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
         showToast(`Đã lưu ${filename}.docx lên Google Drive và thêm vào Danh sách Kế hoạch!`);
 
         setLoadingDrive(prev => ({ ...prev, [type]: false }));
+        setSavedDrive(prev => ({ ...prev, [type]: true }));
         return;
       }
 
@@ -245,6 +247,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
 
     setLoadingAI(true);
     setDkResults({ bao_cao: '', bien_ban: '', nghi_quyet: '' });
+    setSavedDrive({ bao_cao: false, bien_ban: false, nghi_quyet: false, tong_hop: false });
 
     try {
       const config = getBranchConfig(currentUser?.username);
@@ -608,8 +611,8 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
                       <Download size={14} /> Tải Word (.docx)
                     </button>
-                    <button onClick={() => handleSaveToDrive(dkResults.bao_cao, 'bao_cao')} disabled={loadingDrive['bao_cao']} className="text-xs flex items-center gap-1 bg-red-100 text-red-700 px-3 py-1.5 rounded-lg hover:bg-red-200 transition font-bold">
-                      <Save size={14} /> {loadingDrive['bao_cao'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                    <button onClick={() => handleSaveToDrive(dkResults.bao_cao, 'bao_cao')} disabled={loadingDrive['bao_cao'] || savedDrive['bao_cao']} className={`text-xs flex items-center gap-1 px-3 py-1.5 rounded-lg transition font-bold ${savedDrive['bao_cao'] ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}>
+                      {loadingDrive['bao_cao'] ? 'Đang lưu...' : savedDrive['bao_cao'] ? <><Check size={14} /> Đã lưu</> : <><Save size={14} /> Lưu lên Drive</>}
                     </button>
                   </div>
                 </div>
@@ -632,8 +635,8 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
                       <Download size={14} /> Tải Word (.docx)
                     </button>
-                    <button onClick={() => handleSaveToDrive(dkResults.bien_ban, 'bien_ban')} disabled={loadingDrive['bien_ban']} className="text-xs flex items-center gap-1 bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-200 transition font-bold">
-                      <Save size={14} /> {loadingDrive['bien_ban'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                    <button onClick={() => handleSaveToDrive(dkResults.bien_ban, 'bien_ban')} disabled={loadingDrive['bien_ban'] || savedDrive['bien_ban']} className={`text-xs flex items-center gap-1 px-3 py-1.5 rounded-lg transition font-bold ${savedDrive['bien_ban'] ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}>
+                      {loadingDrive['bien_ban'] ? 'Đang lưu...' : savedDrive['bien_ban'] ? <><Check size={14} /> Đã lưu</> : <><Save size={14} /> Lưu lên Drive</>}
                     </button>
                   </div>
                 </div>
@@ -656,8 +659,8 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
                       <Download size={14} /> Tải Word (.docx)
                     </button>
-                    <button onClick={() => handleSaveToDrive(dkResults.nghi_quyet, 'nghi_quyet')} disabled={loadingDrive['nghi_quyet']} className="text-xs flex items-center gap-1 bg-green-100 text-green-700 px-3 py-1.5 rounded-lg hover:bg-green-200 transition font-bold">
-                      <Save size={14} /> {loadingDrive['nghi_quyet'] ? 'Đang lưu...' : 'Lưu lên Drive'}
+                    <button onClick={() => handleSaveToDrive(dkResults.nghi_quyet, 'nghi_quyet')} disabled={loadingDrive['nghi_quyet'] || savedDrive['nghi_quyet']} className={`text-xs flex items-center gap-1 px-3 py-1.5 rounded-lg transition font-bold ${savedDrive['nghi_quyet'] ? 'bg-green-100 text-green-700' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}>
+                      {loadingDrive['nghi_quyet'] ? 'Đang lưu...' : savedDrive['nghi_quyet'] ? <><Check size={14} /> Đã lưu</> : <><Save size={14} /> Lưu lên Drive</>}
                     </button>
                   </div>
                 </div>
@@ -705,6 +708,7 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                 }).join('\n\n');
 
                 setThResultInput(combined);
+                setSavedDrive(prev => ({ ...prev, tong_hop: false }));
                 showToast(`Đã gộp thành công ${reports.length} báo cáo tháng vào Kết quả nổi bật!`);
               }}
               className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-sm font-bold rounded-lg transition flex items-center gap-1"
@@ -730,8 +734,8 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
               <FI label="Thư ký / Người soạn" placeholder="Họ và tên" value={thSecretary} onChange={e => setThSecretary(e.target.value)} />
             </div>
             <div className="space-y-4">
-              <FT label="Kết quả nổi bật (gạch đầu dòng)" placeholder="- Ý 1...&#10;- Ý 2..." value={thResultInput} onChange={e => setThResultInput(e.target.value)} rows={4} />
-              <FT label="Phương hướng trọng tâm (gạch đầu dòng)" placeholder="- Ý 1...&#10;- Ý 2..." value={thNextInput} onChange={e => setThNextInput(e.target.value)} rows={4} />
+              <FT label="Kết quả nổi bật (gạch đầu dòng)" placeholder="- Ý 1...&#10;- Ý 2..." value={thResultInput} onChange={e => {setThResultInput(e.target.value); setSavedDrive(prev => ({...prev, tong_hop: false}))}} rows={4} />
+              <FT label="Phương hướng trọng tâm (gạch đầu dòng)" placeholder="- Ý 1...&#10;- Ý 2..." value={thNextInput} onChange={e => {setThNextInput(e.target.value); setSavedDrive(prev => ({...prev, tong_hop: false}))}} rows={4} />
             </div>
           </div>
 
@@ -750,9 +754,9 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
               <Download size={20} /> Tải xuống Word (.docx)
             </button>
             <button 
-              onClick={() => handleSaveToDrive(null, 'tong_hop')} disabled={loadingDrive['tong_hop']}
-              className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold flex justify-center items-center gap-2 transition-colors disabled:opacity-70">
-              <Save size={20} /> {loadingDrive['tong_hop'] ? 'Đang lưu lên Drive...' : 'Lưu Báo cáo lên Drive'}
+              onClick={() => handleSaveToDrive(null, 'tong_hop')} disabled={loadingDrive['tong_hop'] || savedDrive['tong_hop']}
+              className={`flex-1 py-3 text-white rounded-xl font-bold flex justify-center items-center gap-2 transition-colors disabled:opacity-70 ${savedDrive['tong_hop'] ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'}`}>
+              {loadingDrive['tong_hop'] ? 'Đang lưu lên Drive...' : savedDrive['tong_hop'] ? <><Check size={20} /> Đã lưu Báo cáo</> : <><Save size={20} /> Lưu Báo cáo lên Drive</>}
             </button>
           </div>
         </div>
