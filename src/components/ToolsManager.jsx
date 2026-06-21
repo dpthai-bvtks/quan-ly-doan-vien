@@ -197,9 +197,16 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
         if (setPlans) {
           const fileId = uploadRes.fileId || uploadRes.id;
           const url = uploadRes.url || uploadRes.webViewLink;
+          let planTitle = filename.replace(/_/g, ' ');
+          if (type === 'bao_cao') planTitle = `Báo cáo số ${dkDocNo}/${dkYear}`;
+          else if (type === 'bien_ban') planTitle = `Biên bản số ${dkDocNo}/${dkYear}`;
+          else if (type === 'nghi_quyet') planTitle = `Nghị quyết số ${dkDocNo}/${dkYear}`;
+          else if (type === 'ke_hoach') planTitle = `Kế hoạch số ${dkDocNo}/${dkYear}`;
+          else if (type === 'tong_hop') planTitle = `Báo cáo Tổng hợp ${thPeriod}/${thYear}`;
+
           const newPlan = {
             id: Date.now(),
-            title: filename.replace(/_/g, ' '),
+            title: planTitle,
             category: type === 'ke_hoach' ? 'Khởi nghiệp' : 'Sinh hoạt',
             startDate: `${dkYear}-${dkMonth}-${dkDate}`,
             endDate: `${dkYear}-${dkMonth}-${dkDate}`,

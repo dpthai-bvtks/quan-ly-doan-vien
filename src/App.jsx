@@ -33,7 +33,19 @@ const cleanPlans = (plans) => {
         return line;
       }).join('\n');
     }
-    return { ...p, description: desc };
+    
+    let title = p.title || '';
+    const match = title.match(/^(Bao Cao|Bien Ban|Nghi Quyet) (\d{2}) \d{2} (\d{4})$/);
+    if (match) {
+      const type = match[1];
+      const no = match[2];
+      const yr = match[3];
+      if (type === 'Bao Cao') title = `Báo cáo số ${no}/${yr}`;
+      if (type === 'Bien Ban') title = `Biên bản số ${no}/${yr}`;
+      if (type === 'Nghi Quyet') title = `Nghị quyết số ${no}/${yr}`;
+    }
+
+    return { ...p, description: desc, title: title };
   });
 };
 
