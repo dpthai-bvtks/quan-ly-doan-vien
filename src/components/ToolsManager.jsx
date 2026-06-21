@@ -271,10 +271,10 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
     <tr>
       <td width="50%" align="center" valign="top">
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
-        <strong>BCH CHI ĐOÀN</strong><br/>
-        <strong>${branchName.toUpperCase()}</strong><br/>
+        <strong>BCH CHI ĐOÀN BỆNH VIỆN</strong><br/>
+        <strong>THAN - KHOÁNG SẢN CS2</strong><br/>
         <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
-        Số: ${dkDocNo}/${dkYear}-BC/ĐTN
+        Số: ${dkDocNo}/${dkYear}-BC/ĐTNCS2
       </td>
       <td width="50%" align="center" valign="top">
         <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
@@ -328,10 +328,10 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
     <tr>
       <td width="50%" align="center" valign="top">
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
-        <strong>BCH CHI ĐOÀN</strong><br/>
-        <strong>${branchName.toUpperCase()}</strong><br/>
+        <strong>BCH CHI ĐOÀN BỆNH VIỆN</strong><br/>
+        <strong>THAN - KHOÁNG SẢN CS2</strong><br/>
         <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
-        Số: ${dkDocNo}/${dkYear}-BB/ĐTN
+        Số: ${dkDocNo}/${dkYear}-BB/ĐTNCS2
       </td>
       <td width="50%" align="center" valign="top">
         <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
@@ -401,10 +401,10 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
     <tr>
       <td width="50%" align="center" valign="top">
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
-        <strong>BCH CHI ĐOÀN</strong><br/>
-        <strong>${branchName.toUpperCase()}</strong><br/>
+        <strong>BCH CHI ĐOÀN BỆNH VIỆN</strong><br/>
+        <strong>THAN - KHOÁNG SẢN CS2</strong><br/>
         <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
-        Số: ${dkDocNo}/${dkYear}-NQ/ĐTN
+        Số: ${dkDocNo}/${dkYear}-NQ/ĐTNCS2
       </td>
       <td width="50%" align="center" valign="top">
         <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
