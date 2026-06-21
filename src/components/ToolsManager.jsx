@@ -274,25 +274,25 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
       <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1 flex-wrap gap-1">
         <button
           onClick={() => setActiveTab('dinhky')}
-          className={\`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 \${activeTab === 'dinhky' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}\`}
+          className={`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'dinhky' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
           <Calendar size={18} /> Mô-đun Định kỳ
         </button>
         <button
           onClick={() => setActiveTab('tonghop')}
-          className={\`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 \${activeTab === 'tonghop' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}\`}
+          className={`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'tonghop' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
           <Activity size={18} /> Mô-đun Tổng hợp
         </button>
         <button
           onClick={() => setActiveTab('chiendich')}
-          className={\`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 \${activeTab === 'chiendich' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}\`}
+          className={`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'chiendich' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
           <Sparkles size={18} /> Mô-đun Chiến dịch
         </button>
         <button
           onClick={() => setActiveTab('kho')}
-          className={\`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 \${activeTab === 'kho' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}\`}
+          className={`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'kho' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
           <FileText size={18} /> Kho Biểu mẫu Số
         </button>
