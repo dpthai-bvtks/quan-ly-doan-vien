@@ -263,8 +263,17 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
       const nextMonthStr = nextMonth.toString().padStart(2, '0');
       const branchSuffix = currentUser?.username === 'bvtks-cs1' ? 'BCHCS1' : 'BCHCS2';
 
-      const resultsFormatted = dkResultInput.split('\n').filter(line => line.trim()).map(line => `<li style="margin-bottom: 6px;">${line.trim().replace(/^-/, '').trim()}</li>`).join('\n');
-      const nextFormatted = dkNextInput.split('\n').filter(line => line.trim()).map(line => `<li style="margin-bottom: 6px;">${line.trim().replace(/^-/, '').trim()}</li>`).join('\n');
+      const formatHtmlList = (input) => {
+        return input.split('\n').filter(line => line.trim()).map(line => {
+          let text = line.trim();
+          if (!text.startsWith('-') && !text.startsWith('+') && !text.startsWith('*') && !/^\d+\./.test(text)) {
+            text = '- ' + text;
+          }
+          return `<div style="margin-bottom: 6px; padding-left: 20px; text-indent: -20px; text-align: justify; font-family: 'Times New Roman', serif;">${text}</div>`;
+        }).join('\n');
+      };
+      const resultsFormatted = formatHtmlList(dkResultInput);
+      const nextFormatted = formatHtmlList(dkNextInput);
       const secName = dkSecretary.trim() || '.......................';
 
       // 1. Báo cáo
@@ -298,14 +307,14 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
   </p>
 
   <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">I. Kết quả hoạt động trong tháng ${dkMonth}/${dkYear}</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
+  <div style="margin-top: 0; padding-left: 20px;">
     ${resultsFormatted}
-  </ul>
+  </div>
 
   <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">II. Kế hoạch hoạt động ${nextMonthStr}/${nextYear}</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
+  <div style="margin-top: 0; padding-left: 20px;">
     ${nextFormatted}
-  </ul>
+  </div>
 
   <p align="justify" style="text-indent: 40px; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
     Trên đây là kết quả hoạt động công tác đoàn và phong trào TTN của ${branchName} trong tháng ${dkMonth}/${dkYear} và triển khai phương hướng nhiệm vụ trọng tâm trong tháng ${nextMonthStr}/${nextYear}.
@@ -361,20 +370,20 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
   <p align="center" style="font-weight: bold; font-size: 14pt; margin-bottom: 10px; font-family: 'Times New Roman', serif;">NỘI DUNG HỘI NGHỊ:</p>
   
   <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">1. Đồng chí Chủ trì đánh giá kết quả hoạt động tháng ${dkMonth}/${dkYear}:</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
+  <div style="margin-top: 0; padding-left: 20px;">
     ${resultsFormatted}
-  </ul>
+  </div>
 
   <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">2. Triển khai phương hướng hoạt động tháng ${nextMonthStr}/${nextYear}:</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
+  <div style="margin-top: 0; padding-left: 20px;">
     ${nextFormatted}
-  </ul>
+  </div>
 
   <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">3. Thảo luận:</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
-    <li style="margin-bottom: 6px;">100% các đồng chí dự họp nhất trí với báo cáo kết quả hoạt động và phương hướng trên.</li>
-    <li style="margin-bottom: 6px;">BCH nhất trí phân công nhiệm vụ cụ thể cho từng phân đoàn để triển khai hiệu quả.</li>
-  </ul>
+  <div style="margin-top: 0; padding-left: 20px;">
+    <div style="margin-bottom: 6px; text-indent: -20px; padding-left: 20px; text-align: justify; font-family: 'Times New Roman', serif;">- 100% các đồng chí dự họp nhất trí với báo cáo kết quả hoạt động và phương hướng trên.</div>
+    <div style="margin-bottom: 6px; text-indent: -20px; padding-left: 20px; text-align: justify; font-family: 'Times New Roman', serif;">- BCH nhất trí phân công nhiệm vụ cụ thể cho từng phân đoàn để triển khai hiệu quả.</div>
+  </div>
 
   <p style="margin-top: 10px; margin-bottom: 20px; font-family: 'Times New Roman', serif;">
     Hội nghị kết thúc vào 15h00 cùng ngày. Biên bản đã được thông qua tại hội nghị.
@@ -428,14 +437,14 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
   </p>
 
   <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">Điều 1. Nhất trí thông qua báo cáo kết quả hoạt động tháng ${dkMonth}/${dkYear} với các kết quả nổi bật:</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
+  <div style="margin-top: 0; padding-left: 20px;">
     ${resultsFormatted}
-  </ul>
+  </div>
 
   <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">Điều 2. Nhất trí thông qua phương hướng, nhiệm vụ tháng ${nextMonthStr}/${nextYear} gồm các nhiệm vụ trọng tâm:</p>
-  <ul style="margin-top: 0; padding-left: 40px; text-align: justify; font-family: 'Times New Roman', serif;">
+  <div style="margin-top: 0; padding-left: 20px;">
     ${nextFormatted}
-  </ul>
+  </div>
 
   <p style="font-weight: bold; font-size: 14pt; margin-bottom: 5px; font-family: 'Times New Roman', serif;">Điều 3. Tổ chức thực hiện:</p>
   <p align="justify" style="text-indent: 40px; margin-bottom: 20px; font-family: 'Times New Roman', serif;">

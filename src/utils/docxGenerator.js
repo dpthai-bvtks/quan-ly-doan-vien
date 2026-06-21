@@ -65,12 +65,16 @@ const createHeaderTable = (branchName, dkDocNo, dkYear, dkDate, dkMonth, docType
 
 const createListParagraphs = (textBlock) => {
   return textBlock.split('\n').filter(l => l.trim()).map(line => {
+    let text = line.trim();
+    if (!text.startsWith('-') && !text.startsWith('+') && !text.startsWith('*') && !/^\d+\./.test(text)) {
+      text = '- ' + text;
+    }
     return new Paragraph({
-      text: line.replace(/^-/, '').trim(),
+      text: text,
       font: "Times New Roman",
       size: 28,
-      bullet: { level: 0 },
-      alignment: AlignmentType.JUSTIFIED
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { left: 720, hanging: 360 }
     });
   });
 };
