@@ -81,26 +81,32 @@ export default function ToolsManager({ plans, isAdmin, currentUser, geminiApiKey
   };
 
   // --- MÔ-ĐUN ĐỊNH KỲ ---
+  const [dkDocNo, setDkDocNo] = useState('01');
   const [dkMonth, setDkMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
   const [dkYear, setDkYear] = useState(new Date().getFullYear().toString());
-  const [dkInput, setDkInput] = useState('');
+  const [dkResultInput, setDkResultInput] = useState('');
+  const [dkNextInput, setDkNextInput] = useState('');
   const [dkResults, setDkResults] = useState({ bao_cao: '', bien_ban: '', nghi_quyet: '' });
 
   const handleGenerateDk = async () => {
     if (!isAdmin) return alert("Bạn không có quyền thực hiện chức năng này!");
     if (!geminiApiKey) return alert("Vui lòng cấu hình Gemini API Key trong Cài đặt!");
-    if (!dkInput.trim()) return alert("Vui lòng nhập gạch đầu dòng các nội dung trong tháng!");
+    if (!dkResultInput.trim() && !dkNextInput.trim()) return alert("Vui lòng nhập kết quả đạt được hoặc phương hướng kỳ tới!");
 
     setLoadingAI(true);
     setDkResults({ bao_cao: '', bien_ban: '', nghi_quyet: '' });
 
     try {
       const context = `Chi đoàn ${getBranchConfig(currentUser?.username).title.replace(/\n/g, ' ')}`;
-      const basePrompt = `Đơn vị: ${context}\nTháng: ${dkMonth}/${dkYear}\nDữ liệu thô (gạch đầu dòng): \n${dkInput}\n`;
+      const branchSuffix = currentUser?.username === 'bvtks-cs1' ? 'BCHCS1' : 'BCHCS2';
+      
+      const basePrompt = `Đơn vị: ${context}\nTháng: ${dkMonth}/${dkYear}
+1. KẾT QUẢ ĐẠT ĐƯỢC: \n${dkResultInput}
+2. PHƯƠNG HƯỚNG KỲ TỚI: \n${dkNextInput}\n`;
 
-      const pBaoCao = `${basePrompt}Bạn là Bí thư Chi đoàn. Hãy viết BÁO CÁO HOẠT ĐỘNG THÁNG phong cách tổng kết, chi tiết, trang trọng, văn phong chuẩn Đoàn. Định dạng Markdown.`;
-      const pBienBan = `${basePrompt}Bạn là Thư ký Hội nghị Ban Chấp hành Chi đoàn. Hãy lập "Biên bản Hội nghị" tháng này. Ghi nhận trung thực diễn biến, có phần thảo luận, đóng góp ý kiến của các ủy viên và kết luận của chủ tọa. Định dạng chuẩn hành chính gồm: Thời gian, địa điểm, thành phần, nội dung chi tiết. Định dạng Markdown.`;
-      const pNghiQuyet = `${basePrompt}Bạn là Bí thư Chi đoàn. Hãy viết NGHỊ QUYẾT BAN CHẤP HÀNH THÁNG phong cách chỉ đạo, quyết nghị, giao việc cụ thể. Định dạng Markdown.`;
+      const pBaoCao = `${basePrompt}Bạn là Bí thư Chi đoàn. Hãy viết BÁO CÁO HOẠT ĐỘNG THÁNG phong cách tổng kết, chi tiết, trang trọng, văn phong chuẩn Đoàn. Định dạng Markdown. Góc trên cùng văn bản phải ghi rõ: Số: ${dkDocNo}-${dkMonth}-${dkYear}-BC/${branchSuffix}.`;
+      const pBienBan = `${basePrompt}Bạn là Thư ký Hội nghị Ban Chấp hành Chi đoàn. Hãy lập "Biên bản Hội nghị" tháng này. Ghi nhận trung thực diễn biến, có phần thảo luận, đóng góp ý kiến của các ủy viên và kết luận của chủ tọa. Định dạng chuẩn hành chính gồm: Thời gian, địa điểm, thành phần, nội dung chi tiết. Định dạng Markdown. Góc trên cùng văn bản phải ghi rõ: Số: ${dkDocNo}-${dkMonth}-${dkYear}-BB/${branchSuffix}.`;
+      const pNghiQuyet = `${basePrompt}Bạn là Bí thư Chi đoàn. Hãy viết NGHỊ QUYẾT BAN CHẤP HÀNH THÁNG phong cách chỉ đạo, quyết nghị, giao việc cụ thể. Định dạng Markdown. Góc trên cùng văn bản phải ghi rõ: Số: ${dkDocNo}-${dkMonth}-${dkYear}-NQ/${branchSuffix}.`;
 
       // Parallel calls
       const [resBaoCao, resBienBan, resNghiQuyet] = await Promise.all([
@@ -302,16 +308,25 @@ Yêu cầu chi tiết, khả thi, văn phong chuẩn hành chính. Trả về đ
       {activeTab === 'dinhky' && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Bộ ba văn bản tháng (Biên bản - Nghị quyết - Báo cáo)</h2>
-          <div className="grid grid-cols-2 gap-4 mb-4">
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <FI label="Số văn bản" value={dkDocNo} onChange={e => setDkDocNo(e.target.value)} placeholder="01" />
             <FI label="Tháng" type="number" value={dkMonth} onChange={e => setDkMonth(e.target.value)} />
             <FI label="Năm" type="number" value={dkYear} onChange={e => setDkYear(e.target.value)} />
           </div>
-          <FT 
-            label="Nhập dữ liệu gạch đầu dòng các hoạt động đã làm & dự kiến" 
-            placeholder="- Tổ chức dọn vệ sinh ngày 15/03...\n- Thăm hỏi gia đình chính sách..."
-            value={dkInput}
-            onChange={e => setDkInput(e.target.value)}
-          />
+          <div className="space-y-4">
+            <FT 
+              label="1. KẾT QUẢ ĐẠT ĐƯỢC (Ý CHÍNH)" 
+              placeholder="Điền các kết quả trong kỳ, mỗi ý một dòng. Ví dụ:\nDuy trì vận chuyển bình oxy\nTổ chức ra quân vệ sinh đón Tết âm lịch"
+              value={dkResultInput}
+              onChange={e => setDkResultInput(e.target.value)}
+            />
+            <FT 
+              label="2. PHƯƠNG HƯỚNG KỲ TỚI (Ý CHÍNH)" 
+              placeholder="Điền các hoạt động kế hoạch kỳ tới, mỗi ý một dòng. Ví dụ:\nTổ chức tặng quà trực Tết\nHội thao ngày Thầy thuốc VN 27/2"
+              value={dkNextInput}
+              onChange={e => setDkNextInput(e.target.value)}
+            />
+          </div>
           <div className="mt-4 flex justify-end">
             <Btn onClick={handleGenerateDk} disabled={loadingAI}>
               {loadingAI ? '⏳ Đang xử lý bởi AI...' : '🪄 Tạo Bộ 3 Văn Bản'}
