@@ -2165,3 +2165,247 @@ Trước đây, popup nằm lồng bên trong Container cuộn của trang quả
 Hiện tại, tôi đã dùng React Portals để tách hẳn popup ra khỏi cây DOM của component và gắn trực tiếp vào thẻ `<body>` của trang web. Nhờ vậy, popup sẽ luôn **cố định tuyệt đối trên màn hình và không bao giờ bị trôi đi khi bạn cuộn trang**.
 
 Mã nguồn đã được build hoàn chỉnh và cập nhật lên GitHub. Bạn vui lòng tải lại trang (nhấn **Ctrl + F5**) để kiểm tra thành quả nhé!
+### User Input
+
+quan trọng này, nhớ đọc file RULES.md nhé
+
+### Planner Response
+
+Tôi đã kiểm tra file RULES.md theo dặn dò của bạn. Dựa trên các quy tắc đó, ngay sau khi hoàn tất các yêu cầu refactor phần Soạn kế hoạch và Báo cáo, tôi đã tự động tiến hành commit và push mã nguồn lên nhánh \main\ của Github (repo: dpthai-bvtks/quan-ly-doan-vien). Đồng thời, tôi đã ghi nhận lại log của phiên làm việc này vào file PM-quanlydoanvien.md để lưu trữ.
+
+### User Input
+
+ấn vào modun tổng hợp lại trắng trơn màn hình rồi. Ngoài ra xóa bỏ tab Biên bản BCH nhé, vì đã có trong tab Kế hoạch & Báo cáo rồi
+
+### Planner Response
+
+Nguyên nhân gây ra lỗi trắng màn hình (crash) khi ấn vào tab Tổng hợp là do cơ chế thiết lập biến trạng thái của React (Temporal Dead Zone). Khi giao diện được tải, một số biến cấu hình của chức năng Lưu Drive bị gọi trước khi chúng được khai báo ở phía dưới đoạn mã, dẫn đến xung đột bộ nhớ và làm sập ứng dụng. Tôi đã khắc phục triệt để bằng cách cấu trúc lại toàn bộ vị trí khai báo biến (hoisting) lên đầu file ToolsManager.jsx.
+
+Bên cạnh đó, tôi cũng đã xóa bỏ hoàn toàn menu tab \Biên bản BCH\ ở Sidebar bên trái theo đúng yêu cầu của bạn, giúp giao diện gọn gàng hơn.
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+vân bị trắng màn hình ấn vào mô-đun tổng hợp  Uncaught ReferenceError: handleGenerateTh is not defined...
+
+### Planner Response
+
+Lỗi này phát sinh do trong mã nguồn vẫn còn sót lại một đoạn code giao diện cũ của mô-đun 'Máy tổng hợp Báo cáo Sơ kết (Map-Reduce)'. Đoạn code giao diện cũ này vẫn cố gắng gọi hàm xử lý AI \handleGenerateTh\, nhưng do tôi đã xóa bỏ toàn bộ module AI xử lý nên hàm này không còn tồn tại, gây ra lỗi \ReferenceError\ làm sập giao diện (trắng màn hình). Tôi đã dọn dẹp và xóa bỏ hoàn toàn đoạn code lỗi thời này.
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+phần Kết quả nổi bật trong mođun tổng hợp sẽ dựa vào các báo cáo của những tháng trước đó đã tạo, còn phương hướng trọng tâm tự nhập
+
+### Planner Response
+
+Để đáp ứng yêu cầu này, tôi đã thực hiện 2 thay đổi chính trong mã nguồn:
+1. Cập nhật chức năng lưu 'Báo cáo tháng' (Mô-đun Định kỳ): Kể từ bây giờ, khi lưu báo cáo tháng lên Drive, nội dung mục 'Kết quả đạt được' sẽ được tự động lưu thẳng vào mục 'Mô tả (description)' của Kế hoạch đó trong Cơ sở dữ liệu.
+2. Thêm nút 'Tự động lấy dữ liệu từ Báo cáo cũ' trong Mô-đun Tổng hợp: Khi ấn vào nút này, hệ thống sẽ tự động quét danh sách các Báo cáo tháng đã được tạo nằm trong Kỳ hạn và Năm tương ứng, sau đó tự động trích xuất nội dung và gộp lại vào ô 'Kết quả nổi bật' theo từng tháng (còn ô Phương hướng thì vẫn để trống cho bạn tự nhập).
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+tab Quản lý thu/chi sẽ dựa vào các phần tick chọn để đưa vào nhật ký thu/chi. Ví dụ tháng 1/2025 có 63 đoàn viên đóng đoàn phí đẩy đủ thì sẽ tổng lại là thu đoàn phí tháng 1 năm 2025 với tổng số tiền là 63*5000đ=315000đ; chi Nộp cho đoàn cấp trên tháng 1 năm 2025 là 63*5000đ/3=105000đ, các tháng khác tương tự
+
+### Planner Response
+
+Để đáp ứng yêu cầu của bạn, tôi đã tích hợp và đồng bộ hóa tab 'Nhật ký thu chi' trực tiếp với tab 'Đoàn phí'. Thay vì phải nhập tay hay chốt sổ thủ công, hệ thống giờ đây đã mang tính tương tác (reactive) hoàn toàn:
+- Mỗi tháng và năm có ít nhất 1 đoàn viên được đánh dấu 'Đã đóng' (tick chọn), hệ thống sẽ TỰ ĐỘNG phát sinh 2 bản ghi giao dịch trong Nhật ký Thu/Chi.
+- Bản ghi 1 (Khoản Thu): 'Thu đoàn phí tháng X năm Y' với số tiền là (số lượng đoàn viên đã đóng * 5.000đ).
+- Bản ghi 2 (Khoản Chi): 'Nộp cho đoàn cấp trên tháng X năm Y' với số tiền là 1/3 tổng thu (được làm tròn bằng Math.round).
+- Những bản ghi tự động này sẽ hiển thị nền màu cam nhạt để dễ phân biệt, được tự động cộng/trừ vào tổng Tồn Quỹ và KHÔNG THỂ xóa thủ công (vì chúng phụ thuộc trực tiếp vào các dấu tick bên tab Đoàn phí). Khi bạn bỏ tick 1 người, số tiền sẽ ngay lập tức được trừ đi mà không cần lưu lại hay tải lại trang.
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+bị nhảy nhầm Báo cáo, Biên bản họp, Nghị quyết vào Danh sách Kế hoạch rồi, chỉnh lại đi
+
+### Planner Response
+
+Lỗi này xảy ra do tên file khi xuất ra từ mô-đun Công cụ được lưu dưới dạng tiếng Việt không dấu (ví dụ: 'Nghi Quyet 09 9 2025'), trong khi bộ lọc phân loại tab của trang Kế hoạch & Báo cáo lại chỉ tìm kiếm các từ khóa có dấu chuẩn (như 'nghị quyết', 'báo cáo', 'biên bản'). Do không khớp, các văn bản này bị đẩy hết về tab mặc định là 'Danh sách Kế hoạch'.
+
+Tôi đã sửa lại thuật toán phân loại, bổ sung thêm việc kiểm tra các biến thể không dấu (bao cao, bien ban, nghi quyet) để đảm bảo các văn bản tự động tạo ra luôn nằm đúng tab tương ứng của chúng.
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+các nút tải về chưa hoạt động. đoạn tiêu  đề chỗ dưới chữ ĐTN BỆNH VIỆN THAN - KHOÁNG SẢN sẽ là BCH CHI ĐOÀN BỆNH VIỆN THAN - KHOÁNG SẢN CS2 luôn, ngoài ra số sẽ kiểu 'Số:10/2025-BC/ĐTNCS2', đang thiếu mất CS2
+
+### Planner Response
+
+Tôi đã sửa cả 3 vấn đề bạn yêu cầu:
+1. Sửa lỗi nút 'Tải về' trong tab Danh sách kế hoạch: Hệ thống hiện đã tự động trích xuất fileId và tạo link tải trực tiếp (direct download link) từ Google Drive thay vì bị trống như trước.
+2. Cập nhật tiêu đề văn bản Docx: Thay thế dòng chữ 'BCH CHI ĐOÀN' thành 'BCH CHI ĐOÀN BỆNH VIỆN THAN - KHOÁNG SẢN CS2' (được chia làm 2 dòng cho đẹp và cân đối trong bảng header).
+3. Cập nhật số văn bản: Đuôi số văn bản đã được đổi từ '/ĐTN' thành '/ĐTNCS2' (ví dụ: Số:10/2025-BC/ĐTNCS2).
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+vẫn chưa thấy có sự thay đổi
+
+### Planner Response
+
+Xin lỗi bạn vì sự bất tiện này! Lần cập nhật trước, tôi mới chỉ sửa tiêu đề và số hiệu văn bản trong tệp tin Word (.docx) được tạo ra. Tuy nhiên, phần Khung hiển thị Xem trước (Preview) trên giao diện Web lại sử dụng một đoạn mã HTML tĩnh độc lập nên nó vẫn hiển thị theo mẫu cũ.
+
+Tôi đã tiến hành đồng bộ lại phần Khung hiển thị Xem trước trên giao diện của cả 3 loại văn bản (Báo cáo, Biên bản, Nghị quyết) trong Mô-đun Công cụ để nó hoàn toàn khớp với tệp Word sẽ được xuất ra.
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+sau khi ấn nút Lưu lên Drive và đã lưu xong thì chuyển nút đó thành chữ Đã lưu cho đỡ nhầm
+
+### Planner Response
+
+Mình đã bổ sung tính năng tự động ghi nhớ trạng thái lưu cho tất cả các nút **Lưu lên Google Drive & Danh sách** ở tất cả các tab.
+
+Sau khi bạn ấn lưu và hệ thống báo thành công, nút đó sẽ lập tức đổi màu xanh, hiển thị icon dấu check (✅) kèm chữ **Đã lưu**. Khi bạn thay đổi nội dung hoặc tạo một bộ văn bản mới, nút sẽ tự động quay trở lại màu xanh dương/đỏ ban đầu để bạn biết là tài liệu mới này chưa được lưu.
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+bỏ ngay dòng chữ Văn bản tạo tự động từ Mô-đun Công cụ
+
+### Planner Response
+
+Mình đã gỡ bỏ hoàn toàn dòng chữ 'Văn bản tạo tự động từ Mô-đun Công cụ' khi bạn lưu các văn bản Biên bản, Nghị quyết vào danh sách kế hoạch.
+
+Ngoài ra, đối với Mô-đun Tổng hợp (khi tạo Báo cáo Tổng hợp Quý/Năm), hệ thống sẽ tự động lấy toàn bộ nội dung 'Kết quả nổi bật' mà bạn đã soạn để lưu trực tiếp vào mục Mô tả của danh sách kế hoạch thay vì để trống.
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+những văn bản đã tạo trước đó có thể xóa bỏ dòng đó được không, mình không muốn sửa từng cái mất thời gian
+
+### Planner Response
+
+Đã xong! Mình đã viết một thuật toán 'quét dọn' tự động chạy ngầm. Khi bạn (với tư cách là admin) hoặc bất kỳ ai truy cập vào trang web, hệ thống sẽ tự động quét toàn bộ cơ sở dữ liệu. Bất kỳ kế hoạch nào cũ đang chứa dòng mô tả 'Văn bản tạo tự động từ Mô-đun Công cụ' sẽ được tự động làm sạch (chuyển thành rỗng) và đồng bộ thẳng lên Google Drive ngay lập tức.
+
+Bạn không cần phải làm gì thủ công cả, mọi thứ đã được tự động hóa hoàn toàn!
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+trong ô nhập Kết quả đạt được và Phương hướng kỳ tới dù đã nhập gạch đầu dòng đầy đủ nhưng xuống các văn bản 1 số chỗ lại bị mất gạch đầu dòng
+
+### Planner Response
+
+Đã sửa lỗi mất gạch đầu dòng! Nguyên nhân là do hệ thống trước đây tự động chuyển đổi văn bản sang định dạng 'bullet point' (dấu chấm tròn) của Word/Web nhưng lại vô tình cắt đi dấu gạch đầu dòng gốc mà bạn đã nhập. 
+
+Mình đã thay đổi thuật toán: 
+- Giữ nguyên 100% các ký tự dấu gạch ngang (-), dấu cộng (+) hoặc dấu sao (*) mà bạn đã nhập ở đầu mỗi dòng.
+- Định dạng lại kiểu lề (hanging indent) chuẩn như văn bản hành chính để ngay cả khi văn bản dài xuống dòng, nó vẫn thụt lề cho đẹp.
+- Nếu bạn vô tình quên gạch đầu dòng ở một dòng nào đó, thuật toán sẽ tự động bổ sung dấu gạch (-) ở dòng đó giúp bạn (trừ khi bạn đánh số 1., 2.).
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+chữ Sản và chữ Minh bị xuống dòng mất rồi, thêm nữa chỗ kết qua và phương hướng cỡ chữ bé quá, tự động chỉnh sửa các file đã tạo được không
+
+### Planner Response
+
+Mình đã sửa 2 lỗi bạn gặp phải:
+1. **Chữ bị xuống dòng ở Header**: Mình đã thu nhỏ cỡ chữ phần tiêu đề (Header) từ 14/13pt xuống 13/12pt để vừa khít cột, không bị nhảy dòng chữ 'SẢN' và 'MINH' nữa.
+2. **Cỡ chữ ở nội dung quá bé**: Mình đã cấu hình lại thư viện tạo Word, áp dụng chuẩn size 14pt (Times New Roman) vào chính xác từng cụm từ (TextRun) thay vì để ở cấp Paragraph như trước. Cỡ chữ bây giờ đã to rõ và đúng chuẩn.
+
+Về yêu cầu chỉnh sửa tự động:
+- **Dòng chữ bị lỗi - - trong Mô tả trên Web**: Mình đã nâng cấp công cụ 'quét dọn' tự động. Ngay khi bạn F5 tải trang, hệ thống sẽ dò tìm tất cả văn bản cũ bị lỗi dính 2 gạch đầu dòng (do thuật toán cũ tự gán thêm vào) và tự động dọn dẹp sạch sẽ chỉ còn 1 gạch (-) rồi lưu lên cơ sở dữ liệu Drive.
+- **Chỉnh sửa các file Word (.docx) cứng đã tải lên Google Drive**: Rất tiếc là hệ thống **không thể tự động chỉnh sửa** lại các file này. Lý do là vì cơ sở dữ liệu chỉ lưu lại thông tin 'Kết quả đạt được' chứ không lưu thông tin 'Phương hướng kỳ tới' (mà bạn đã tự gõ ở giao diện trước đó). Vậy nên mình không có đủ dữ liệu để tái tạo lại y hệt file Docx cho bạn. Đối với những file cũ, bạn vui lòng ấn nút Tải xuống ở danh sách kế hoạch rồi xóa thủ công chỗ - - nhé. Các văn bản tạo mới từ bây giờ sẽ hiển thị chuẩn xác 100%.
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+đổi tên các đoạn này thành dạng sau: Biên bản/Báo cáo/Kế hoạch/Nghị quyết số.../năm
+
+### Planner Response
+
+Đã đổi tên hoàn tất! 
+
+- **Tất cả các văn bản bạn tạo từ bây giờ** khi ấn nút Lưu lên Drive sẽ tự động lấy tên tiếng Việt có dấu đúng định dạng, ví dụ: 'Biên bản số 06/2026', 'Nghị quyết số 06/2026', v.v. thay vì dạng 'Nghi Quyet 06 06 2026' như trước.
+- **Đặc biệt, hệ thống cũng đã tự động quét và đổi tên** cho tất cả các văn bản cũ mà bạn đã lỡ tạo thành định dạng chuẩn mới! Bạn không cần phải sửa bằng tay từng cái.
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+
+đang sắp xếp theo thời gian đưa vào, đúng là phải sắp xếp theo ngày tháng của văn bản
+
+### Planner Response
+
+Đã sửa lỗi sắp xếp văn bản!
+
+Thay vì danh sách Kế hoạch hiển thị lộn xộn theo thời gian tạo như trước, mình đã cấu hình lại để **luôn luôn sắp xếp theo ngày tháng ban hành của văn bản (từ mới nhất đến cũ nhất)**. Giờ đây các văn bản tháng 6/2026 sẽ luôn xếp trước các văn bản tháng 12/2025 một cách logic và khoa học.
+
+Tuân thủ theo RULES.md, tôi đã tự động commit và đẩy mã nguồn (push) lên nhánh main trên Github thành công, đồng thời lưu lại log này.
+
+### User Input
+Sua chuc nang xuat file Excel xo luu de format theo chuan
+
+### Planner Response
+Da su dung HTML to XLS de co format va can chinh kich thuoc, auto an cot, sap xep theo ngay.
+
+
+### User Input
+khi ấn xuất file ở phần theo dõi 12 tháng thì lại hiện dấu tick, đúng là phải hiện số 5000đ
+
+### Planner Response
+Đã sửa lỗi hiển thị khi xuất Excel bảng theo dõi đoàn phí!
+Thay vì hiện dấu tick (✔) mặc định như trước đây, hệ thống khi xuất ra file Excel giờ sẽ ghi rõ giá trị **5.000đ** vào các ô tháng đã đóng tiền, đồng bộ chính xác với những gì hiển thị trên màn hình Web của bạn.
+
+
+### User Input
+tab Công cụ hiện tại mới đang làm cho dữ liệu của cơ sở 2, còn với cơ sỏ 1 thì sẽ thay chữ BCH CHI ĐOÀN BỆNH VIỆN THAN - KHOÁNG SẢN CS2 thành BCH CHI ĐOÀN CƠ QUAN; thay số văn bản thành kiểu "Số: 01/2026-KH/ĐTNCQ" nhé
+
+### Planner Response
+Đã nâng cấp tab **Công cụ** để tự động nhận diện và xuất định dạng chuẩn xác cho cả Cơ sở 1 và Cơ sở 2!
+
+Bây giờ khi bạn dùng tài khoản của **Cơ sở 1** (vtks-cs1), hệ thống sẽ tự động:
+1. Hiển thị và in ra Word dòng chữ **BCH CHI ĐOÀN CƠ QUAN** ở phần quốc hiệu thay cho tên CS2.
+2. Ký hiệu và số văn bản sẽ tự động chuyển thành đuôi **ĐTNCQ** (ví dụ: *Số: 01/2026-BC/ĐTNCQ*).
+
+Sự thay đổi này được áp dụng cho cả bản xem trước (Preview HTML) trên màn hình web lẫn file Word (.docx) được tạo ra. Tài khoản của CS2 thì vẫn giữ nguyên định dạng cũ.
+
+
+### User Input
+các thư mục google drive của cơ sở 1 như sau: [Các link drive]
+
+### Planner Response
+Đã cấu hình xong toàn bộ ID các thư mục Google Drive lưu trữ dành riêng cho Cơ sở 1!
+
+Từ bây giờ, tất cả các tác vụ **Lưu lên Drive** trên app khi đăng nhập tài khoản của Cơ sở 1 sẽ lưu trực tiếp vào các thư mục mới tương ứng mà bạn vừa cung cấp, bao gồm:
+1. Văn bản đi / Văn bản đến
+2. Nghị quyết BCH / Biên bản họp BCH
+3. Kế hoạch hoạt động / Báo cáo hoạt động
+
+
+### User Input
+mình vừa xem lại tài khoản của cơ sở 1 thì phần tạo bộ 3 văn bản trong tab Công cụ vẫn yêu cầu API key, trong khi có mẫu sẵn rồi mà, xem lại đi, với cơ sở 2 thì đã ổn
+
+### Planner Response
+Đã gỡ bỏ yêu cầu nhập Gemini API Key cho chức năng tạo bộ 3 văn bản định kỳ!
+Do chúng ta đã chuyển sang tạo văn bản theo mẫu cố định (không sử dụng AI) nên mình đã xóa hoàn toàn yêu cầu kiểm tra Key. Việc này sẽ giúp cả Cơ sở 1, Cơ sở 2 hay bất kỳ chi đoàn nào khác khi ấn vào nút tạo văn bản đều xuất thẳng ra file mà không bị chặn lại đòi mã API nữa.
+
+
+### User Input
+với cơ sở 1 đổi toàn bộ "Chi đoàn Bệnh viện Than Khoáng sản CS1" thành "Chi đoàn Cơ quan" và chỗ ký thì thay "Đặng Phong Thái" thành "Nguyễn Thanh Huyền"
+
+### Planner Response
+Đã đổi tên và thông tin người ký cho Cơ sở 1!
+
+1. Toàn bộ tên hiển thị của tài khoản Cơ sở 1 đã được chuyển thành **Chi đoàn Cơ quan**.
+2. Khi xuất bộ 3 văn bản định kỳ trên tab Công cụ bằng tài khoản của Cơ sở 1, phần chữ ký bên dưới (cả trong file xem trước HTML và file Word tải về) đã tự động chuyển thành tên Bí thư: **Nguyễn Thanh Huyền**.
+
+Với tài khoản Cơ sở 2 thì vẫn giữ nguyên chữ ký là Đặng Phong Thái như cũ.
+
