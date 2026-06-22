@@ -250,7 +250,6 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
 
   const handleGenerateDk = async () => {
     if (!isAdmin) return alert("Bạn không có quyền thực hiện chức năng này!");
-    if (!geminiApiKey) return alert("Vui lòng cấu hình Gemini API Key trong Cài đặt!");
     if (!dkResultInput.trim() && !dkNextInput.trim()) return alert("Vui lòng nhập kết quả đạt được hoặc phương hướng kỳ tới!");
 
     setLoadingAI(true);
