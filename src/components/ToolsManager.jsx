@@ -270,6 +270,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
       const nextMonthStr = nextMonth.toString().padStart(2, '0');
       const isCS1 = currentUser?.username === 'bvtks-cs1';
       const branchSuffix = isCS1 ? 'BCHCS1' : 'BCHCS2';
+      const signerName = isCS1 ? 'Nguyễn Thanh Huyền' : 'Đặng Phong Thái';
       const bchTitleHtml = isCS1 
         ? `<strong>BCH CHI ĐOÀN CƠ QUAN</strong><br/>` 
         : `<strong>BCH CHI ĐOÀN BỆNH VIỆN</strong><br/>\n        <strong>THAN - KHOÁNG SẢN CS2</strong><br/>`;
@@ -338,7 +339,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
         <strong>TM. BAN CHẤP HÀNH</strong><br/>
         <strong>Bí thư</strong><br/>
         <br/><br/><br/><br/>
-        <strong>Đặng Phong Thái</strong>
+        <strong>${signerName}</strong>
       </td>
     </tr>
   </table>
@@ -373,7 +374,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
     - Thời gian: 14h00 ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}<br/>
     - Địa điểm: Phòng họp Chi đoàn<br/>
     - Thành phần: Các đồng chí trong BCH Chi đoàn<br/>
-    - Chủ trì: Đồng chí Đặng Phong Thái - Bí thư Chi đoàn<br/>
+    - Chủ trì: Đồng chí ${signerName} - Bí thư Chi đoàn<br/>
     - Thư ký: Đồng chí ${secName}
   </p>
 
@@ -410,7 +411,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
         <strong>CHỦ TRÌ</strong><br/>
         <strong>Bí thư</strong><br/>
         <br/><br/><br/><br/>
-        <strong>Đặng Phong Thái</strong>
+        <strong>${signerName}</strong>
       </td>
     </tr>
   </table>
@@ -467,7 +468,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
         <strong>TM. BAN CHẤP HÀNH</strong><br/>
         <strong>Bí thư</strong><br/>
         <br/><br/><br/><br/>
-        <strong>Đặng Phong Thái</strong>
+        <strong>${signerName}</strong>
       </td>
     </tr>
   </table>

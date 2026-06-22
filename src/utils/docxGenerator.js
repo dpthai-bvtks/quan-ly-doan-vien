@@ -91,6 +91,7 @@ const createListParagraphs = (textBlock) => {
 
 export const generateDinhKyDocx = async (type, data) => {
   const { isCS1, branchName, dkDocNo, dkDate, dkMonth, dkYear, results, nextPlan, secretary, nextMonthStr, nextYearStr } = data;
+  const signerName = isCS1 ? 'Nguyễn Thanh Huyền' : 'Đặng Phong Thái';
   
   let children = [];
 
@@ -153,7 +154,7 @@ export const generateDinhKyDocx = async (type, data) => {
                   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "TM. BAN CHẤP HÀNH", font: "Times New Roman", size: 28, bold: true })] }),
                   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bí thư", font: "Times New Roman", size: 28, bold: true })] }),
                   new Paragraph({ text: "" }), new Paragraph({ text: "" }), new Paragraph({ text: "" }),
-                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Đặng Phong Thái", font: "Times New Roman", size: 28, bold: true })] }),
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: signerName, font: "Times New Roman", size: 28, bold: true })] }),
                 ]
               })
             ]
@@ -181,7 +182,7 @@ export const generateDinhKyDocx = async (type, data) => {
       new Paragraph({ children: [new TextRun({ text: `- Thời gian: 14h00 ngày ${dkDate} tháng ${dkMonth} năm ${dkYear}`, font: "Times New Roman", size: 28 })] }),
       new Paragraph({ children: [new TextRun({ text: `- Địa điểm: Phòng họp Chi đoàn`, font: "Times New Roman", size: 28 })] }),
       new Paragraph({ children: [new TextRun({ text: `- Thành phần: Các đồng chí trong BCH Chi đoàn`, font: "Times New Roman", size: 28 })] }),
-      new Paragraph({ children: [new TextRun({ text: `- Chủ trì: Đồng chí Đặng Phong Thái - Bí thư Chi đoàn`, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: `- Chủ trì: Đồng chí ${signerName} - Bí thư Chi đoàn`, font: "Times New Roman", size: 28 })] }),
       new Paragraph({ children: [new TextRun({ text: `- Thư ký: Đồng chí ${secretary}`, font: "Times New Roman", size: 28 })] }),
       new Paragraph({ text: "" }),
       new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `NỘI DUNG HỘI NGHỊ:`, font: "Times New Roman", size: 28, bold: true })] }),
@@ -221,7 +222,7 @@ export const generateDinhKyDocx = async (type, data) => {
                   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "CHỦ TRÌ", font: "Times New Roman", size: 28, bold: true })] }),
                   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bí thư", font: "Times New Roman", size: 28, bold: true })] }),
                   new Paragraph({ text: "" }), new Paragraph({ text: "" }), new Paragraph({ text: "" }),
-                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Đặng Phong Thái", font: "Times New Roman", size: 28, bold: true })] }),
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: signerName, font: "Times New Roman", size: 28, bold: true })] }),
                 ]
               })
             ]
@@ -285,7 +286,7 @@ export const generateDinhKyDocx = async (type, data) => {
                   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "TM. BAN CHẤP HÀNH", font: "Times New Roman", size: 28, bold: true })] }),
                   new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bí thư", font: "Times New Roman", size: 28, bold: true })] }),
                   new Paragraph({ text: "" }), new Paragraph({ text: "" }), new Paragraph({ text: "" }),
-                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Đặng Phong Thái", font: "Times New Roman", size: 28, bold: true })] }),
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: signerName, font: "Times New Roman", size: 28, bold: true })] }),
                 ]
               })
             ]
@@ -307,6 +308,7 @@ export const generateDinhKyDocx = async (type, data) => {
 
 export const generateTongHopDocx = async (data) => {
   const { isCS1, branchName, thDocNo, thDate, thMonth, thYear, results, nextPlan, secretary, thPeriod, nextPeriodStr } = data;
+  const signerName = isCS1 ? 'Nguyễn Thanh Huyền' : 'Đặng Phong Thái';
   
   const children = [
     createHeaderTable(isCS1, thDocNo, thYear, thDate, thMonth, "BC"),
@@ -366,7 +368,7 @@ export const generateTongHopDocx = async (data) => {
                 new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "TM. BAN CHẤP HÀNH", font: "Times New Roman", size: 28, bold: true })] }),
                 new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bí thư", font: "Times New Roman", size: 28, bold: true })] }),
                 new Paragraph({ text: "" }), new Paragraph({ text: "" }), new Paragraph({ text: "" }),
-                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Đặng Phong Thái", font: "Times New Roman", size: 28, bold: true })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: signerName, font: "Times New Roman", size: 28, bold: true })] }),
               ]
             })
           ]

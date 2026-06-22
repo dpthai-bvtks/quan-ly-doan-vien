@@ -1,7 +1,7 @@
 export const BRANCH_CONFIGS = {
   'bvtks-cs1': {
-    title: "Chi đoàn Bệnh viện Than\nKhoáng sản CS1",
-    displayName: "Chi đoàn Bệnh viện Than Khoáng sản CS1",
+    title: "Chi đoàn Cơ quan",
+    displayName: "Chi đoàn Cơ quan",
     defaultApiUrl: 'https://script.google.com/macros/s/AKfycbwrBrDPYew4uooEFxCPgBumIcj68AiW6DiaGsW4ZmiTXy3O5QdgV-1_od8YLOo0C-Vu/exec',
     defaultFolderDen: '1O_UzwJG-57cjsGmQ6_Fh-MLmfgC77ObV',
     defaultFolderDi: '1Z0heGXWLFM3zr5Z9afyIaDt9t5oKqnL7',

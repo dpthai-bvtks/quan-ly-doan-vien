@@ -4,7 +4,7 @@ import { X, Plus, Trash2, KeyRound, Eye, EyeOff, Shield, User, RefreshCw } from 
 const STORAGE_KEY = 'app_accounts';
 
 const DEFAULT_ACCOUNTS = [
-  { username: 'bvtks-cs1', password: 'admin@123', role: 'admin', displayName: 'Chi đoàn Bệnh viện Than Khoáng sản CS1' },
+  { username: 'bvtks-cs1', password: 'admin@123', role: 'admin', displayName: 'Chi đoàn Cơ quan' },
   { username: 'bvtks-cs2', password: 'admin@123', role: 'admin', displayName: 'Chi đoàn Bệnh viện Than Khoáng sản CS2' },
   { username: 'admin-bvtks', password: 'admin@123', role: 'admin', displayName: 'Đoàn thanh niên Bệnh viện Than - Khoáng sản' },
 ];
