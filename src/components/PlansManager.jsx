@@ -48,7 +48,7 @@ export default function PlansManager({
   geminiApiKey, 
   currentUser
 }) {
-  const [subTab, setSubTab] = useState('ke_hoach'); // ke_hoach | bien_ban | nghi_quyet | bao_cao
+  const [subTab, setSubTab] = useState('ke_hoach'); // ke_hoach | bien_ban | nghi_quyet | bao_cao | cttn
   const [showForm, setShowForm] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [pendingFile, setPendingFile] = useState(null); // file object chưa upload
@@ -67,16 +67,18 @@ export default function PlansManager({
     const filtered = (plans || []).filter(p => {
       const t = (p.title || '').toLowerCase();
       
+      const isCttn = t.includes('công trình thanh niên') || t.includes('cttn');
       const isBaoCao = t.includes('báo cáo') || t.includes('bao_cao') || t.includes('bao cao');
       const isBienBan = t.includes('biên bản') || t.includes('bien_ban') || t.includes('bien ban');
       const isNghiQuyet = t.includes('nghị quyết') || t.includes('nghi_quyet') || t.includes('nghi quyet');
 
+      if (subTab === 'cttn') return isCttn;
       if (subTab === 'bao_cao') return isBaoCao;
       if (subTab === 'bien_ban') return isBienBan;
       if (subTab === 'nghi_quyet') return isNghiQuyet;
       
       // ke_hoach is everything else
-      return !(isBaoCao || isBienBan || isNghiQuyet);
+      return !(isBaoCao || isBienBan || isNghiQuyet || isCttn);
     });
     
     // Sort by startDate descending (newest first)
@@ -91,6 +93,7 @@ export default function PlansManager({
   const listTitle = subTab === 'ke_hoach' ? '📋 Kế hoạch hoạt động' 
                   : subTab === 'bien_ban' ? '📋 Biên bản họp' 
                   : subTab === 'nghi_quyet' ? '📋 Nghị quyết' 
+                  : subTab === 'cttn' ? '📋 Công trình thanh niên'
                   : '📋 Báo cáo';
 
   const resetForm = () => {
@@ -168,30 +171,36 @@ export default function PlansManager({
     <div className="space-y-6">
       
       {/* Tab Selector dạng Menu Tab đẹp mắt */}
-      <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1">
+      <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1 flex-wrap md:flex-nowrap">
         <button
           onClick={() => setSubTab('ke_hoach')}
-          className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${subTab === 'ke_hoach' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+          className={`flex-1 py-2.5 px-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${subTab === 'ke_hoach' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
-          <FileText size={16} /> Danh sách Kế hoạch
+          <FileText size={16} /> DS Kế hoạch
+        </button>
+        <button
+          onClick={() => setSubTab('cttn')}
+          className={`flex-1 py-2.5 px-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${subTab === 'cttn' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+        >
+          <FileText size={16} /> DS Công trình TN
         </button>
         <button
           onClick={() => setSubTab('bien_ban')}
-          className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${subTab === 'bien_ban' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+          className={`flex-1 py-2.5 px-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${subTab === 'bien_ban' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
-          <FileText size={16} /> Danh sách Biên bản
+          <FileText size={16} /> DS Biên bản
         </button>
         <button
           onClick={() => setSubTab('nghi_quyet')}
-          className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${subTab === 'nghi_quyet' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+          className={`flex-1 py-2.5 px-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${subTab === 'nghi_quyet' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
-          <FileText size={16} /> Danh sách Nghị quyết
+          <FileText size={16} /> DS Nghị quyết
         </button>
         <button
           onClick={() => setSubTab('bao_cao')}
-          className={`flex-1 py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${subTab === 'bao_cao' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+          className={`flex-1 py-2.5 px-2 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${subTab === 'bao_cao' ? 'bg-blue-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
-          <FileText size={16} /> Danh sách Báo cáo
+          <FileText size={16} /> DS Báo cáo
         </button>
       </div>
 

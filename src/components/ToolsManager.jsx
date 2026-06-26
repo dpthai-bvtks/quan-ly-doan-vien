@@ -4,7 +4,7 @@ import { Sparkles, Calendar, FileText, Download, Briefcase, Activity, Check, Edi
 import { getBranchConfig } from '../data/constants';
 
 import { saveAs } from 'file-saver';
-import { generateDinhKyDocx, exportDocxBlob, generateTongHopDocx } from '../utils/docxGenerator';
+import { generateDinhKyDocx, exportDocxBlob, generateTongHopDocx, generateKeHoachDocx, generateCttnDocx } from '../utils/docxGenerator';
 
 // Utility to export HTML to a .docx file
 export const exportHTMLToDoc = (htmlContent, filename) => {
@@ -114,7 +114,7 @@ async function callGeminiAPI(prompt, geminiApiKey) {
 }
 
 export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, geminiApiKey }) {
-  const [activeTab, setActiveTab] = useState('dinhky'); // dinhky | tonghop | kho
+  const [activeTab, setActiveTab] = useState('dinhky'); // dinhky | tonghop | kho | kehoach | cttn
 
   const [thDocNo, setThDocNo] = useState('02');
   const [thDate, setThDate] = useState(new Date().getDate().toString().padStart(2, '0'));
@@ -134,6 +134,34 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
   const [dkResultInput, setDkResultInput] = useState('');
   const [dkNextInput, setDkNextInput] = useState('');
   const [dkResults, setDkResults] = useState({ bao_cao: '', bien_ban: '', nghi_quyet: '' });
+
+  
+  // --- STATE KẾ HOẠCH ---
+  const [khDocNo, setKhDocNo] = useState('01');
+  const [khDate, setKhDate] = useState(new Date().getDate().toString().padStart(2, '0'));
+  const [khMonth, setKhMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
+  const [khYear, setKhYear] = useState(new Date().getFullYear().toString());
+  const [khName, setKhName] = useState('KẾ HOẠCH HOẠT ĐỘNG THÁNG');
+  const [khPurpose, setKhPurpose] = useState('');
+  const [khContent, setKhContent] = useState('');
+  const [khTime, setKhTime] = useState('');
+  const [khLocation, setKhLocation] = useState('');
+  const [khParticipants, setKhParticipants] = useState('');
+  const [khOrganization, setKhOrganization] = useState('');
+  
+  // --- STATE CTTN ---
+  const [cttnDocNo, setCttnDocNo] = useState('01');
+  const [cttnDate, setCttnDate] = useState(new Date().getDate().toString().padStart(2, '0'));
+  const [cttnMonth, setCttnMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
+  const [cttnYear, setCttnYear] = useState(new Date().getFullYear().toString());
+  const [cttnName, setCttnName] = useState('Khám và phát thuốc miễn phí');
+  const [cttnTime, setCttnTime] = useState('');
+  const [cttnLocation, setCttnLocation] = useState('');
+  const [cttnVolume, setCttnVolume] = useState('');
+  const [cttnParticipants, setCttnParticipants] = useState('15');
+  const [cttnMeaning, setCttnMeaning] = useState('');
+  const [cttnResult, setCttnResult] = useState('');
+  const [cttnSecretary, setCttnSecretary] = useState('');
 
   const [loadingAI, setLoadingAI] = useState(false);
   const [loadingDrive, setLoadingDrive] = useState({});
@@ -246,7 +274,140 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
     }
   };
 
+
+  // --- XỬ LÝ TẠO KẾ HOẠCH ---
+  const handleCreateKeHoach = async () => {
+    try {
+      setLoadingAI(true);
+      const isCS1 = currentUser?.username === 'bvtks-cs1';
+      const config = getBranchConfig(currentUser?.username);
+      const branchName = config.title;
+      
+      const docxBlob = await generateKeHoachDocx({
+        isCS1, branchName, docNo: khDocNo, docDate: khDate, docMonth: khMonth, docYear: khYear,
+        planName: khName, planPurpose: khPurpose, planContent: khContent, planTime: khTime,
+        planLocation: khLocation, planParticipants: khParticipants, planOrganization: khOrganization
+      });
+      
+      exportDocxBlob(docxBlob, `Ke_Hoach_${khDocNo}_${khMonth}_${khYear}`);
+      showToast("Đã tải xuống Kế hoạch thành công!");
+      
+      // Auto save to Drive
+      if (setPlans) {
+        const folderId = isCS1 ? '17nCNXjMoYnGwmsySH-HD6XMM1GQHUx8Q' : '1g3Y-MgyR6kButQGiBrbuI9OFI5pAwTPn';
+        const file = new File([docxBlob], `Ke_Hoach_${khDocNo}_${khMonth}_${khYear}.docx`, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        const uploadRes = await uploadFileToDrive(file, folderId, config.apiUrl);
+        const fileId = uploadRes.fileId || uploadRes.id;
+        const url = uploadRes.url || uploadRes.webViewLink;
+        
+        const newPlan = {
+          id: Date.now(),
+          title: `Kế hoạch số ${khDocNo}/${khYear} (${khName})`,
+          category: 'Kế hoạch',
+          startDate: `${khYear}-${khMonth}-${khDate}`,
+          endDate: `${khYear}-${khMonth}-${khDate}`,
+          status: 'Kế hoạch',
+          responsible: 'BCH Chi đoàn',
+          description: '',
+          attachment: { name: file.name, fileId: fileId, viewUrl: url }
+        };
+        setPlans(prev => [newPlan, ...prev]);
+        showToast("Đã lưu Kế hoạch lên Google Drive và thêm vào Danh sách Kế hoạch!");
+      }
+    } catch (err) {
+      alert("Lỗi: " + err.message);
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
+  // --- XỬ LÝ TẠO CTTN ---
+  const handleCreateCttn = async () => {
+    try {
+      setLoadingAI(true);
+      const isCS1 = currentUser?.username === 'bvtks-cs1';
+      const config = getBranchConfig(currentUser?.username);
+      const branchName = config.title;
+      
+      const baseData = {
+        isCS1, branchName, docNo: cttnDocNo, docDate: cttnDate, docMonth: cttnMonth, docYear: cttnYear,
+        projectName: cttnName, projectTime: cttnTime, projectLocation: cttnLocation, projectVolume: cttnVolume,
+        projectParticipants: cttnParticipants, projectResult: cttnResult, projectMeaning: cttnMeaning, secretary: cttnSecretary
+      };
+      
+      const dangKyBlob = await generateCttnDocx('dang_ky', baseData);
+      const bienBanBlob = await generateCttnDocx('bien_ban', baseData);
+      const baoCaoBlob = await generateCttnDocx('bao_cao', baseData);
+      
+      exportDocxBlob(dangKyBlob, `Ban_Dang_Ky_CTTN_${cttnDocNo}_${cttnMonth}_${cttnYear}`);
+      exportDocxBlob(bienBanBlob, `Bien_Ban_CTTN_${cttnDocNo}_${cttnMonth}_${cttnYear}`);
+      exportDocxBlob(baoCaoBlob, `Bao_Cao_CTTN_${cttnDocNo}_${cttnMonth}_${cttnYear}`);
+      showToast("Đã tải xuống bộ 3 văn bản CTTN thành công!");
+      
+      // Auto save to Drive
+      if (setPlans) {
+        // folder IDs
+        const folderDK = isCS1 ? '17nCNXjMoYnGwmsySH-HD6XMM1GQHUx8Q' : '1g3Y-MgyR6kButQGiBrbuI9OFI5pAwTPn'; // Save Dang Ky to Ke Hoach
+        const folderBB = isCS1 ? '1BRfEJwq4dFUXHC60oB6UAaAA9iN3hhmp' : '1-1cfuEFcYXab-GUvnULl7dD5nN4i5LmV';
+        const folderBC = isCS1 ? '1YQrHutAFAcU24-Y8X--k2y_wCmNRWxwZ' : '1uPciReR36oYs_8bdvRke8PbjJf0YL9HY';
+        
+        const fDK = new File([dangKyBlob], `Ban_Dang_Ky_CTTN_${cttnDocNo}_${cttnMonth}_${cttnYear}.docx`, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        const fBB = new File([bienBanBlob], `Bien_Ban_CTTN_${cttnDocNo}_${cttnMonth}_${cttnYear}.docx`, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        const fBC = new File([baoCaoBlob], `Bao_Cao_CTTN_${cttnDocNo}_${cttnMonth}_${cttnYear}.docx`, { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+        
+        const resDK = await uploadFileToDrive(fDK, folderDK, config.apiUrl);
+        const resBB = await uploadFileToDrive(fBB, folderBB, config.apiUrl);
+        const resBC = await uploadFileToDrive(fBC, folderBC, config.apiUrl);
+        
+        const commonDate = `${cttnYear}-${cttnMonth}-${cttnDate}`;
+        const newPlans = [
+          {
+            id: Date.now() + 1,
+            title: `Bản đăng ký Công trình thanh niên: ${cttnName}`,
+            category: 'Tình nguyện',
+            startDate: commonDate,
+            endDate: commonDate,
+            status: 'Kế hoạch',
+            responsible: 'BCH Chi đoàn',
+            description: '',
+            attachment: { name: fDK.name, fileId: resDK.fileId || resDK.id, viewUrl: resDK.url || resDK.webViewLink }
+          },
+          {
+            id: Date.now() + 2,
+            title: `Biên bản họp BCH xét duyệt CTTN: ${cttnName}`,
+            category: 'Tình nguyện',
+            startDate: commonDate,
+            endDate: commonDate,
+            status: 'Hoàn thành',
+            responsible: cttnSecretary || 'BCH Chi đoàn',
+            description: '',
+            attachment: { name: fBB.name, fileId: resBB.fileId || resBB.id, viewUrl: resBB.url || resBB.webViewLink }
+          },
+          {
+            id: Date.now() + 3,
+            title: `Báo cáo kết quả CTTN: ${cttnName}`,
+            category: 'Tình nguyện',
+            startDate: commonDate,
+            endDate: commonDate,
+            status: 'Hoàn thành',
+            responsible: 'BCH Chi đoàn',
+            description: '',
+            attachment: { name: fBC.name, fileId: resBC.fileId || resBC.id, viewUrl: resBC.url || resBC.webViewLink }
+          }
+        ];
+        
+        setPlans(prev => [...newPlans, ...prev]);
+        showToast("Đã lưu bộ hồ sơ CTTN lên Google Drive và thêm vào danh sách!");
+      }
+    } catch (err) {
+      alert("Lỗi: " + err.message);
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
   // --- MÔ-ĐUN ĐỊNH KỲ ---
+
 
   const handleGenerateDk = async () => {
     if (!isAdmin) return alert("Bạn không có quyền thực hiện chức năng này!");
@@ -786,7 +947,84 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
       )}
 
       {/* CONTENT: KHO BIỂU MẪU */}
-      {activeTab === 'kho' && (
+      
+        {activeTab === 'kehoach' && (
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Briefcase className="text-indigo-600"/> Tạo Kế hoạch hoạt động
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <FI label="Số KH" val={khDocNo} set={setKhDocNo} />
+              <FI label="Ngày" val={khDate} set={setKhDate} />
+              <FI label="Tháng" val={khMonth} set={setKhMonth} />
+              <FI label="Năm" val={khYear} set={setKhYear} />
+            </div>
+            <div className="mb-4">
+              <FI label="Tên kế hoạch" val={khName} set={setKhName} ph="VD: KẾ HOẠCH HOẠT ĐỘNG THÁNG 3" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <FI label="Thời gian thực hiện" val={khTime} set={setKhTime} ph="VD: 14h00 ngày 26/03/2026" />
+              <FI label="Địa điểm" val={khLocation} set={setKhLocation} ph="VD: Sân cỏ nhân tạo..." />
+              <FI label="Thành phần tham gia" val={khParticipants} set={setKhParticipants} ph="VD: Các đồng chí ĐVTN" />
+            </div>
+            <div className="mb-4">
+              <FT label="I. Mục đích, yêu cầu" val={khPurpose} set={setKhPurpose} ph="Gạch đầu dòng các mục đích..." />
+            </div>
+            <div className="mb-4">
+              <FT label="II. Nội dung thực hiện" val={khContent} set={setKhContent} ph="Gạch đầu dòng các nội dung chính..." />
+            </div>
+            <div className="mb-4">
+              <FT label="IV. Tổ chức thực hiện" val={khOrganization} set={setKhOrganization} ph="Giao nhiệm vụ cho các phân đoàn..." />
+            </div>
+            
+            <div className="flex gap-3 justify-end mt-6">
+              <Btn icon={<FileText size={18}/>} label="Tạo file Kế hoạch & Lưu Drive" onClick={handleCreateKeHoach} primary disabled={loadingAI} />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'cttn' && (
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <Sparkles className="text-indigo-600"/> Hồ sơ Công trình thanh niên
+            </h3>
+            <p className="text-sm text-gray-600 mb-6 italic">Hệ thống sẽ tạo ra 3 văn bản: Bản đăng ký, Biên bản xét duyệt, Báo cáo kết quả.</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              <FI label="Số văn bản" val={cttnDocNo} set={setCttnDocNo} />
+              <FI label="Ngày lập" val={cttnDate} set={setCttnDate} />
+              <FI label="Tháng" val={cttnMonth} set={setCttnMonth} />
+              <FI label="Năm" val={cttnYear} set={setCttnYear} />
+            </div>
+            <div className="mb-4">
+              <FI label="Tên công trình thanh niên" val={cttnName} set={setCttnName} ph="VD: Khám và phát thuốc miễn phí..." />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <FI label="Thời gian thực hiện" val={cttnTime} set={setCttnTime} ph="VD: 13h00 ngày 21/03/2026" />
+              <FI label="Địa điểm" val={cttnLocation} set={setCttnLocation} ph="VD: Hội trường tầng 1 nhà A..." />
+              <FI label="Số người tham gia" val={cttnParticipants} set={setCttnParticipants} type="number" />
+            </div>
+            <div className="mb-4">
+              <FI label="Thư ký cuộc họp" val={cttnSecretary} set={setCttnSecretary} ph="Họ tên người ghi biên bản" />
+            </div>
+            <div className="mb-4">
+              <FT label="Khối lượng / Nội dung thực hiện" val={cttnVolume} set={setCttnVolume} ph="VD: Khám bệnh (thể lực, lâm sàng...) cho 40 trẻ em..." />
+            </div>
+            <div className="mb-4">
+              <FT label="Ý nghĩa công trình" val={cttnMeaning} set={setCttnMeaning} ph="VD: Nâng cao vai trò xung kích..." />
+            </div>
+            <div className="mb-4">
+              <FT label="Hiệu quả / Kết quả đạt được" val={cttnResult} set={setCttnResult} ph="VD: Đã phối hợp khám đầy đủ..." />
+            </div>
+            
+            <div className="flex gap-3 justify-end mt-6">
+              <Btn icon={<FileText size={18}/>} label="Tạo bộ 3 văn bản CTTN & Lưu Drive" onClick={handleCreateCttn} primary disabled={loadingAI} />
+            </div>
+          </div>
+        )}
+
+
+        {activeTab === 'kho' && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Kho Biểu mẫu Số (Template Cố định)</h2>
           <p className="text-sm text-gray-600 mb-6">

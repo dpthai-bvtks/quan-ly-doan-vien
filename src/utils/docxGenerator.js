@@ -397,3 +397,244 @@ export const exportDocxBlob = (blob, filename) => {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 };
+
+
+export const generateKeHoachDocx = async (data) => {
+  const { isCS1, branchName, docNo, docDate, docMonth, docYear, planName, planPurpose, planContent, planTime, planLocation, planParticipants, planOrganization } = data;
+  const signerName = isCS1 ? 'Nguyễn Thanh Huyền' : 'Đặng Phong Thái';
+
+  const children = [
+    createHeaderTable(isCS1, docNo, docYear, docDate, docMonth, "KH"),
+    new Paragraph({ text: "" }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: "KẾ HOẠCH", font: "Times New Roman", size: 30, bold: true })]
+    }),
+    new Paragraph({
+      alignment: AlignmentType.CENTER,
+      children: [new TextRun({ text: planName.toUpperCase(), font: "Times New Roman", size: 28, bold: true })]
+    }),
+    new Paragraph({ text: "" }),
+    new Paragraph({ children: [new TextRun({ text: "I. MỤC ĐÍCH, YÊU CẦU", font: "Times New Roman", size: 28, bold: true })] }),
+    ...createListParagraphs(planPurpose),
+    new Paragraph({ text: "" }),
+    new Paragraph({ children: [new TextRun({ text: "II. NỘI DUNG THỰC HIỆN", font: "Times New Roman", size: 28, bold: true })] }),
+    ...createListParagraphs(planContent),
+    new Paragraph({ text: "" }),
+    new Paragraph({ children: [new TextRun({ text: "III. THỜI GIAN, ĐỊA ĐIỂM, THÀNH PHẦN", font: "Times New Roman", size: 28, bold: true })] }),
+    new Paragraph({ children: [new TextRun({ text: "- Thời gian: ", font: "Times New Roman", size: 28 })] }),
+    new Paragraph({ children: [new TextRun({ text: "- Địa điểm: ", font: "Times New Roman", size: 28 })] }),
+    new Paragraph({ children: [new TextRun({ text: "- Thành phần: ", font: "Times New Roman", size: 28 })] }),
+    new Paragraph({ text: "" }),
+    new Paragraph({ children: [new TextRun({ text: "IV. TỔ CHỨC THỰC HIỆN", font: "Times New Roman", size: 28, bold: true })] }),
+    ...createListParagraphs(planOrganization),
+    new Paragraph({ text: "" }),
+    new Table({
+      width: { size: 100, type: WidthType.PERCENTAGE },
+      borders: {
+        top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE },
+        insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE },
+      },
+      rows: [
+        new TableRow({
+          children: [
+            new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, children: [] }),
+            new TableCell({
+              width: { size: 50, type: WidthType.PERCENTAGE },
+              children: [
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "TM. BAN CHẤP HÀNH", font: "Times New Roman", size: 28, bold: true })] }),
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bí thư", font: "Times New Roman", size: 28, bold: true })] }),
+                new Paragraph({ text: "" }), new Paragraph({ text: "" }), new Paragraph({ text: "" }),
+                new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: signerName, font: "Times New Roman", size: 28, bold: true })] }),
+              ]
+            })
+          ]
+        })
+      ]
+    })
+  ];
+
+  const doc = new Document({ sections: [{ properties: {}, children }] });
+  return await Packer.toBlob(doc);
+};
+
+
+export const generateCttnDocx = async (type, data) => {
+  const { isCS1, branchName, docNo, docDate, docMonth, docYear, projectName, projectTime, projectLocation, projectVolume, projectParticipants, projectResult, projectMeaning, secretary } = data;
+  const signerName = isCS1 ? 'Nguyễn Thanh Huyền' : 'Đặng Phong Thái';
+
+  let children = [];
+
+  if (type === 'dang_ky') {
+    children = [
+      createHeaderTable(isCS1, docNo, docYear, docDate, docMonth, "VB"),
+      new Paragraph({ text: "" }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: "VĂN BẢN ĐĂNG KÝ", font: "Times New Roman", size: 30, bold: true })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: "Đảm nhận công trình thanh niên", font: "Times New Roman", size: 28, bold: true })]
+      }),
+      new Paragraph({ text: "" }),
+      new Paragraph({
+        alignment: AlignmentType.JUSTIFIED,
+        indent: { firstLine: 720 },
+        children: [
+          new TextRun({ text: `Căn cứ vào tình hình thực tế và chương trình công tác Đoàn phong trào thanh niên năm ${docYear}. Nhằm nâng cao vai trò xung kích, tình nguyện của Đoàn Thanh niên. BCH ${branchName} kính đề nghị lãnh đạo quan tâm tạo điều kiện, giao cho Đoàn Thanh niên đăng ký đảm nhận thực hiện công trình thanh niên:`, font: "Times New Roman", size: 28 })]
+      }),
+      new Paragraph({ text: "" }),
+      new Paragraph({ children: [new TextRun({ text: "1. Tên công trình: ", font: "Times New Roman", size: 28, bold: true }), new TextRun({ text: projectName, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: "2. Khối lượng/Nội dung thực hiện:", font: "Times New Roman", size: 28, bold: true })] }),
+      ...createListParagraphs(projectVolume),
+      new Paragraph({ text: "" }),
+      new Paragraph({ children: [new TextRun({ text: "3. Thời gian thực hiện: ", font: "Times New Roman", size: 28, bold: true }), new TextRun({ text: projectTime, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ text: "" }),
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: {
+          top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE },
+          insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE },
+        },
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, children: [] }),
+              new TableCell({
+                width: { size: 50, type: WidthType.PERCENTAGE },
+                children: [
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "TM. BAN CHẤP HÀNH", font: "Times New Roman", size: 28, bold: true })] }),
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bí thư", font: "Times New Roman", size: 28, bold: true })] }),
+                  new Paragraph({ text: "" }), new Paragraph({ text: "" }), new Paragraph({ text: "" }),
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: signerName, font: "Times New Roman", size: 28, bold: true })] }),
+                ]
+              })
+            ]
+          })
+        ]
+      })
+    ];
+  } else if (type === 'bien_ban') {
+    children = [
+      createHeaderTable(isCS1, docNo, docYear, docDate, docMonth, "BB"),
+      new Paragraph({ text: "" }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: "BIÊN BẢN", font: "Times New Roman", size: 30, bold: true })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: "HỌP BAN CHẤP HÀNH CHI ĐOÀN", font: "Times New Roman", size: 28, bold: true })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: `(V/v: Thống nhất triển khai CTTN: ${projectName})`, font: "Times New Roman", size: 28, italics: true })]
+      }),
+      new Paragraph({ text: "" }),
+      new Paragraph({ children: [new TextRun({ text: "I. Thời gian, địa điểm, thành phần", font: "Times New Roman", size: 28, bold: true })] }),
+      new Paragraph({ children: [new TextRun({ text: `- Thời gian: 14h00 ngày ${docDate} tháng ${docMonth} năm ${docYear}`, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: `- Địa điểm: Phòng họp Chi đoàn`, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: `- Thành phần: Các đồng chí trong BCH Chi đoàn`, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: `- Chủ trì: Đồng chí ${signerName} - Bí thư Chi đoàn`, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: `- Thư ký: Đồng chí ${secretary}`, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ text: "" }),
+      new Paragraph({ children: [new TextRun({ text: "II. Nội dung cuộc họp", font: "Times New Roman", size: 28, bold: true })] }),
+      new Paragraph({ children: [new TextRun({ text: "1. Đồng chí Chủ trì trình bày dự thảo Kế hoạch tổ chức Công trình thanh niên: ", font: "Times New Roman", size: 28, bold: true }), new TextRun({ text: projectName, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: "2. Thảo luận và thống nhất các nội dung triển khai:", font: "Times New Roman", size: 28, bold: true })] }),
+      new Paragraph({ text: "Về đối tượng và nội dung thực hiện: Nhất trí với các phương án đề ra.", font: "Times New Roman", size: 28, bullet: { level: 0 } }),
+      new Paragraph({ text: `Về thời gian, địa điểm: ${projectTime} tại ${projectLocation}.`, font: "Times New Roman", size: 28, bullet: { level: 0 } }),
+      new Paragraph({ text: `Về nhân sự: Cử ${projectParticipants} đồng chí tham gia hỗ trợ.`, font: "Times New Roman", size: 28, bullet: { level: 0 } }),
+      new Paragraph({ text: "" }),
+      new Paragraph({ children: [new TextRun({ text: "Hội nghị kết thúc vào 15h00 cùng ngày. Biên bản đã được thông qua tại hội nghị.", font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ text: "" }),
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: {
+          top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE },
+          insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE },
+        },
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                width: { size: 50, type: WidthType.PERCENTAGE },
+                children: [
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "THƯ KÝ", font: "Times New Roman", size: 28, bold: true })] }),
+                  new Paragraph({ text: "" }), new Paragraph({ text: "" }), new Paragraph({ text: "" }),
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: secretary, font: "Times New Roman", size: 28, bold: true })] }),
+                ]
+              }),
+              new TableCell({
+                width: { size: 50, type: WidthType.PERCENTAGE },
+                children: [
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "CHỦ TRÌ", font: "Times New Roman", size: 28, bold: true })] }),
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bí thư", font: "Times New Roman", size: 28, bold: true })] }),
+                  new Paragraph({ text: "" }), new Paragraph({ text: "" }), new Paragraph({ text: "" }),
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: signerName, font: "Times New Roman", size: 28, bold: true })] }),
+                ]
+              })
+            ]
+          })
+        ]
+      })
+    ];
+  } else if (type === 'bao_cao') {
+    children = [
+      createHeaderTable(isCS1, docNo, docYear, docDate, docMonth, "BC"),
+      new Paragraph({ text: "" }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: "BÁO CÁO", font: "Times New Roman", size: 30, bold: true })]
+      }),
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        children: [new TextRun({ text: "Kết quả thực hiện công trình thanh niên", font: "Times New Roman", size: 28, bold: true })]
+      }),
+      new Paragraph({ text: "" }),
+      new Paragraph({
+        alignment: AlignmentType.JUSTIFIED,
+        indent: { firstLine: 720 },
+        children: [
+          new TextRun({ text: `Căn cứ vào Văn bản số ${docNo}-VB/ĐTN ngày ${docDate}/${docMonth}/${docYear} đăng ký đảm nhận công trình Thanh niên đã được lãnh đạo phê duyệt. Ban Chấp hành Chi đoàn ${branchName} báo cáo kết quả thực hiện công trình như sau:`, font: "Times New Roman", size: 28 })]
+      }),
+      new Paragraph({ text: "" }),
+      new Paragraph({ children: [new TextRun({ text: "1. Tên công trình: ", font: "Times New Roman", size: 28, bold: true }), new TextRun({ text: projectName, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: "2. Thời gian và Địa điểm:", font: "Times New Roman", size: 28, bold: true })] }),
+      new Paragraph({ children: [new TextRun({ text: `- Thời gian: ${projectTime}`, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: `- Địa điểm: ${projectLocation}`, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: "3. Số người tham gia: ", font: "Times New Roman", size: 28, bold: true }), new TextRun({ text: projectParticipants, font: "Times New Roman", size: 28 })] }),
+      new Paragraph({ children: [new TextRun({ text: "4. Ý nghĩa công trình thanh niên:", font: "Times New Roman", size: 28, bold: true })] }),
+      ...createListParagraphs(projectMeaning),
+      new Paragraph({ children: [new TextRun({ text: "5. Hiệu quả thực hiện / Mục tiêu đề ra:", font: "Times New Roman", size: 28, bold: true })] }),
+      ...createListParagraphs(projectResult),
+      new Paragraph({ text: "" }),
+      new Table({
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: {
+          top: { style: BorderStyle.NONE }, bottom: { style: BorderStyle.NONE }, left: { style: BorderStyle.NONE }, right: { style: BorderStyle.NONE },
+          insideHorizontal: { style: BorderStyle.NONE }, insideVertical: { style: BorderStyle.NONE },
+        },
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({ width: { size: 50, type: WidthType.PERCENTAGE }, children: [] }),
+              new TableCell({
+                width: { size: 50, type: WidthType.PERCENTAGE },
+                children: [
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "TM. BAN CHẤP HÀNH", font: "Times New Roman", size: 28, bold: true })] }),
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bí thư", font: "Times New Roman", size: 28, bold: true })] }),
+                  new Paragraph({ text: "" }), new Paragraph({ text: "" }), new Paragraph({ text: "" }),
+                  new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: signerName, font: "Times New Roman", size: 28, bold: true })] }),
+                ]
+              })
+            ]
+          })
+        ]
+      })
+    ];
+  }
+
+  const doc = new Document({ sections: [{ properties: {}, children }] });
+  return await Packer.toBlob(doc);
+};
