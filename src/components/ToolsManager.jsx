@@ -966,31 +966,31 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
               <Briefcase className="text-indigo-600"/> Tạo Kế hoạch hoạt động
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <FI label="Số KH" val={khDocNo} set={setKhDocNo} />
-              <FI label="Ngày" val={khDate} set={setKhDate} />
-              <FI label="Tháng" val={khMonth} set={setKhMonth} />
-              <FI label="Năm" val={khYear} set={setKhYear} />
+              <FI label="Số KH" value={khDocNo} onChange={e => setKhDocNo(e.target.value)} />
+              <FI label="Ngày" value={khDate} onChange={e => setKhDate(e.target.value)} />
+              <FI label="Tháng" value={khMonth} onChange={e => setKhMonth(e.target.value)} />
+              <FI label="Năm" value={khYear} onChange={e => setKhYear(e.target.value)} />
             </div>
             <div className="mb-4">
-              <FI label="Tên kế hoạch" val={khName} set={setKhName} ph="VD: KẾ HOẠCH HOẠT ĐỘNG THÁNG 3" />
+              <FI label="Tên kế hoạch" value={khName} onChange={e => setKhName(e.target.value)} ph="VD: KẾ HOẠCH HOẠT ĐỘNG THÁNG 3" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <FI label="Thời gian thực hiện" val={khTime} set={setKhTime} ph="VD: 14h00 ngày 26/03/2026" />
-              <FI label="Địa điểm" val={khLocation} set={setKhLocation} ph="VD: Sân cỏ nhân tạo..." />
-              <FI label="Thành phần tham gia" val={khParticipants} set={setKhParticipants} ph="VD: Các đồng chí ĐVTN" />
+              <FI label="Thời gian thực hiện" value={khTime} onChange={e => setKhTime(e.target.value)} ph="VD: 14h00 ngày 26/03/2026" />
+              <FI label="Địa điểm" value={khLocation} onChange={e => setKhLocation(e.target.value)} ph="VD: Sân cỏ nhân tạo..." />
+              <FI label="Thành phần tham gia" value={khParticipants} onChange={e => setKhParticipants(e.target.value)} ph="VD: Các đồng chí ĐVTN" />
             </div>
             <div className="mb-4">
-              <FT label="I. Mục đích, yêu cầu" val={khPurpose} set={setKhPurpose} ph="Gạch đầu dòng các mục đích..." />
+              <FT label="I. Mục đích, yêu cầu" value={khPurpose} onChange={e => setKhPurpose(e.target.value)} ph="Gạch đầu dòng các mục đích..." />
             </div>
             <div className="mb-4">
-              <FT label="II. Nội dung thực hiện" val={khContent} set={setKhContent} ph="Gạch đầu dòng các nội dung chính..." />
+              <FT label="II. Nội dung thực hiện" value={khContent} onChange={e => setKhContent(e.target.value)} ph="Gạch đầu dòng các nội dung chính..." />
             </div>
             <div className="mb-4">
-              <FT label="IV. Tổ chức thực hiện" val={khOrganization} set={setKhOrganization} ph="Giao nhiệm vụ cho các phân đoàn..." />
+              <FT label="IV. Tổ chức thực hiện" value={khOrganization} onChange={e => setKhOrganization(e.target.value)} ph="Giao nhiệm vụ cho các phân đoàn..." />
             </div>
             
             <div className="flex gap-3 justify-end mt-6">
-              <Btn icon={<FileText size={18}/>} label="Tạo file Kế hoạch & Lưu Drive" onClick={handleCreateKeHoach} primary disabled={loadingAI} />
+              <Btn onClick={handleCreateKeHoach} disabled={loadingAI}><div className="flex items-center gap-2"><FileText size={18}/> Tạo file Kế hoạch & Lưu Drive</div></Btn>
             </div>
           </div>
         )}
@@ -1003,34 +1003,34 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
             <p className="text-sm text-gray-600 mb-6 italic">Hệ thống sẽ tạo ra 3 văn bản: Bản đăng ký, Biên bản xét duyệt, Báo cáo kết quả.</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              <FI label="Số văn bản" val={cttnDocNo} set={setCttnDocNo} />
-              <FI label="Ngày lập" val={cttnDate} set={setCttnDate} />
-              <FI label="Tháng" val={cttnMonth} set={setCttnMonth} />
-              <FI label="Năm" val={cttnYear} set={setCttnYear} />
+              <FI label="Số văn bản" value={cttnDocNo} onChange={e => setCttnDocNo(e.target.value)} />
+              <FI label="Ngày lập" value={cttnDate} onChange={e => setCttnDate(e.target.value)} />
+              <FI label="Tháng" value={cttnMonth} onChange={e => setCttnMonth(e.target.value)} />
+              <FI label="Năm" value={cttnYear} onChange={e => setCttnYear(e.target.value)} />
             </div>
             <div className="mb-4">
-              <FI label="Tên công trình thanh niên" val={cttnName} set={setCttnName} ph="VD: Khám và phát thuốc miễn phí..." />
+              <FI label="Tên công trình thanh niên" value={cttnName} onChange={e => setCttnName(e.target.value)} ph="VD: Khám và phát thuốc miễn phí..." />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <FI label="Thời gian thực hiện" val={cttnTime} set={setCttnTime} ph="VD: 13h00 ngày 21/03/2026" />
-              <FI label="Địa điểm" val={cttnLocation} set={setCttnLocation} ph="VD: Hội trường tầng 1 nhà A..." />
-              <FI label="Số người tham gia" val={cttnParticipants} set={setCttnParticipants} type="number" />
+              <FI label="Thời gian thực hiện" value={cttnTime} onChange={e => setCttnTime(e.target.value)} ph="VD: 13h00 ngày 21/03/2026" />
+              <FI label="Địa điểm" value={cttnLocation} onChange={e => setCttnLocation(e.target.value)} ph="VD: Hội trường tầng 1 nhà A..." />
+              <FI label="Số người tham gia" value={cttnParticipants} onChange={e => setCttnParticipants(e.target.value)} type="number" />
             </div>
             <div className="mb-4">
-              <FI label="Thư ký cuộc họp" val={cttnSecretary} set={setCttnSecretary} ph="Họ tên người ghi biên bản" />
+              <FI label="Thư ký cuộc họp" value={cttnSecretary} onChange={e => setCttnSecretary(e.target.value)} ph="Họ tên người ghi biên bản" />
             </div>
             <div className="mb-4">
-              <FT label="Khối lượng / Nội dung thực hiện" val={cttnVolume} set={setCttnVolume} ph="VD: Khám bệnh (thể lực, lâm sàng...) cho 40 trẻ em..." />
+              <FT label="Khối lượng / Nội dung thực hiện" value={cttnVolume} onChange={e => setCttnVolume(e.target.value)} ph="VD: Khám bệnh (thể lực, lâm sàng...) cho 40 trẻ em..." />
             </div>
             <div className="mb-4">
-              <FT label="Ý nghĩa công trình" val={cttnMeaning} set={setCttnMeaning} ph="VD: Nâng cao vai trò xung kích..." />
+              <FT label="Ý nghĩa công trình" value={cttnMeaning} onChange={e => setCttnMeaning(e.target.value)} ph="VD: Nâng cao vai trò xung kích..." />
             </div>
             <div className="mb-4">
-              <FT label="Hiệu quả / Kết quả đạt được" val={cttnResult} set={setCttnResult} ph="VD: Đã phối hợp khám đầy đủ..." />
+              <FT label="Hiệu quả / Kết quả đạt được" value={cttnResult} onChange={e => setCttnResult(e.target.value)} ph="VD: Đã phối hợp khám đầy đủ..." />
             </div>
             
             <div className="flex gap-3 justify-end mt-6">
-              <Btn icon={<FileText size={18}/>} label="Tạo bộ 3 văn bản CTTN & Lưu Drive" onClick={handleCreateCttn} primary disabled={loadingAI} />
+              <Btn onClick={handleCreateCttn} disabled={loadingAI}><div className="flex items-center gap-2"><FileText size={18}/> Tạo bộ 3 văn bản CTTN & Lưu Drive</div></Btn>
             </div>
           </div>
         )}
