@@ -4,6 +4,7 @@ import { Sparkles, Calendar, FileText, Download, Briefcase, Activity, Check, Edi
 import { getBranchConfig } from '../data/constants';
 
 import { saveAs } from 'file-saver';
+import * as mammoth from 'mammoth';
 import { generateDinhKyDocx, exportDocxBlob, generateTongHopDocx, generateKeHoachDocx, generateCttnDocx } from '../utils/docxGenerator';
 
 // Utility to export HTML to a .docx file
@@ -163,6 +164,9 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
   const [cttnResult, setCttnResult] = useState('');
   const [cttnSecretary, setCttnSecretary] = useState('');
 
+  const [upstreamText, setUpstreamText] = useState('');
+  const [isParsingUpstream, setIsParsingUpstream] = useState(false);
+
   const [loadingAI, setLoadingAI] = useState(false);
   const [loadingDrive, setLoadingDrive] = useState({});
   const [savedDrive, setSavedDrive] = useState({});
@@ -276,6 +280,61 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
 
 
   // --- XỬ LÝ TẠO KẾ HOẠCH ---
+  
+  const handleAutoFillKeHoach = async () => {
+    if (!upstreamText.trim()) {
+      alert('Vui lòng dán nội dung văn bản chỉ đạo của cấp trên vào ô trống!');
+      return;
+    }
+    try {
+      setIsParsingUpstream(true);
+      const prompt = `Bạn là một trợ lý chuyên nghiệp. Dưới đây là văn bản chỉ đạo của Đoàn cấp trên.
+Hãy trích xuất và tóm tắt các thông tin sau để điền vào kế hoạch cấp cơ sở.
+TRẢ VỀ ĐÚNG ĐỊNH DẠNG JSON (bắt đầu bằng { và kết thúc bằng }), KHÔNG KÈM markdown, KHÔNG KÈM text giải thích:
+{
+  "khName": "Tên kế hoạch (ngắn gọn, viết HOA, ví dụ: KẾ HOẠCH TỔ CHỨC HOẠT ĐỘNG...)",
+  "khPurpose": "- Mục đích 1...\n- Yêu cầu 1...",
+  "khContent": "- Nội dung 1...\n- Nội dung 2...",
+  "khTime": "Thời gian tổ chức dự kiến (ngắn gọn)",
+  "khLocation": "Địa điểm tổ chức dự kiến (ngắn gọn)",
+  "khParticipants": "Thành phần tham gia"
+}
+
+[NỘI DUNG VĂN BẢN CẤP TRÊN]:
+${upstreamText}`;
+
+      const aiText = await callGeminiAPI(prompt, geminiApiKey);
+      const jsonStr = aiText.substring(aiText.indexOf('{'), aiText.lastIndexOf('}') + 1);
+      const data = JSON.parse(jsonStr);
+
+      if (data.khName) setKhName(data.khName);
+      if (data.khPurpose) setKhPurpose(data.khPurpose);
+      if (data.khContent) setKhContent(data.khContent);
+      if (data.khTime) setKhTime(data.khTime);
+      if (data.khLocation) setKhLocation(data.khLocation);
+      if (data.khParticipants) setKhParticipants(data.khParticipants);
+      
+      showToast('Đã điền tự động các thông tin từ văn bản cấp trên!');
+    } catch (e) {
+      alert('Lỗi phân tích AI: ' + e.message);
+    } finally {
+      setIsParsingUpstream(false);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer: arrayBuffer });
+      setUpstreamText(result.value);
+      showToast('Đã đọc nội dung file Word thành công!');
+    } catch (err) {
+      alert('Lỗi đọc file Word: ' + err.message);
+    }
+  };
+
   const handleCreateKeHoach = async () => {
     try {
       setLoadingAI(true);
@@ -961,10 +1020,39 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
       {/* CONTENT: KHO BIỂU MẪU */}
       
         {activeTab === 'kehoach' && (
-          <div className="bg-white rounded-xl shadow-sm border p-6">
+                    <div className="bg-white rounded-xl shadow-sm border p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
               <Briefcase className="text-indigo-600"/> Tạo Kế hoạch hoạt động
             </h3>
+
+            {/* AI AUTO FILL SECTION */}
+            <div className="mb-6 p-4 bg-indigo-50 border border-indigo-100 rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <h4 className="font-bold text-indigo-800 flex items-center gap-2">
+                  <Sparkles size={16} /> Dữ liệu đầu vào từ cấp trên (Tự động điền)
+                </h4>
+                <div className="flex items-center gap-2">
+                  <label className="cursor-pointer bg-white px-3 py-1.5 border border-indigo-200 text-indigo-600 text-xs font-bold rounded-lg hover:bg-indigo-100 transition">
+                    Tải lên file Word (.docx)
+                    <input type="file" accept=".docx" className="hidden" onChange={handleFileUpload} />
+                  </label>
+                  <button 
+                    onClick={handleAutoFillKeHoach} 
+                    disabled={isParsingUpstream}
+                    className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-70 text-white px-3 py-1.5 text-xs font-bold rounded-lg transition"
+                  >
+                    {isParsingUpstream ? 'Đang phân tích AI...' : '🪄 Phân tích & Tự động điền'}
+                  </button>
+                </div>
+              </div>
+              <FT 
+                placeholder="Dán nội dung Kế hoạch / Công văn của Đoàn cấp trên vào đây, hoặc tải file .docx lên..." 
+                value={upstreamText} 
+                onChange={e => setUpstreamText(e.target.value)} 
+                rows={3} 
+              />
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               <FI label="Số KH" value={khDocNo} onChange={e => setKhDocNo(e.target.value)} />
               <FI label="Ngày" value={khDate} onChange={e => setKhDate(e.target.value)} />
