@@ -719,25 +719,37 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
         </div>
       )}
 
-      {/* TABS MENU */}
+            {/* TABS MENU */}
       <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1 flex-wrap gap-1">
         <button
           onClick={() => setActiveTab('dinhky')}
-          className={`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'dinhky' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+          className={`flex-1 py-3 px-2 min-w-[120px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'dinhky' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
-          <Calendar size={18} /> Mô-đun Định kỳ
+          <Calendar size={18} /> Định kỳ
         </button>
         <button
           onClick={() => setActiveTab('tonghop')}
-          className={`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'tonghop' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+          className={`flex-1 py-3 px-2 min-w-[120px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'tonghop' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
-          <Activity size={18} /> Mô-đun Tổng hợp
+          <Activity size={18} /> Tổng hợp
+        </button>
+        <button
+          onClick={() => setActiveTab('kehoach')}
+          className={`flex-1 py-3 px-2 min-w-[120px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'kehoach' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+        >
+          <Briefcase size={18} /> Kế hoạch
+        </button>
+        <button
+          onClick={() => setActiveTab('cttn')}
+          className={`flex-1 py-3 px-2 min-w-[120px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'cttn' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+        >
+          <Sparkles size={18} /> CTTN
         </button>
         <button
           onClick={() => setActiveTab('kho')}
-          className={`flex-1 py-3 px-2 min-w-[150px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'kho' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+          className={`flex-1 py-3 px-2 min-w-[120px] text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'kho' ? 'bg-red-600 text-white shadow' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
         >
-          <FileText size={18} /> Kho Biểu mẫu Số
+          <FileText size={18} /> Kho Biểu mẫu
         </button>
       </div>
 
