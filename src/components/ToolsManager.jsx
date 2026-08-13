@@ -816,8 +816,12 @@ ${upstreamText}`;
       {activeTab === 'dinhky' && (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Bộ ba văn bản tháng (Biên bản - Nghị quyết - Báo cáo)</h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-            <FI label="Số văn bản" value={dkDocNo} onChange={e => setDkDocNo(e.target.value)} placeholder="01" />
+          <div className="grid grid-cols-3 md:grid-cols-3 gap-4 mb-4">
+            <FI label="Số Biên bản" value={dkDocNoBB} onChange={e => setDkDocNoBB(e.target.value)} placeholder="01" />
+            <FI label="Số Nghị quyết" value={dkDocNoNQ} onChange={e => setDkDocNoNQ(e.target.value)} placeholder="01" />
+            <FI label="Số Báo cáo" value={dkDocNoBC} onChange={e => setDkDocNoBC(e.target.value)} placeholder="01" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <FI label="Ngày" type="number" value={dkDate} onChange={e => setDkDate(e.target.value)} />
             <FI label="Tháng" type="number" value={dkMonth} onChange={e => setDkMonth(e.target.value)} />
             <FI label="Năm" type="number" value={dkYear} onChange={e => setDkYear(e.target.value)} />
