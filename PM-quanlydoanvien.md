@@ -2431,3 +2431,11 @@ CÃ¡c file Ä‘Ã£ bá»‹ dá»n dáº¹p (Ä‘Ã£ xÃ³a vÃ  Ä‘áº©y code lÃªn Github) bao gá»“
   - Khai báo 3 state riêng bi?t dkDocNoBB, dkDocNoNQ, dkDocNoBC thay th? cho dkDocNo trong ToolsManager.jsx.
   - C?p nh?t giao di?n UI d? hi?n th? 3 ô input thay vì 1.
   - C?p nh?t logic t?o chu?i HTML, t?o tên file t?i xu?ng th? công, luu tr? Google Drive, và tiêu d? trong danh sách K? ho?ch d? ánh x? chính xác v?i t?ng lo?i van b?n.
+
+
+## [2026-08-13] S?a l?i chua khai báo state khi tách S? van b?n
+- **Yêu c?u:** Fix l?i dkDocNoBB is not defined và các l?i giao di?n không d?ng b? khi tách ô nh?p.
+- **Nguyên nhân/Gi?i pháp:**
+  - L?n tru?c ch? c?p nh?t UI mà chua c?p nh?t d?nh nghia state (do l?i parse string).
+  - Ğã dùng Regex d? thay th? chính xác các dòng d?nh nghia bi?n dkDocNoBB, dkDocNoNQ, dkDocNoBC và logic sinh file Word, luu Drive.
+  - Xóa các file script t?m d? d?n d?p mã ngu?n theo rule s? 3.
