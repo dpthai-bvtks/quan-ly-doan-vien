@@ -2409,3 +2409,25 @@ với cơ sở 1 đổi toàn bộ "Chi đoàn Bệnh viện Than Khoáng sản 
 
 Với tài khoản Cơ sở 2 thì vẫn giữ nguyên chữ ký là Đặng Phong Thái như cũ.
 
+
+### User Input
+file BCCT T1-2026.docx là mẫu báo cáo, có nên xóa không, còn lại những file kia xóa đi
+
+### Planner Response
+Đã xóa toàn bộ các file rác và giữ lại file mẫu!
+
+File **BCCT T1-2026.docx** tuy hiện tại app đã tự động sinh nội dung và form chuẩn trực tiếp bằng code chứ không phụ thuộc vào file ngoài nữa, nhưng việc giữ lại file này làm tư liệu tham khảo/mẫu chuẩn hoàn toàn không ảnh hưởng gì đến hiệu suất của dự án.
+
+Các file đã bị dọn dẹp (đã xóa và đẩy code lên Github) bao gồm:
+- Các file test trích xuất dữ liệu: *BCCT.txt, BCCT.xml, BCCT.zip, BCCT_utf8.txt, test.docx, test.zip, và các folder extracted...*
+- Các script vá lỗi đã cũ: *patch.cjs, patchCd.cjs, patchTools.js, v.v.*
+- File Excel mẫu và bản backup cũ, file ý tưởng không còn dùng tới.
+
+
+
+## [2026-08-13] T�ch tru?ng s? van b?n cho B? ba van b?n th�ng
+- **Y�u c?u:** T�ch tru?ng S? van b?n d�ng chung th�nh 3 tru?ng ri�ng bi?t cho Bi�n b?n, Ngh? quy?t, B�o c�o trong ch?c nang t?o B? ba van b?n th�ng.
+- **Nguy�n nh�n/Gi?i ph�p:**
+  - Khai b�o 3 state ri�ng bi?t dkDocNoBB, dkDocNoNQ, dkDocNoBC thay th? cho dkDocNo trong ToolsManager.jsx.
+  - C?p nh?t giao di?n UI d? hi?n th? 3 � input thay v� 1.
+  - C?p nh?t logic t?o chu?i HTML, t?o t�n file t?i xu?ng th? c�ng, luu tr? Google Drive, v� ti�u d? trong danh s�ch K? ho?ch d? �nh x? ch�nh x�c v?i t?ng lo?i van b?n.
