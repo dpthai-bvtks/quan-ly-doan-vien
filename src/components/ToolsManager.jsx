@@ -127,7 +127,9 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
   const [thResultInput, setThResultInput] = useState('');
   const [thNextInput, setThNextInput] = useState('');
 
-  const [dkDocNo, setDkDocNo] = useState('01');
+  const [dkDocNoBB, setDkDocNoBB] = useState('01');
+  const [dkDocNoNQ, setDkDocNoNQ] = useState('01');
+  const [dkDocNoBC, setDkDocNoBC] = useState('01');
   const [dkDate, setDkDate] = useState(new Date().getDate().toString().padStart(2, '0'));
   const [dkMonth, setDkMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
   const [dkYear, setDkYear] = useState(new Date().getFullYear().toString());
@@ -183,15 +185,19 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
       const isCS1 = currentUser?.username === 'bvtks-cs1';
       let folderId = '';
       let filename = '';
+      let currentDocNo = '';
       if (type === 'bao_cao') {
         folderId = isCS1 ? '1YQrHutAFAcU24-Y8X--k2y_wCmNRWxwZ' : '1uPciReR36oYs_8bdvRke8PbjJf0YL9HY';
-        filename = `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}`;
+        currentDocNo = dkDocNoBC;
+        filename = `Bao_Cao_${currentDocNo}_${dkMonth}_${dkYear}`;
       } else if (type === 'bien_ban') {
         folderId = isCS1 ? '1BRfEJwq4dFUXHC60oB6UAaAA9iN3hhmp' : '1-1cfuEFcYXab-GUvnULl7dD5nN4i5LmV';
-        filename = `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}`;
+        currentDocNo = dkDocNoBB;
+        filename = `Bien_Ban_${currentDocNo}_${dkMonth}_${dkYear}`;
       } else if (type === 'nghi_quyet') {
         folderId = isCS1 ? '1IvfaxI8UvMbGrlIMVQq4epW-kGz7ORHQ' : '1sbRu-eADECV4MN_uDQ7vwP0LjZ5lqeJu';
-        filename = `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}`;
+        currentDocNo = dkDocNoNQ;
+        filename = `Nghi_Quyet_${currentDocNo}_${dkMonth}_${dkYear}`;
       } else if (type === 'ke_hoach') {
         folderId = isCS1 ? '17nCNXjMoYnGwmsySH-HD6XMM1GQHUx8Q' : '1g3Y-MgyR6kButQGiBrbuI9OFI5pAwTPn';
         filename = `Ke_Hoach_Chuyen_De`;
@@ -217,7 +223,7 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
           });
         } else {
           docxBlob = await generateDinhKyDocx(type, {
-            branchName, dkDocNo, dkDate, dkMonth, dkYear,
+            branchName, dkDocNo: currentDocNo, dkDate, dkMonth, dkYear,
             results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
             nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
           });
@@ -231,9 +237,9 @@ export default function ToolsManager({ plans, setPlans, isAdmin, currentUser, ge
           const fileId = uploadRes.fileId || uploadRes.id;
           const url = uploadRes.url || uploadRes.webViewLink;
           let planTitle = filename.replace(/_/g, ' ');
-          if (type === 'bao_cao') planTitle = `Báo cáo số ${dkDocNo}/${dkYear}`;
-          else if (type === 'bien_ban') planTitle = `Biên bản số ${dkDocNo}/${dkYear}`;
-          else if (type === 'nghi_quyet') planTitle = `Nghị quyết số ${dkDocNo}/${dkYear}`;
+          if (type === 'bao_cao') planTitle = `Báo cáo số ${currentDocNo}/${dkYear}`;
+          else if (type === 'bien_ban') planTitle = `Biên bản số ${currentDocNo}/${dkYear}`;
+          else if (type === 'nghi_quyet') planTitle = `Nghị quyết số ${currentDocNo}/${dkYear}`;
           else if (type === 'ke_hoach') planTitle = `Kế hoạch số ${dkDocNo}/${dkYear}`;
           else if (type === 'tong_hop') planTitle = `Báo cáo Tổng hợp ${thPeriod}/${thYear}`;
 
@@ -859,11 +865,11 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                       const config = getBranchConfig(currentUser?.username);
                       const blob = await generateDinhKyDocx('bao_cao', {
                         isCS1: currentUser?.username === 'bvtks-cs1',
-                        branchName: config.title, dkDocNo, dkDate, dkMonth, dkYear,
+                        branchName: config.title, dkDocNo: dkDocNoBC, dkDate, dkMonth, dkYear,
                         results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
                         nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
                       });
-                      exportDocxBlob(blob, `Bao_Cao_${dkDocNo}_${dkMonth}_${dkYear}`);
+                      exportDocxBlob(blob, `Bao_Cao_${dkDocNoBC}_${dkMonth}_${dkYear}`);
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
                       <Download size={14} /> Tải Word (.docx)
                     </button>
@@ -884,11 +890,11 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                       const config = getBranchConfig(currentUser?.username);
                       const blob = await generateDinhKyDocx('bien_ban', {
                         isCS1: currentUser?.username === 'bvtks-cs1',
-                        branchName: config.title, dkDocNo, dkDate, dkMonth, dkYear,
+                        branchName: config.title, dkDocNo: dkDocNoBB, dkDate, dkMonth, dkYear,
                         results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
                         nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
                       });
-                      exportDocxBlob(blob, `Bien_Ban_${dkDocNo}_${dkMonth}_${dkYear}`);
+                      exportDocxBlob(blob, `Bien_Ban_${dkDocNoBB}_${dkMonth}_${dkYear}`);
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
                       <Download size={14} /> Tải Word (.docx)
                     </button>
@@ -909,11 +915,11 @@ const nextMonth = dkMonth === '12' ? 1 : parseInt(dkMonth, 10) + 1;
                       const config = getBranchConfig(currentUser?.username);
                       const blob = await generateDinhKyDocx('nghi_quyet', {
                         isCS1: currentUser?.username === 'bvtks-cs1',
-                        branchName: config.title, dkDocNo, dkDate, dkMonth, dkYear,
+                        branchName: config.title, dkDocNo: dkDocNoNQ, dkDate, dkMonth, dkYear,
                         results: dkResultInput, nextPlan: dkNextInput, secretary: dkSecretary,
                         nextMonthStr: nextMonth.toString().padStart(2, '0'), nextYearStr
                       });
-                      exportDocxBlob(blob, `Nghi_Quyet_${dkDocNo}_${dkMonth}_${dkYear}`);
+                      exportDocxBlob(blob, `Nghi_Quyet_${dkDocNoNQ}_${dkMonth}_${dkYear}`);
                     }} className="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition font-bold">
                       <Download size={14} /> Tải Word (.docx)
                     </button>
