@@ -518,7 +518,7 @@ ${upstreamText}`;
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
         ${bchTitleHtml}
         <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
-        Số: ${dkDocNo}/${dkYear}-BC/${docSuffix}
+        Số: ${dkDocNoBC}/${dkYear}-BC/${docSuffix}
       </td>
       <td width="50%" align="center" valign="top">
         <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
@@ -574,7 +574,7 @@ ${upstreamText}`;
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
         ${bchTitleHtml}
         <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
-        Số: ${dkDocNo}/${dkYear}-BB/${docSuffix}
+        Số: ${dkDocNoBB}/${dkYear}-BB/${docSuffix}
       </td>
       <td width="50%" align="center" valign="top">
         <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
@@ -646,7 +646,7 @@ ${upstreamText}`;
         <span style="font-size: 13pt;">ĐTN BỆNH VIỆN THAN – KHOÁNG SẢN</span><br/>
         ${bchTitleHtml}
         <hr width="40%" size="1" color="black" noshade style="margin-top: 5px; margin-bottom: 5px;" />
-        Số: ${dkDocNo}/${dkYear}-NQ/${docSuffix}
+        Số: ${dkDocNoNQ}/${dkYear}-NQ/${docSuffix}
       </td>
       <td width="50%" align="center" valign="top">
         <strong>ĐOÀN TN CỘNG SẢN HỒ CHÍ MINH</strong><br/>
